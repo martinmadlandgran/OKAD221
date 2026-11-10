@@ -192,6 +192,8 @@ Kontroller:
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 162 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 462 bestått.
 
+Avgjort av eier etter bølgen: de fire punktene lukkes som foreslått (1a), quizspørsmålet om factoring med kortere kredittid blir stående (2a), og bølge 11 er quiz for resten av kapittel 12 og kapittel 9 pluss funn fra mobiltesten (3a).
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
