@@ -12,7 +12,7 @@
 
   // ---------- Lagring (med tydelig beskjed hvis den ikke virker) ----------
   const KEY = 'okad221:v1';
-  const blank = () => ({ gen: {}, exam: {}, quiz: {}, mock: null, mockLog: [], examDate: '' });
+  const blank = () => ({ gen: {}, exam: {}, quiz: {}, qmiss: {}, mock: null, mockLog: [], examDate: '' });
   let S = blank(), storageOk = true;
   const notice = (msg) => { const el = $('#notice'); el.hidden = !msg; el.textContent = msg || ''; };
   try { S = Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); localStorage.setItem(KEY, JSON.stringify(S)); }
@@ -52,6 +52,15 @@
       return ms.length ? { g, ms, last: Math.max(...ms.map((x) => x.t)), score: examWeight(g.id) * ms.length } : null;
     }).filter(Boolean).sort((a, b) => b.score - a.score || b.last - a.last);
   }
+  // ---------- Repetisjon i quizen: spørsmål besvart feil kommer igjen til de er besvart riktig ----------
+  // S.qmiss[id] = { t: sist feil (ms), n: antall feil }. id er en hash av spørsmålsteksten, så den tåler at spørsmål legges til eller flyttes.
+  const QREP = 5, QMISSMAX = 1000;
+  O.quiz.forEach((q) => { q.id = U.hash(q.q); });
+  const quizById = {}; O.quiz.forEach((q) => { quizById[q.id] = q; });
+  if (!S.qmiss || typeof S.qmiss !== 'object' || Array.isArray(S.qmiss)) S.qmiss = {};
+  Object.keys(S.qmiss).forEach((k) => { if (!quizById[k]) delete S.qmiss[k]; });
+  /** Spørsmål som venter på repetisjon, eldste feil først. ch: kapittelnummer eller 'alle'. */
+  const quizDue = (ch) => O.quiz.filter((q) => S.qmiss[q.id] && (ch === 'alle' || String(q.ch) === String(ch))).sort((a, b) => S.qmiss[a.id].t - S.qmiss[b.id].t);
   const partList = (p) => { const a = p.split(''); return a.length === 1 ? a[0] : a.slice(0, -1).join(', ') + ' og ' + a[a.length - 1]; };
   // ---------- Flytte fremdrift mellom enheter: eksport, kontroll, sammenslåing ----------
   const MAXSEED = 2147483647;
@@ -67,7 +76,7 @@
     if (o.app !== undefined && o.app !== 'okad221') throw new Error('Filen er fra et annet program, ikke fra ØKAD 221-siden.');
     if (o.app === 'okad221' && o.format !== 1) throw new Error(typeof o.format === 'number' && o.format > 1 ? 'Filen er laget med en nyere versjon av siden. Last siden på nytt og prøv igjen.' : 'Filen mangler versjonsnummer og kan ikke leses.');
     const d = o.app === 'okad221' ? o.data : o;
-    if (!isObj(d) || !['gen', 'exam', 'quiz', 'mockLog'].some((k) => k in d)) throw new Error('Filen inneholder ingen fremdrift fra ØKAD 221-siden.');
+    if (!isObj(d) || !['gen', 'exam', 'quiz', 'qmiss', 'mockLog'].some((k) => k in d)) throw new Error('Filen inneholder ingen fremdrift fra ØKAD 221-siden.');
     const out = blank(), warn = [];
     let unknown = 0;
     if (isObj(d.gen)) Object.keys(d.gen).forEach((id) => {
@@ -83,6 +92,15 @@
     if (unknown) warn.push(`${unknown} ${unknown === 1 ? 'oppgavetype' : 'oppgavetyper'} i filen finnes ikke på denne versjonen av siden og ble hoppet over.`);
     if (isObj(d.exam)) Object.keys(d.exam).forEach((k) => { if (/^\d{4}-\d{1,2}[a-z]$/.test(k) && d.exam[k] === true) out.exam[k] = true; });
     if (isObj(d.quiz)) Object.keys(d.quiz).forEach((k) => { const q = d.quiz[k]; if (/^\d{1,2}$/.test(k) && isObj(q) && isInt(q.n, 0, 1e7) && isInt(q.ok, 0, 1e7)) out.quiz[k] = { n: q.n, ok: Math.min(q.ok, q.n) }; });
+    if (isObj(d.qmiss)) {
+      let qu = 0;
+      Object.keys(d.qmiss).slice(0, QMISSMAX).forEach((k) => {
+        const x = d.qmiss[k];
+        if (!Object.prototype.hasOwnProperty.call(quizById, k)) { qu++; return; }
+        if (isObj(x) && Number.isFinite(x.t) && x.t > 0 && isInt(x.n, 1, 1e6)) out.qmiss[k] = { t: x.t, n: x.n };
+      });
+      if (qu) warn.push(`${qu} ${qu === 1 ? 'quizspørsmål' : 'quizspørsmål'} å repetere finnes ikke på denne versjonen av siden og ble hoppet over.`);
+    }
     if (Array.isArray(d.mockLog)) out.mockLog = d.mockLog.slice(-500).filter((x) => isObj(x) && typeof x.date === 'string' && /^[0-9./\- ]{1,20}$/.test(x.date) && isInt(x.score, 0, 100) && isInt(x.min, 0, 1e6))
       .map((x) => Object.assign({ date: x.date, score: x.score, min: x.min }, Number.isFinite(x.t) ? { t: x.t } : {}, x.paper === true ? { paper: true } : {}));
     if (typeof d.examDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.examDate)) out.examDate = d.examDate;
@@ -97,9 +115,9 @@
   const progressSummary = (st) => ({
     tried: U.sum(Object.values(st.gen).map((g) => g.tried)), types: Object.values(st.gen).filter((g) => g.tried > 0).length,
     exam: Object.values(st.exam).filter(Boolean).length, quiz: U.sum(Object.values(st.quiz).map((q) => q.n)), mocks: (st.mockLog || []).length, open: !!st.mock,
-    review: U.sum(Object.values(st.gen).map((g) => (g.miss ? g.miss.length : 0))),
+    review: U.sum(Object.values(st.gen).map((g) => (g.miss ? g.miss.length : 0))), qreview: Object.keys(st.qmiss || {}).length,
   });
-  const isEmptyProgress = (st) => { const x = progressSummary(st); return !x.tried && !x.exam && !x.quiz && !x.mocks && !x.open && !st.examDate; };
+  const isEmptyProgress = (st) => { const x = progressSummary(st); return !x.tried && !x.exam && !x.quiz && !x.qreview && !x.mocks && !x.open && !st.examDate; };
   /** Slår sammen to tilstander. Idempotent: samme fil to ganger gir samme resultat. */
   function mergeProgress(a, b) {
     const out = blank();
@@ -118,6 +136,9 @@
     });
     Object.keys(a.exam).concat(Object.keys(b.exam)).forEach((k) => { if (a.exam[k] || b.exam[k]) out.exam[k] = true; });
     new Set(Object.keys(a.quiz).concat(Object.keys(b.quiz))).forEach((k) => { const x = a.quiz[k], y = b.quiz[k]; out.quiz[k] = !x ? y : !y ? x : (y.n > x.n ? y : x); });
+    // Quizrepetisjon: et spørsmål som venter på én av enhetene, venter etterpå (siste feil og flest feil beholdes).
+    const qa = a.qmiss || {}, qb = b.qmiss || {};
+    new Set(Object.keys(qa).concat(Object.keys(qb))).forEach((k) => { const x = qa[k], y = qb[k]; out.qmiss[k] = !x ? { t: y.t, n: y.n } : !y ? { t: x.t, n: x.n } : { t: Math.max(x.t, y.t), n: Math.max(x.n, y.n) }; });
     const key = (x) => [x.t || '', x.date, x.score, x.min].join('|'), seen = new Set((a.mockLog || []).map(key));
     out.mockLog = (a.mockLog || []).concat((b.mockLog || []).filter((x) => !seen.has(key(x))));
     if (out.mockLog.every((x) => x.t)) out.mockLog.sort((x, y) => x.t - y.t);
@@ -213,7 +234,7 @@
         <div><h2>Slå opp</h2><ul class="rows">
           <li><a class="rowlink" href="#/tema"><span class="rl-title">Teori per kapittel</span><span class="rl-sub">Begreper, fremgangsmåter, eksempler og typiske feil.</span></a></li>
           <li><a class="rowlink" href="#/formler"><span class="rl-title">Formelsamling</span><span class="rl-sub">Søkbar, ${U.sum(O.theory.map((t) => t.formulas.length))} formler.</span></a></li>
-          <li><a class="rowlink" href="#/quiz"><span class="rl-title">Quiz</span><span class="rl-sub">${O.quiz.length} flervalgsspørsmål om begreper og feller.</span></a></li>
+          <li><a class="rowlink" href="#/quiz"><span class="rl-title">Quiz</span><span class="rl-sub">${O.quiz.length} flervalgsspørsmål om begreper og feller.</span>${quizDue('alle').length ? `<span class="rl-meta"><b>${quizDue('alle').length}</b> å repetere</span>` : ''}</a></li>
           <li><a class="rowlink" href="#/verktoy"><span class="rl-title">Kalkulatorer</span><span class="rl-sub">Kontroller NNV, lån, obligasjon og WACC.</span></a></li></ul></div>
       </div>
       <h2>Innstillinger</h2>
@@ -230,7 +251,7 @@
     $('#ed').onchange = (e) => { S.examDate = e.target.value; save(); routes[''](); };
     setupTransfer();
     $('#reset').onclick = () => {
-      if (!started && !examDone && !(S.mockLog || []).length) { $('#resetmsg').textContent = 'Det er ingenting å slette.'; return; }
+      if (isEmptyProgress(S)) { $('#resetmsg').textContent = 'Det er ingenting å slette.'; return; }
       if (confirm('Slette all lagret fremdrift på denne enheten? Dette kan ikke angres.')) { S = blank(); save(); routes['']();  $('#resetmsg').textContent = 'Fremdriften er slettet.'; }
     };
   };
@@ -267,7 +288,7 @@
       const a = progressSummary(res.data), b = progressSummary(S), c = progressSummary(mergeProgress(S, res.data)), yn = (x) => (x ? 'ja' : 'nei');
       const notes = res.warn.concat(a.open && b.open ? ['Begge har en påbegynt prøveeksamen. Ved sammenslåing beholdes den på denne enheten.'] : []);
       box.innerHTML = `<div class="callout"><p><b>Fremdrift${res.when ? ' lagret ' + esc(res.when.toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' })) : ''}${from}.</b> Sjekk tallene før du velger.</p>` +
-        table(['', 'Filen', 'Her nå', 'Sammen'], [['Deloppgaver besvart', n(a.tried), n(b.tried), n(c.tried)], ['Oppgavetyper prøvd', a.types, b.types, c.types], ['Eksamensdeler krysset av', a.exam, b.exam, c.exam], ['Quizsvar', n(a.quiz), n(b.quiz), n(c.quiz)], ['Prøver levert', a.mocks, b.mocks, c.mocks], ['Oppgaver å repetere', a.review, b.review, c.review], ['Påbegynt prøve', yn(a.open), yn(b.open), yn(c.open)]], { cls: 'wrap' }) + '<p class="small muted" style="margin-top:0">«Sammen» viser hva du får med «Slå sammen».</p>' +
+        table(['', 'Filen', 'Her nå', 'Sammen'], [['Deloppgaver besvart', n(a.tried), n(b.tried), n(c.tried)], ['Oppgavetyper prøvd', a.types, b.types, c.types], ['Eksamensdeler krysset av', a.exam, b.exam, c.exam], ['Quizsvar', n(a.quiz), n(b.quiz), n(c.quiz)], ['Quizspørsmål å repetere', a.qreview, b.qreview, c.qreview], ['Prøver levert', a.mocks, b.mocks, c.mocks], ['Oppgaver å repetere', a.review, b.review, c.review], ['Påbegynt prøve', yn(a.open), yn(b.open), yn(c.open)]], { cls: 'wrap' }) + '<p class="small muted" style="margin-top:0">«Sammen» viser hva du får med «Slå sammen».</p>' +
         (notes.length ? '<ul class="small">' + notes.map((w) => `<li>${esc(w)}</li>`).join('') + '</ul>' : '') +
         `<p class="row"><button class="btn primary" type="button" id="impmerge">Slå sammen</button><button class="btn" type="button" id="impreplace">Erstatt det som er her</button><button class="btn link" type="button" id="impcancel">Avbryt</button></p>
         <p class="small muted">Slå sammen beholder det beste fra begge: for hver oppgavetype og hvert quizkapittel beholdes tallene fra enheten med flest forsøk, og avkryssinger og prøveresultater fra begge tas med. Samme fil to ganger endrer ingenting. Erstatt sletter det som er her nå.</p></div>`;
@@ -420,7 +441,9 @@
     if (sub) return notFound('siden', 'repeter', 'Til repetisjonslisten');
     setTitle('Repeter');
     const RV = reviewList(), tried = U.sum(Object.values(S.gen).map((g) => g.tried));
-    const head = '<div class="crumbs"><a href="#/oving">Øv</a> › Repeter</div><h1>Repeter det du har bommet på</h1>';
+    const qd = quizDue('alle').length;
+    const head = '<div class="crumbs"><a href="#/oving">Øv</a> › Repeter</div><h1>Repeter det du har bommet på</h1>' +
+      (qd ? `<p class="review-line" id="qline"><a href="#/quiz/repeter"><b>Repeter ${qd} quizspørsmål</b></a> du har svart feil på.</p>` : '');
     if (!RV.length) {
       view.innerHTML = head + `<div class="empty"><h2>${tried ? 'Ingenting å repetere' : 'Ingenting å repetere ennå'}</h2><p>${tried
         ? 'Alt du har svart på er enten riktig på første forsøk, eller løst på nytt uten feil. Oppgaver der du svarer feil eller åpner løsningen før du har svart, havner her.'
@@ -626,30 +649,60 @@
   routes.quiz = (ch) => {
     setTitle('Quiz');
     const chs = [...new Set(O.quiz.map((q) => q.ch))].sort((a, b) => a - b);
+    const answered = U.sum(Object.values(S.quiz).map((x) => x.n));
     if (!ch) {
+      const due = quizDue('alle');
       view.innerHTML = '<h1>Quiz</h1><p class="lead">Ti flervalgsspørsmål per runde om begreper, relevante kontantstrømmer og typiske feller.</p>' +
+        (due.length ? `<div class="callout warn" id="qdue"><p><b>${due.length} spørsmål du har svart feil på</b> kommer igjen i de neste rundene, høyst ${QREP} per runde, til du svarer riktig.</p><p><a class="btn" href="#/quiz/repeter">Repeter bare ${due.length === 1 ? 'dette' : 'disse'} (${due.length})</a></p></div>`
+          : `<p class="small muted" style="max-width:68ch">${answered ? 'Ingen spørsmål venter på repetisjon. ' : ''}Svarer du feil, kommer spørsmålet igjen i senere runder til du svarer riktig.</p>`) +
         '<p><a class="btn primary big" href="#/quiz/alle">Start blandet runde</a></p><h2>Eller velg kapittel</h2><ul class="rows">' +
-        chs.map((c) => { const s = S.quiz[c]; return `<li><a class="rowlink" href="#/quiz/${c}"><span class="rl-title">Kapittel ${c} · ${chTitle(c)}</span><span class="rl-meta">${s && s.n ? `<b>${Math.round(s.ok / s.n * 100)} %</b> riktig av ${s.n} · ` : ''}${O.quiz.filter((q) => q.ch === c).length} spørsmål</span></a></li>`; }).join('') + '</ul>';
+        chs.map((c) => { const s = S.quiz[c], dn = quizDue(c).length; return `<li><a class="rowlink" href="#/quiz/${c}"><span class="rl-title">Kapittel ${c} · ${chTitle(c)}</span><span class="rl-meta">${s && s.n ? `<b>${Math.round(s.ok / s.n * 100)} %</b> riktig av ${s.n} · ` : ''}${dn ? `<b>${dn}</b> å repetere · ` : ''}${O.quiz.filter((q) => q.ch === c).length} spørsmål</span></a></li>`; }).join('') + '</ul>';
       return;
     }
-    const pool = U.rng(U.newSeed()).shuffle(O.quiz.filter((q) => ch === 'alle' || String(q.ch) === String(ch))).slice(0, 10);
-    if (!pool.length) return notFound('quiz for dette kapitlet', 'quiz', 'Velg et annet kapittel');
-    let i = 0, right = 0; const missed = [];
+    const onlyRep = ch === 'repeter';
+    if (!onlyRep && ch !== 'alle' && !chs.some((c) => String(c) === String(ch))) return notFound('quiz for dette kapitlet', 'quiz', 'Velg et annet kapittel');
+    const R0 = U.rng(U.newSeed());
+    // Spørsmål du har svart feil på i tidligere runder kommer først i køen (høyst QREP per runde), resten fylles med andre.
+    let pool;
+    if (onlyRep) pool = quizDue('alle').slice(0, 10);
+    else {
+      // De øvrige som venter, tas bare med når kapitlet ikke har nok andre spørsmål til en full runde.
+      const due = quizDue(ch), rep = due.slice(0, QREP);
+      const other = R0.shuffle(O.quiz.filter((q) => (ch === 'alle' || String(q.ch) === String(ch)) && !S.qmiss[q.id])).slice(0, 10 - rep.length);
+      pool = R0.shuffle(rep.concat(other, due.slice(QREP, QREP + 10 - rep.length - other.length)));
+    }
+    if (!pool.length) {
+      view.innerHTML = `<div class="crumbs"><a href="#/quiz">Quiz</a> › Repeter</div><h1>Repeter quizspørsmål</h1><div class="empty"><h2>${answered ? 'Ingenting å repetere' : 'Ingenting å repetere ennå'}</h2><p>${answered
+        ? 'Alle spørsmål du har svart feil på, er besvart riktig senere. Nye feil havner her og kommer igjen i de neste rundene.'
+        : 'Når du svarer feil på et quizspørsmål, havner det her og kommer igjen i senere runder til du svarer riktig.'}</p><p class="row"><a class="btn primary" href="#/quiz/alle">Start blandet runde</a><a class="btn" href="#/quiz">Velg kapittel</a></p></div>`;
+      return;
+    }
+    const wasDue = new Set(pool.filter((q) => S.qmiss[q.id]).map((q) => q.id));
+    let i = 0, right = 0, cleared = 0; const missed = [];
+    const crumb = onlyRep ? 'Repeter' : ch === 'alle' ? 'Blandet' : 'Kapittel ' + ch;
     const show = () => {
       if (i >= pool.length) {
-        view.innerHTML = `<h1>${right} av ${pool.length} riktige</h1>` + (missed.length ? '<h2>Disse bør du se på igjen</h2><ul class="keypoints">' + missed.map((q) => `<li><b>${q.q}</b><br>${q.options[q.correct]} – ${q.why} <a href="#/tema/${q.ch}">Kapittel ${q.ch}</a></li>`).join('') + '</ul>' : '<p>Alt riktig.</p>') +
-          '<p class="row"><button class="btn primary" type="button" id="again">Ny runde</button><a href="#/quiz">Velg kapittel</a></p>';
-        $('#again').onclick = () => routes.quiz(ch); view.focus(); return;
+        const left = quizDue(onlyRep ? 'alle' : ch).length;
+        view.innerHTML = `<div class="crumbs"><a href="#/quiz">Quiz</a> › ${crumb}</div><h1>${right} av ${pool.length} riktige</h1>` +
+          (wasDue.size ? `<p class="statline" id="qsum">${wasDue.size} av spørsmålene var repetisjon. ${cleared ? `<b>${cleared}</b> er nå riktig og fjernet fra repetisjonen.` : 'Ingen av dem ble riktig denne gangen.'}</p>` : '') +
+          (missed.length ? `<h2>Disse kommer igjen i en senere runde</h2><ul class="keypoints">${missed.map((q) => `<li><b>${q.q}</b><br>${q.options[q.correct]} – ${q.why} <a href="#/tema/${q.ch}">Kapittel ${q.ch}</a></li>`).join('')}</ul>` : '<p>Alt riktig.</p>') +
+          `<p class="row"><button class="btn primary" type="button" id="again">${onlyRep && left ? `Repeter igjen (${left})` : 'Ny runde'}</button><a href="#/quiz">Velg kapittel</a></p>`;
+        $('#again').onclick = () => { if (onlyRep && !left) location.hash = '#/quiz/alle'; else routes.quiz(ch); };
+        view.focus(); return;
       }
-      const q = pool[i], order = U.rng(U.newSeed()).shuffle([0, 1, 2, 3]);
-      view.innerHTML = `<div class="crumbs"><a href="#/quiz">Quiz</a> › ${ch === 'alle' ? 'Blandet' : 'Kapittel ' + ch}</div>
-        <p class="eyebrow">Spørsmål ${i + 1} av ${pool.length} · kapittel ${q.ch}</p><div class="progress" aria-hidden="true"><i style="width:${i / pool.length * 100}%"></i></div>
-        <h2 style="border:0;margin-top:.8em" id="qq" tabindex="-1">${q.q}</h2><div id="opts" role="group" aria-labelledby="qq">${order.map((o) => `<button class="choice" type="button" data-o="${o}">${q.options[o]}</button>`).join('')}</div><div id="why" role="status"></div>`;
+      const q = pool[i], order = R0.shuffle([0, 1, 2, 3]), isRep = wasDue.has(q.id), m0 = S.qmiss[q.id];
+      view.innerHTML = `<div class="crumbs"><a href="#/quiz">Quiz</a> › ${crumb}</div>
+        <p class="eyebrow">Spørsmål ${i + 1} av ${pool.length} · kapittel ${q.ch}${isRep ? ' · <span class="tag warm">Repetisjon</span>' : ''}</p><div class="progress" aria-hidden="true"><i style="width:${i / pool.length * 100}%"></i></div>
+        <h2 style="border:0;margin-top:.8em" id="qq" tabindex="-1">${q.q}</h2>${isRep && m0 ? `<p class="small muted" id="qrep">Du har svart feil på dette spørsmålet ${m0.n > 1 ? m0.n + ' ganger' : 'før'}.</p>` : ''}<div id="opts" role="group" aria-labelledby="qq">${order.map((o) => `<button class="choice" type="button" data-o="${o}">${q.options[o]}</button>`).join('')}</div><div id="why" role="status"></div>`;
       $('#opts').onclick = (e) => {
         const b = e.target.closest('.choice'); if (!b || b.disabled) return; const ok = +b.dataset.o === q.correct;
         $$('.choice').forEach((x) => { x.disabled = true; if (+x.dataset.o === q.correct) x.classList.add('right'); }); if (!ok) { b.classList.add('wrong'); missed.push(q); } else right++;
-        const s = S.quiz[q.ch] || (S.quiz[q.ch] = { n: 0, ok: 0 }); s.n++; if (ok) s.ok++; save();
-        $('#why').innerHTML = `<div class="callout ${ok ? 'good' : 'bad'}"><b>${ok ? 'Riktig.' : 'Feil.'}</b> ${q.why}</div><button class="btn primary" type="button" id="nx">${i + 1 < pool.length ? 'Neste spørsmål' : 'Se resultat'}</button>`;
+        const s = S.quiz[q.ch] || (S.quiz[q.ch] = { n: 0, ok: 0 }); s.n++; if (ok) s.ok++;
+        let note = '';
+        if (!ok) { const m = S.qmiss[q.id]; S.qmiss[q.id] = { t: Date.now(), n: (m ? m.n : 0) + 1 }; note = 'Spørsmålet kommer igjen i en senere runde.'; }
+        else if (S.qmiss[q.id]) { delete S.qmiss[q.id]; cleared++; note = 'Fjernet fra repetisjonen.'; }
+        save();
+        $('#why').innerHTML = `<div class="callout ${ok ? 'good' : 'bad'}"><b>${ok ? 'Riktig.' : 'Feil.'}</b> ${q.why}${note ? `<br><span class="small">${note}</span>` : ''}</div><button class="btn primary" type="button" id="nx">${i + 1 < pool.length ? 'Neste spørsmål' : 'Se resultat'}</button>`;
         $('#nx').onclick = () => { i++; show(); }; $('#nx').focus();
       };
       if (i > 0) $('#qq').focus();

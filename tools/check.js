@@ -24,5 +24,6 @@ for (const g of O.gens) {
 console.log(`${O.gens.length} generatorer × ${N} frø`, bad ? `– ${bad} problemer` : '– OK');
 if (O.exams) console.log('eksamener:', O.exams.map((e) => e.id + ':' + e.tasks.length).join(' '));
 if (O.theory) console.log('teori-kapitler:', O.theory.map((c) => c.nr).join(','));
-if (O.quiz) console.log('quiz-spørsmål:', O.quiz.length);
+if (O.quiz) { const ids = O.quiz.map((q) => O.U.hash(q.q)), dup = ids.length - new Set(ids).size; console.log('quiz-spørsmål:', O.quiz.length, dup ? `– ${dup} like id-er` : '(unike id-er)'); if (dup) bad++; }
+
 process.exit(bad ? 1 : 0);

@@ -156,6 +156,19 @@ details > .inner { padding: 4px 4px 16px 20px; }
 details > .inner > :first-child { margin-top: 0; }
 dl.defs dt { font-weight: 700; margin-top: 12px; } dl.defs dd { margin: 2px 0 0; color: var(--ink-2); max-width: 75ch; }
 
+/* ---------- Diagram (stjernediagram): bare linjer og tekst i temaets farger ---------- */
+.chartfig { margin: 14px 0; max-width: 560px; }
+.chart { display: block; width: 100%; height: auto; color: var(--ink); font-family: var(--sans); }
+.chart text { fill: currentColor; font-size: 14px; }
+.chart .tick { fill: var(--ink-2); font-size: 13px; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .axis0 { stroke: var(--ink-3); stroke-width: 1; }
+.chart .line { fill: none; stroke: currentColor; stroke-width: 1.8; }
+.chart .dot { fill: currentColor; }
+.chart .req { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 4; }
+.chart .req-lbl { fill: var(--accent); font-weight: 600; }
+.chartfig figcaption { margin-top: 4px; max-width: 60ch; }
+
 /* ---------- Tabeller: hovedbok ---------- */
 .tablewrap { overflow-x: auto; margin: 12px 0; position: relative; }
 .tablewrap:focus-visible { outline-offset: 0; }
