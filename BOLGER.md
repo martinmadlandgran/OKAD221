@@ -49,6 +49,7 @@ Rettet:
 - Durasjon og rentenivå: siden sier at durasjonen synker når renten øker (standard teori, stemmer med tallene). Lysbildet sier det motsatte. Bør sjekkes mot Bredesen kap. 4.
 - 2025 oppg. 4: LFs varians for aksje B (0,00579) lar seg ikke gjenskape; eksakt er 0,005852. Siden godtar begge.
 - 2025 oppg. 5b: begge versjoner er etterregnet og står.
+- Black–Scholes-toleransen beholdes (Excel-nøyaktighet), avgjort av eier.
 - `k10-to-aksjer-tilstander`: ca. 5 % av frøene gir minimum-varians-vekt over 300 % (riktig regnet, lite pedagogisk).
 - `k11-wacc-kvm`: oppgitte markedsverdier gir andeler som avviker opptil 0,02 prosentpoeng fra de oppgitte.
 - `k8-nv-etter-skatt-komplett`: toleransen godtar motsatt fortegn når NNV er nær 0 (ca. 3 % av frøene).

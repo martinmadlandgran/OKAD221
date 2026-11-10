@@ -223,7 +223,7 @@
     id: '2022',
     year: 2022,
     title: 'Desember 2022',
-    note: `<p><b>Vekting:</b> I originalen står oppgavene som 20 % + 20 % + 20 % + 30 %, altså bare <b>90 %</b> til sammen (trykkfeil i eksamenssettet). Den fjerde oppgaven er dessuten feilnummerert «Oppgave 3 (30 %)» i settet (LF kaller den Oppgave 4). Her er den vist med 30 % slik det står trykt, men den skulle trolig vært 40 %.</p>
+    note: `<p><b>Vekting:</b> I originalen står oppgavene som 20 % + 20 % + 20 % + 30 %, altså bare <b>90 %</b> til sammen (trykkfeil i eksamenssettet). Den fjerde oppgaven er dessuten feilnummerert «Oppgave 3 (30 %)» i settet (LF kaller den Oppgave 4). Her er den vist med 30 % slik det står trykt. Trolig skulle én av de tre første vært 30 %, eller den siste 40 %.</p>
 <p><b>Internrente i 1a</b> er ikke oppgitt i løsningsforslaget – tallet her (≈ 13,46 %) er egen utregning. Drøftingen av payback-metoden i 1b er også egen kommentar. Forsiden (varighet og hjelpemidler) var ikke med i kilden. LF bruker KVM <b>uten</b> skattejustering.</p>`,
     tasks: [
       {
