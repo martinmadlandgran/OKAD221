@@ -415,18 +415,16 @@
       const prev = [3, 2, 1].map((k) => ({ BL: U.round(c.BL + s * acc.B[k], 2), KL: U.round(c.KL + s * acc.K[k], 2), GA: U.round(c.GA - s * acc.G[k], 3), D: Math.round(c.D - s * acc.D[k]) }));
       if (prev.some((x) => x.BL <= 0.3 || x.KL <= 0.1 || x.GA <= 0.2 || x.GA >= 1 || x.D < 15)) return null;
       const yrs = [2022, 2023, 2024, 2025];
-      const nkt = U.table(['Nøkkeltall'].concat(yrs.map(String), ['Bransjesnitt']), [
-        ['Balanselikviditet'].concat(prev.map((x) => n(x.BL, 2)), ['?', n(BLb, 2)]),
-        ['Kasselikviditet'].concat(prev.map((x) => n(x.KL, 2)), ['?', n(KLb, 2)]),
-        ['Gjeldsandel'].concat(prev.map((x) => pct(x.GA, 1)), ['?', pctS(GAb)]),
-        ['Kundekredittid, dager'].concat(prev.map((x) => n(x.D)), ['?', String(Db)])], { cls: 'wrapth' });
+      // Årene som rader, så tabellen får plass på smal skjerm
+      const nkt = U.table(['År', 'Balanse&shy;likv.', 'Kasse&shy;likv.', 'Gjelds&shy;andel, %', 'Kreditt&shy;tid'],
+        prev.map((x, k) => [String(yrs[k]), n(x.BL, 2), n(x.KL, 2), n(x.GA * 100, 1), n(x.D)]).concat([[String(yrs[3]), '?', '?', '?', '?'], { cells: ['Bransje', n(BLb, 2), n(KLb, 2), n(GAb * 100, 1), String(Db)], cls: 'sum' }]), { cls: 'wrapth compact' });
       const bal = U.table(['Balanse 31.12.2025', 'Beløp'], [['Anleggsmidler', `<b>${n(AM)}</b>`], ['Varelager', `<b>${n(VL)}</b>`], ['Kundefordringer', `<b>${n(KF)}</b>`], ['Kontanter og bank', `<b>${n(KB)}</b>`], { cells: ['Sum eiendeler', `<b>${n(c.TA)}</b>`], cls: 'sum' },
         ['Egenkapital', `<b>${n(c.EK)}</b>`], ['Langsiktig lån', `<b>${n(LL)}</b>`], ['Kassekreditt', `<b>${n(KK)}</b>`], ['Leverandørgjeld og annen kortsiktig gjeld', `<b>${n(KG2)}</b>`], { cells: ['Sum egenkapital og gjeld', `<b>${n(c.TA)}</b>`], cls: 'sum' }], { cls: 'wrapth' });
       const vs = (x, b, hi) => (x > b ? (hi ? 'bedre enn' : 'svakere enn') : (hi ? 'svakere enn' : 'bedre enn'));
       const task = {
         text: `<p>${firm} driver ${bransje}. Banken vil vurdere likviditeten før kassekreditten fornyes. Salgsinntektene i 2025 var <b>${n(S)}</b>, alt på kreditt. Alle tall er i 1 000 kr, og det regnes med <b>${Y} dager</b> i året.</p>` +
-          `<p>Nøkkeltallene for de tre foregående årene og bransjesnittet:</p>` + nkt + bal +
-          `<p>Balanselikviditet = omløpsmidler / kortsiktig gjeld. Kasselikviditet = (omløpsmidler − varelager) / kortsiktig gjeld. Gjeldsandel = total gjeld / totalkapital. Kundekredittid = kundefordringer / salgsinntekter · ${Y}.</p>`,
+          `<p>Nøkkeltallene for de tre foregående årene og bransjesnittet (2025 skal du regne ut). Gjeldsandelen er i prosent, kredittiden i dager.</p>` + nkt + bal +
+          `<p>Balanselikviditet (balanselikv.) = omløpsmidler / kortsiktig gjeld. Kasselikviditet (kasselikv.) = (omløpsmidler − varelager) / kortsiktig gjeld. Gjeldsandel = total gjeld / totalkapital. Kundekredittid = kundefordringer / salgsinntekter · ${Y}.</p>`,
         parts: [
           { q: 'Hva er arbeidskapitalen (omløpsmidler − kortsiktig gjeld)?', answer: c.WC, unit: T1000, tol: tolK,
             hint: 'Kortsiktig gjeld er kassekreditten og leverandørgjelden og annen kortsiktig gjeld.',
