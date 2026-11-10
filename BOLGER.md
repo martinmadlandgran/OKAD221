@@ -7,6 +7,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 3. Vedlegg/filer du trenger
 4. Spørsmål du må svare på (med svaralternativer og anbefalt svar)
 5. Hva neste bølge bør være
+6. Forslag til melding for neste bølge, klar til å kopiere inn i en ny chat
 
 ## Føringer fra eier
 
@@ -107,18 +108,21 @@ Test etter bølgen: `node tools/check.js 3000` OK (34 generatorer), `node tools/
 - Black–Scholes-toleransen beholdes (Excel-nøyaktighet), avgjort av eier.
 - Ekte utskrift og flytting mellom fysiske enheter er ikke testet (bare i hodeløs Chromium, A4-PDF).
 
-## Spørsmål til eier etter bølge 6
-
-1. Skal de fire nye oppgavetypene med i prøveeksamenens trekkpott?
-   - a) Nei. Prøveeksamenen følger eksamensmønsteret, og ingen av dem er gitt 2016–2025. De finnes under Øv. **(Anbefalt)**
-   - b) Ja, med lav vekt: fortsette/avslutte 0,5 i oppgave 1, egenkapitalmetoden og egenproduksjon/kjøp 0,5 hver i oppgave 5.
-2. Egenkapitalens internrente godtas innenfor 0,1 prosentpoeng av målsøkingssvaret. Svaret med skattefordelen regnet ved kravet ligger som regel innenfor, men ikke alltid.
-   - a) Behold. Målsøking er riktig metode, og hintet sier det. **(Anbefalt)**
-   - b) Godta begge svarene uansett avstand.
-3. «Vis alle løsninger» før man har svart legger oppgaven i repetisjonslisten, men endrer ikke treffprosenten.
-   - a) Behold. Man har ikke vist at man kan oppgaven. **(Anbefalt)**
-   - b) Bare feil svar skal telle.
+Avgjort av eier etter bølgen: de fire nye typene holdes utenfor prøveeksamenens trekkpott (1a), egenkapitalens internrente godtas innenfor 0,1 prosentpoeng av målsøkingssvaret (2a), og «Vis alle løsninger» før svar legger oppgaven i repetisjonslisten uten å endre treffprosenten (3a). Ingen kodeendring trengtes.
 
 ## Neste bølge (forslag)
 
-Siste oppgavetyper fra kapittel-LF som mangler: leasing eller kjøp etter skatt (kap. 8 oppg. 10), følsomhetstabell og stjernediagram på internrenten (kap. 6 oppg. 1) og IR etter skatt med effektiv skattesats (kap. 8 oppg. 9c). Deretter en tidsbasert repetisjon også i quizen (spørsmål man har svart feil på kommer igjen), og en gjennomgang av de nye oppgavetypene på papir i prøveeksamensformat hvis eier svarer b på spørsmål 1.
+Siste oppgavetyper fra kapittel-LF som mangler: leasing eller kjøp etter skatt (kap. 8 oppg. 10), følsomhetstabell og stjernediagram på internrenten (kap. 6 oppg. 1) og IR etter skatt med effektiv skattesats (kap. 8 oppg. 9c). Deretter en tidsbasert repetisjon også i quizen (spørsmål man har svart feil på kommer igjen).
+
+## Melding for neste bølge (kopier inn i ny chat)
+
+```text
+Kjør bølge 7 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+
+Innhold i bølge 7:
+1. Tre nye generatorer fra kapittel-LF i kilder/kapittel_lf.md: leasing eller kjøp etter skatt (kap. 8 oppg. 10), følsomhetstabell og stjernediagram på internrenten (kap. 6 oppg. 1), og internrente etter skatt med effektiv skattesats (kap. 8 oppg. 9c). Regnefunksjonene skal gjenskape LF-tallene, og tools/verify.js skal etterregne dem fra oppgaveteksten over 1000 frø. Ikke legg dem i prøveeksamenens trekkpott (samme avgjørelse som for bølge 6).
+2. Quiz med repetisjon: spørsmål man har svart feil på, kommer igjen i senere runder til de er besvart riktig. Lagres i fremdriften, flyttes med den og tåler ugyldige data ved import, som repetisjonslisten for oppgaver.
+3. Oppdater tools/e2e.js med kontroller for det nye, og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
+
+Commit og push til arbeidsgrenen når alt er grønt. Ikke lag PR.
+```
