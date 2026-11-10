@@ -20,6 +20,39 @@
   const save = () => { if (!storageOk) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { storageOk = false; notice('Kunne ikke lagre fremdriften – lagringsplassen i nettleseren er full eller sperret.'); } };
   const gstat = (id) => S.gen[id] || (S.gen[id] = { tried: 0, ok: 0, tasks: 0 });
   const mastery = (id) => { const g = S.gen[id]; return g && g.tried ? g.ok / g.tried : 0; };
+  // ---------- Repetisjon: oppgaver med feil på første forsøk ----------
+  // S.gen[id].miss = [{ s: frø, p: 'bd' (deloppgaver med feil), t: tid, m: 1 hvis fra prøveeksamen }], eldste først, høyst MISSMAX.
+  const MISSMAX = 6;
+  const addMiss = (id, seed, label, mock) => {
+    const st = gstat(id), ms = st.miss || (st.miss = []);
+    let e = ms.find((x) => x.s === seed);
+    if (!e) { e = { s: seed, p: '', t: 0 }; ms.push(e); }
+    if (!e.p.includes(label)) e.p = (e.p + label).split('').sort().join('');
+    e.t = Date.now(); if (mock) e.m = 1;
+    ms.sort((a, b) => a.t - b.t); while (ms.length > MISSMAX) ms.shift();
+  };
+  /** Oppgaven er løst uten feil: fjern den fra listen, eller den eldste av typen hvis det var en ny oppgave. Gir true hvis noe ble fjernet. */
+  const clearMiss = (id, seed) => {
+    const st = S.gen[id]; if (!st || !st.miss || !st.miss.length) return false;
+    const i = st.miss.findIndex((x) => x.s === seed);
+    st.miss.splice(i >= 0 ? i : 0, 1);
+    if (!st.miss.length) delete st.miss;
+    return true;
+  };
+  /** Hvor mye oppgavetypen trolig teller på eksamen (sannsynlighet × midtre vekt). */
+  const examWeight = (id) => {
+    let w = 0;
+    O.prediction.slots.forEach((x) => { if (x.gens.includes(id)) w = Math.max(w, x.prob * (x.weight[0] + x.weight[1]) / 2); });
+    O.prediction.jokers.forEach((x) => { if (x.gens.includes(id)) w = Math.max(w, x.prob * 15); });
+    return w || 2;
+  };
+  function reviewList() {
+    return O.gens.map((g) => {
+      const ms = (S.gen[g.id] && S.gen[g.id].miss) || [];
+      return ms.length ? { g, ms, last: Math.max(...ms.map((x) => x.t)), score: examWeight(g.id) * ms.length } : null;
+    }).filter(Boolean).sort((a, b) => b.score - a.score || b.last - a.last);
+  }
+  const partList = (p) => { const a = p.split(''); return a.length === 1 ? a[0] : a.slice(0, -1).join(', ') + ' og ' + a[a.length - 1]; };
   // ---------- Flytte fremdrift mellom enheter: eksport, kontroll, sammenslåing ----------
   const MAXSEED = 2147483647;
   const isInt = (x, lo, hi) => Number.isInteger(x) && x >= lo && x <= hi;
@@ -40,7 +73,12 @@
     if (isObj(d.gen)) Object.keys(d.gen).forEach((id) => {
       const g = d.gen[id];
       if (!Object.prototype.hasOwnProperty.call(O.genById, id)) { unknown++; return; }
-      if (isObj(g) && isInt(g.tried, 0, 1e7) && isInt(g.ok, 0, 1e7) && isInt(g.tasks || 0, 0, 1e7)) out.gen[id] = { tried: g.tried, ok: Math.min(g.ok, g.tried), tasks: g.tasks || 0 };
+      if (isObj(g) && isInt(g.tried, 0, 1e7) && isInt(g.ok, 0, 1e7) && isInt(g.tasks || 0, 0, 1e7)) {
+        out.gen[id] = { tried: g.tried, ok: Math.min(g.ok, g.tried), tasks: g.tasks || 0 };
+        const ms = Array.isArray(g.miss) ? g.miss.filter((x) => isObj(x) && isInt(x.s, 1, MAXSEED) && typeof x.p === 'string' && /^[a-p]{1,16}$/.test(x.p) && Number.isFinite(x.t))
+          .slice(-MISSMAX).map((x) => Object.assign({ s: x.s, p: x.p, t: x.t }, x.m === 1 ? { m: 1 } : {})) : [];
+        if (ms.length) out.gen[id].miss = ms;
+      }
     });
     if (unknown) warn.push(`${unknown} ${unknown === 1 ? 'oppgavetype' : 'oppgavetyper'} i filen finnes ikke på denne versjonen av siden og ble hoppet over.`);
     if (isObj(d.exam)) Object.keys(d.exam).forEach((k) => { if (/^\d{4}-\d{1,2}[a-z]$/.test(k) && d.exam[k] === true) out.exam[k] = true; });
@@ -59,6 +97,7 @@
   const progressSummary = (st) => ({
     tried: U.sum(Object.values(st.gen).map((g) => g.tried)), types: Object.values(st.gen).filter((g) => g.tried > 0).length,
     exam: Object.values(st.exam).filter(Boolean).length, quiz: U.sum(Object.values(st.quiz).map((q) => q.n)), mocks: (st.mockLog || []).length, open: !!st.mock,
+    review: U.sum(Object.values(st.gen).map((g) => (g.miss ? g.miss.length : 0))),
   });
   const isEmptyProgress = (st) => { const x = progressSummary(st); return !x.tried && !x.exam && !x.quiz && !x.mocks && !x.open && !st.examDate; };
   /** Slår sammen to tilstander. Idempotent: samme fil to ganger gir samme resultat. */
@@ -68,6 +107,14 @@
       const x = a.gen[id], y = b.gen[id];
       const best = !x ? y : !y ? x : (y.tried > x.tried || (y.tried === x.tried && y.ok > x.ok) ? y : x);
       out.gen[id] = { tried: best.tried, ok: best.ok, tasks: Math.max((x && x.tasks) || 0, (y && y.tasks) || 0) };
+      // Repetisjonslisten: samme oppgave (frø) fra begge slås sammen, de nyeste beholdes.
+      const ms = {};
+      ((x && x.miss) || []).concat((y && y.miss) || []).forEach((e) => {
+        const o = ms[e.s] || (ms[e.s] = { s: e.s, p: '', t: 0 });
+        o.p = [...new Set((o.p + e.p).split(''))].sort().join(''); o.t = Math.max(o.t, e.t); if (e.m) o.m = 1;
+      });
+      const list = Object.values(ms).sort((a, b) => a.t - b.t).slice(-MISSMAX);
+      if (list.length) out.gen[id].miss = list;
     });
     Object.keys(a.exam).concat(Object.keys(b.exam)).forEach((k) => { if (a.exam[k] || b.exam[k]) out.exam[k] = true; });
     new Set(Object.keys(a.quiz).concat(Object.keys(b.quiz))).forEach((k) => { const x = a.quiz[k], y = b.quiz[k]; out.quiz[k] = !x ? y : !y ? x : (y.n > x.n ? y : x); });
@@ -143,6 +190,7 @@
     let days = '';
     if (S.examDate) { const d = Math.ceil((new Date(S.examDate + 'T09:00') - new Date()) / 864e5); if (d >= 0) days = `<b>${d}</b> ${d === 1 ? 'dag' : 'dager'} til eksamen · `; }
     const started = totTried > 0;
+    const RV = reviewList(), rvN = U.sum(RV.map((x) => x.ms.length));
     view.innerHTML = `
       <p class="eyebrow">ØKAD 221 · Investering og finansiering</p>
       <h1>${started ? 'Fortsett eksamenstreningen' : 'Fem oppgavetyper avgjør eksamen'}</h1>
@@ -152,6 +200,7 @@
           <p class="small muted" style="margin:0">${S.mock ? (S.mock.paper ? 'Svarene du har tastet inn fra papiret, er lagret.' : 'Svarene dine er lagret. Klokken har gått siden du startet.') : `${next.s.title} teller trolig ${next.s.weight[0]}–${next.s.weight[1]} % · ca. ${next.g.minutes} min · ${next.tried ? 'du har ' + Math.round(next.m * 100) + ' % riktig hittil' : 'du har ikke prøvd denne ennå'}`}</p></div>
         <a class="btn primary big" href="#/${S.mock ? 'prove' : 'oving/' + next.g.id}">${S.mock ? 'Fortsett prøveeksamen' : 'Start oppgaven'}</a>
       </div>
+      ${RV.length ? `<p class="review-line"><a href="#/repeter"><b>Repeter ${rvN} ${rvN === 1 ? 'oppgave' : 'oppgaver'}</b> du har bommet på</a> i ${RV.length} ${RV.length === 1 ? 'oppgavetype' : 'oppgavetyper'}. Viktigst nå: ${RV[0].g.title}.</p>` : ''}
       <ol class="plan" aria-label="Oppgavetyper etter eksamensvekt">${P.slice().sort((a, b) => b.mid - a.mid).map((x) => `<li class="${x.mid >= 28 ? 'heavy' : x.mid < 15 ? 'light' : ''}"><a href="#/oving/${x.g.id}">
         <span class="w">${x.s.weight[0]}–${x.s.weight[1]}<small>% av karakteren</small></span>
         <span><span class="t">${x.s.title}</span><br><span class="d">${x.g.title}</span></span>
@@ -218,7 +267,7 @@
       const a = progressSummary(res.data), b = progressSummary(S), c = progressSummary(mergeProgress(S, res.data)), yn = (x) => (x ? 'ja' : 'nei');
       const notes = res.warn.concat(a.open && b.open ? ['Begge har en påbegynt prøveeksamen. Ved sammenslåing beholdes den på denne enheten.'] : []);
       box.innerHTML = `<div class="callout"><p><b>Fremdrift${res.when ? ' lagret ' + esc(res.when.toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' })) : ''}${from}.</b> Sjekk tallene før du velger.</p>` +
-        table(['', 'Filen', 'Her nå', 'Sammen'], [['Deloppgaver besvart', n(a.tried), n(b.tried), n(c.tried)], ['Oppgavetyper prøvd', a.types, b.types, c.types], ['Eksamensdeler krysset av', a.exam, b.exam, c.exam], ['Quizsvar', n(a.quiz), n(b.quiz), n(c.quiz)], ['Prøver levert', a.mocks, b.mocks, c.mocks], ['Påbegynt prøve', yn(a.open), yn(b.open), yn(c.open)]], { cls: 'wrap' }) + '<p class="small muted" style="margin-top:0">«Sammen» viser hva du får med «Slå sammen».</p>' +
+        table(['', 'Filen', 'Her nå', 'Sammen'], [['Deloppgaver besvart', n(a.tried), n(b.tried), n(c.tried)], ['Oppgavetyper prøvd', a.types, b.types, c.types], ['Eksamensdeler krysset av', a.exam, b.exam, c.exam], ['Quizsvar', n(a.quiz), n(b.quiz), n(c.quiz)], ['Prøver levert', a.mocks, b.mocks, c.mocks], ['Oppgaver å repetere', a.review, b.review, c.review], ['Påbegynt prøve', yn(a.open), yn(b.open), yn(c.open)]], { cls: 'wrap' }) + '<p class="small muted" style="margin-top:0">«Sammen» viser hva du får med «Slå sammen».</p>' +
         (notes.length ? '<ul class="small">' + notes.map((w) => `<li>${esc(w)}</li>`).join('') + '</ul>' : '') +
         `<p class="row"><button class="btn primary" type="button" id="impmerge">Slå sammen</button><button class="btn" type="button" id="impreplace">Erstatt det som er her</button><button class="btn link" type="button" id="impcancel">Avbryt</button></p>
         <p class="small muted">Slå sammen beholder det beste fra begge: for hver oppgavetype og hvert quizkapittel beholdes tallene fra enheten med flest forsøk, og avkryssinger og prøveresultater fra begge tas med. Samme fil to ganger endrer ingenting. Erstatt sletter det som er her nå.</p></div>`;
@@ -287,6 +336,7 @@
     const chs = [...new Set(O.gens.map((g) => g.chapter))].sort((a, b) => a - b);
     view.innerHTML = `<h1>Øv på oppgavetypene</h1>
       <p class="lead">Nye tall hver gang. Tast svaret og få det sjekket; hint og full løsning ligger ett trykk unna.</p>
+      ${(() => { const RV = reviewList(); return RV.length ? `<p class="review-line"><a href="#/repeter"><b>Repeter det du har bommet på</b></a>: ${RV.length} ${RV.length === 1 ? 'oppgavetype' : 'oppgavetyper'}.</p>` : ''; })()}
       <h2>Disse teller mest</h2>` +
       core.map((s) => `<h3>${s.title} <span class="pts">${s.weight[0]}–${s.weight[1]} %</span></h3><ul class="rows">${s.gens.map((i) => genRow(O.genById[i])).join('')}</ul>`).join('') +
       '<h2>Alt annet, etter kapittel</h2>' +
@@ -339,18 +389,53 @@
     setTitle(g.title);
     history.replaceState(null, '', `#/oving/${id}/${seed}`);
     st.tasks++; save();
-    view.innerHTML = `<div class="crumbs"><a href="#/oving">Øv</a> › Kapittel ${g.chapter}</div>
-      <h1>${g.title}</h1>
+    const prev = (st.miss || []).find((x) => x.s === seed);
+    view.innerHTML = `<div class="crumbs"><a href="#/oving">Øv</a> › ${prev ? '<a href="#/repeter">Repeter</a>' : `Kapittel ${g.chapter}`}</div>
+      <h1>${g.title}</h1>${prev ? `<div class="callout warn"><p>Sist bommet du på deloppgave ${partList(prev.p)} i denne oppgaven${prev.m ? ' (på prøveeksamen)' : ''}. Prøv igjen uten å se på løsningen. Løser du alle tallsvarene riktig på første forsøk, forsvinner den fra repetisjonslisten.</p></div>` : ''}
       <div class="taskbar"><span class="tag">Kap. ${g.chapter}</span><span class="tag">${LEVEL[g.level]}</span><span class="tag">ca. ${g.minutes} min</span>${g.examLike ? `<span class="tag warm">${g.examLike}</span>` : ''}
         <span class="spacer"></span><a href="#/tema/${g.chapter}">Teori til kapittel ${g.chapter}</a></div>
       <div class="task-text">${task.text}</div><div id="parts"></div>
       <p class="row noprint" style="margin-top:22px;padding-top:16px;border-top:3px solid var(--rule)"><button class="btn primary big" type="button" id="new">Ny oppgave med nye tall</button><button class="btn" type="button" id="all">Vis alle løsninger</button></p>
+      <p id="rvmsg" class="small" role="status"></p>
       <p class="small muted">Prosent tastes som prosent (12,34), beløp i hele kroner. Små avrundingsavvik godtas. Adressen i nettleseren gir nøyaktig denne oppgaven igjen (nr. ${seed}).</p>`;
-    const R = renderParts(task, $('#parts'), { onFirst: (i, ok) => { st.tried++; if (ok) st.ok++; save(); } });
+    const nums = task.parts.map((p, i) => (p.kind === 'num' ? i : -1)).filter((i) => i >= 0);
+    let R = null;
+    R = renderParts(task, $('#parts'), { onFirst: (i, ok) => {
+      st.tried++; if (ok) st.ok++;
+      if (!ok) addMiss(id, seed, task.parts[i].label);
+      else if (R && nums.every((j) => R.state[j].first === true) && clearMiss(id, seed)) $('#rvmsg').textContent = 'Alle tallsvar riktig på første forsøk. En oppgave av denne typen er fjernet fra repetisjonslisten.';
+      save();
+    } });
     $('#new').onclick = () => { taskView(id, U.newSeed()); view.focus(); };
-    $('#all').onclick = (e) => { task.parts.forEach((_, i) => R.showSol(i)); e.target.disabled = true; };
+    $('#all').onclick = (e) => {
+      // Løsningen åpnet før svar: regnes som bommet i repetisjonslisten (ikke i treffprosenten).
+      nums.forEach((i) => { if (R.state[i].first === null && !R.state[i].shown) addMiss(id, seed, task.parts[i].label); });
+      save(); task.parts.forEach((_, i) => R.showSol(i)); e.target.disabled = true;
+    };
     scrollTo(0, 0);
   }
+
+  // ---------- Repeter: det man har bommet på, viktigst for eksamen øverst ----------
+  routes.repeter = (sub) => {
+    if (sub) return notFound('siden', 'repeter', 'Til repetisjonslisten');
+    setTitle('Repeter');
+    const RV = reviewList(), tried = U.sum(Object.values(S.gen).map((g) => g.tried));
+    const head = '<div class="crumbs"><a href="#/oving">Øv</a> › Repeter</div><h1>Repeter det du har bommet på</h1>';
+    if (!RV.length) {
+      view.innerHTML = head + `<div class="empty"><h2>${tried ? 'Ingenting å repetere' : 'Ingenting å repetere ennå'}</h2><p>${tried
+        ? 'Alt du har svart på er enten riktig på første forsøk, eller løst på nytt uten feil. Oppgaver der du svarer feil eller åpner løsningen før du har svart, havner her.'
+        : 'Listen fylles når du øver: oppgaver der du svarer feil på første forsøk eller åpner løsningen før du har svart, havner her. Det samme gjør feil på prøveeksamen.'}</p>` +
+        `<p class="row"><a class="btn primary" href="#/oving">Øv på oppgavetypene</a><a class="btn" href="#/prove">Ta en prøveeksamen</a></p></div>`;
+      return;
+    }
+    const date = (t) => new Date(t).toLocaleDateString('nb-NO', { day: 'numeric', month: 'numeric' });
+    view.innerHTML = head + `<p class="lead">Oppgaver der du svarte feil på første forsøk eller åpnet løsningen før du svarte. Det som trolig teller mest på eksamen, står øverst.</p>
+      <p class="small muted" style="max-width:68ch">Løs samme oppgave på nytt: får du alle tallsvarene riktig på første forsøk, forsvinner den fra listen. Løser du en ny oppgave av samme type uten feil, forsvinner den eldste. Listen holder de ${MISSMAX} siste per type.</p>
+      <ol class="review" aria-label="Oppgavetyper å repetere">${RV.map((x) => { const last = x.ms[x.ms.length - 1]; return `<li>
+        <div class="rv-head"><a class="rv-title" href="#/oving/${x.g.id}/${last.s}">${x.g.title}</a><span class="rl-meta">${x.ms.length} ${x.ms.length === 1 ? 'oppgave' : 'oppgaver'} · ${genMeta(x.g)}</span></div>
+        <ul class="rv-tasks">${x.ms.slice().reverse().map((e) => `<li><a href="#/oving/${x.g.id}/${e.s}">Oppgave nr. ${e.s}</a> <span class="muted">– feil på ${partList(e.p)}, ${date(e.t)}${e.m ? ', prøveeksamen' : ''}</span></li>`).join('')}</ul>
+        <p class="row"><a class="btn primary" href="#/oving/${x.g.id}/${last.s}">Samme oppgave igjen</a><a class="btn" href="#/oving/${x.g.id}">Nye tall</a><a class="btn link" href="#/tema/${x.g.chapter}">Teori kap. ${x.g.chapter}</a></p></li>`; }).join('')}</ol>`;
+  };
 
   // ---------- Prøveeksamen ----------
   function buildMock(seed) {
@@ -449,17 +534,17 @@
       const blankCount = nNum - countFilled();
       if (blankCount && !confirm(`${blankCount} av ${nNum} tallsvar er ikke fylt ut og gir null poeng. Levere likevel?`)) return;
       clearInterval(timerId);
-      let total = 0; const rows = [];
+      let total = 0, missed = 0; const rows = [];
       slots.forEach((s, i) => {
         const nums = s.task.parts.filter((p) => p.kind === 'num').length; let ok = 0;
-        s.task.parts.forEach((p, j) => { if (p.kind === 'num' && RS[i].check(j, true) === 'ok') ok++; RS[i].showSol(j); });
-        const share = nums ? ok / nums : 0; total += share * s.weight;
+        s.task.parts.forEach((p, j) => { if (p.kind === 'num') { if (RS[i].check(j, true) === 'ok') ok++; else addMiss(s.task.id, s.task.seed, p.label, true); } RS[i].showSol(j); });
+        const share = nums ? ok / nums : 0; total += share * s.weight; if (ok < nums) missed++;
         rows.push([`<a href="#mo${i}" data-jump="mo${i}">Oppgave ${i + 1}</a>: ${s.task.gen.title}`, s.weight + ' %', `${ok} / ${nums}`, n(share * s.weight, 1) + ' %']);
       });
       const mins = Math.round((Date.now() - M.start) / 60000), score = Math.round(total);
       const grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 60 ? 'C' : score >= 50 ? 'D' : score >= 40 ? 'E' : 'F';
       rows.push({ cells: ['Sum', '100 %', '', `${score} %`], cls: 'sum' });
-      $('#result').innerHTML = `<h1>${score} % – omtrent karakter ${grade}</h1><p>${M.paper ? 'Svarene er tastet inn fra papiret.' : `Tid brukt: ${mins} minutter.`} Bare tallsvarene er rettet. Drøftingsdelene sammenligner du selv med momentlistene under. På den ordentlige eksamenen gis det også uttelling for riktig metode når sluttsvaret er feil, så dette er et forsiktig anslag.</p>` + table(['Oppgave', 'Vekt', 'Riktige tallsvar', 'Poeng'], rows, { cls: 'left' }) + '<p class="row"><button class="btn primary" type="button" id="again">Ny prøveeksamen</button></p>';
+      $('#result').innerHTML = `<h1>${score} % – omtrent karakter ${grade}</h1><p>${M.paper ? 'Svarene er tastet inn fra papiret.' : `Tid brukt: ${mins} minutter.`} Bare tallsvarene er rettet. Drøftingsdelene sammenligner du selv med momentlistene under. På den ordentlige eksamenen gis det også uttelling for riktig metode når sluttsvaret er feil, så dette er et forsiktig anslag.</p>` + table(['Oppgave', 'Vekt', 'Riktige tallsvar', 'Poeng'], rows, { cls: 'left' }) + (missed ? `<p>${missed === 1 ? 'Oppgaven' : `De ${missed} oppgavene`} med feil tallsvar ligger nå i <a href="#/repeter">repetisjonslisten</a>, med de samme tallene.</p>` : '') + '<p class="row"><button class="btn primary" type="button" id="again">Ny prøveeksamen</button></p>';
       (S.mockLog = S.mockLog || []).push(Object.assign({ date: new Date().toLocaleDateString('nb-NO'), score, min: mins, t: Date.now() }, M.paper ? { paper: true } : {})); S.mock = null; save();
       inputs.forEach((el) => { el.readOnly = true; });
       $('.sticky-bar').remove(); $('#again').onclick = () => routes.prove();
@@ -621,7 +706,7 @@
     clearInterval(timerId); view.onchange = null; view.oninput = null;
     const parts = decodeURIComponent(location.hash.replace(/^#\/?/, '')).split('/');
     const known = Object.prototype.hasOwnProperty.call(routes, parts[0]);
-    drawNav(known ? (parts[0] === 'eksamen' ? 'eksamener' : parts[0]) : '');
+    drawNav(known ? ({ eksamen: 'eksamener', repeter: 'oving' }[parts[0]] || parts[0]) : '');
     if (!known) { setTitle('Fant ikke siden'); notFound('siden', '', 'Til forsiden'); }
     else routes[parts[0]](parts[1], parts[2]);
     scrollTo(0, 0);
