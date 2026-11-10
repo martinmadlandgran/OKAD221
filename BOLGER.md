@@ -215,6 +215,8 @@ Kontroller i `e2e.js` (33 nye): antall spørsmål per tema, at hvert feil tallal
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 183 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 495 bestått.
 
+Avgjort av eier etter bølgen: ingen funn fra brukertesten på mobil (1a). Tusenskillet skal også være hardt mellomrom i teori, eksamener og resten av siden, og det tas i bølge 12 (2a).
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -228,7 +230,7 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Quizen dekker nå alle temaene i kapittel 12 og har 14 spørsmål i kapittel 9. Kapittel 1 har bare 5 og gir en kort runde. Forslag til bølge 12: quizspørsmål for kapittel 1 (opp til minst 10) og det eier finner i brukertesten på mobil.
+Quizen dekker nå alle temaene i kapittel 12 og har 14 spørsmål i kapittel 9. Kapittel 1 har bare 5 og gir en kort runde. Forslag til bølge 12: quizspørsmål for kapittel 1 (opp til minst 10), hardt mellomrom i tusenskillet på resten av siden (avgjort etter bølge 11), og det eier finner i brukertesten på mobil.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
@@ -237,8 +239,9 @@ Kjør bølge 12 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og 
 
 Innhold i bølge 12:
 1. Nye quizspørsmål for kapittel 1, så kapitlet gir en full runde på 10, der hvert feil alternativ er en navngitt typisk feil. check.js skal fortsatt melde gyldige spørsmål med unike id-er.
-2. Rett det jeg fant i brukertesten på mobil: <lim inn funn, eller skriv «ingen funn»>.
-3. Oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
+2. Hardt mellomrom i tusenskillet i teori, eksamener, formler og resten av siden, slik at tall ikke brytes over to linjer på mobil (som i quizen fra bølge 11). Id-er og lagret fremdrift skal ikke endres.
+3. Rett det jeg fant i brukertesten på mobil: <lim inn funn, eller skriv «ingen funn»>.
+4. Oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit og push til arbeidsgrenen når alt er grønt.
 ```
