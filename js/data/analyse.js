@@ -5,18 +5,18 @@
   O.exams = O.exams || []; O.theory = O.theory || []; O.quiz = O.quiz || [];
 
   O.topics = {
-    skatt: { name: 'Nåverdi etter skatt (saldoavskrivning)', ch: [8], gens: ['k8-nv-etter-skatt-komplett', 'k8-saldo-arlig-kontantstrom', 'k8-kapasitetsutvidelse', 'k8-egenproduksjon-kjop', 'k8-egenkapitalmetoden'] },
+    skatt: { name: 'Nåverdi etter skatt (saldoavskrivning)', ch: [8], gens: ['k8-nv-etter-skatt-komplett', 'k8-saldo-arlig-kontantstrom', 'k8-kapasitetsutvidelse', 'k8-egenproduksjon-kjop', 'k8-egenkapitalmetoden', 'k8-ir-etter-skatt', 'k8-leasing-kjop'] },
     kvm: { name: 'KVM, beta og WACC', ch: [11], gens: ['k11-wacc-kvm', 'k11-kml-beta'] },
     prosjekt: { name: 'Kontantstrøm, NNV og internrente før skatt', ch: [2, 4], gens: ['k2-prosjekt-for-skatt', 'k4-resultat-til-kontantstrom', 'k2-hotell-differanse', 'k2-kontantstrom-egenkapital'] },
     toprosjekt: { name: 'Gjensidig utelukkende prosjekter / Fisher-rente', ch: [4], gens: ['k4-to-prosjekter-fisher', 'k4-resultat-til-kontantstrom'] },
-    folsomhet: { name: 'Kritiske verdier og følsomhet', ch: [6], gens: ['k6-kritiske-verdier', 'k2-prosjekt-for-skatt', 'k6-lite-stort-anlegg', 'k6-fortsette-avslutte'] },
+    folsomhet: { name: 'Kritiske verdier og følsomhet', ch: [6], gens: ['k6-kritiske-verdier', 'k2-prosjekt-for-skatt', 'k6-lite-stort-anlegg', 'k6-fortsette-avslutte', 'k6-folsomhet-internrente'] },
     portefolje: { name: 'Portefølje: forventning, risiko, korrelasjon', ch: [10], gens: ['k10-to-aksjer-tilstander', 'k10-kurser-til-avkastning'] },
     laan: { name: 'Lån og effektiv rente', ch: [7], gens: ['k7-annuitetslan-maanedlig', 'k7-rentefri-kreditt', 'k7-avbetaling-nominell-effektiv', 'k7-serielan-avdragsfri'] },
     obligasjon: { name: 'Obligasjoner: kurs, YTM, durasjon, terminrenter', ch: [4], gens: ['k4-obligasjon-kurs-ytm-durasjon', 'k4-spotrenter-terminrenter'] },
     levetid: { name: 'Økonomisk levetid og årskostnad', ch: [4], gens: ['k4-okonomisk-levetid', 'k4-arskostnad-ulik-levetid'] },
     rente: { name: 'Renteregning og annuiteter', ch: [3], gens: ['k3-effektiv-rente-grunn', 'k3-sparing-pensjon', 'k3-annuitetslan-arlig', 'k3-aksje-gordon'] },
     payback: { name: 'Payback og andre metoder', ch: [5], gens: ['k5-payback-kapitalrasjonering'] },
-    kortfin: { name: 'Kassekreditt, leverandørkreditt, leasing', ch: [7], gens: ['k7-kortsiktig-finansiering'] },
+    kortfin: { name: 'Kassekreditt, leverandørkreditt, leasing', ch: [7], gens: ['k7-kortsiktig-finansiering', 'k8-leasing-kjop'] },
     inflasjon: { name: 'Inflasjon og realrente', ch: [9], gens: ['k9-inflasjon-realrente'] },
     opsjon: { name: 'Opsjoner', ch: [13], gens: ['k13-opsjoner-binomial', 'k13-opsjonsposisjoner'] },
   };

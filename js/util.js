@@ -86,6 +86,9 @@
   U.frac = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
   U.steps = (arr) => '<ol class="steps">' + arr.map((s) => `<li>${s}</li>`).join('') + '</ol>';
 
+  /** Kort, stabil id fra en tekst (FNV-1a, 32 bit). Brukes for quizspørsmål. */
+  U.hash = (str) => { let h = 0x811c9dc5; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); } return 'q' + (h >>> 0).toString(36); };
+
   // ---------- Avrunding ----------
   U.round = (x, d = 0) => { const p = Math.pow(10, d); return Math.round((x + Number.EPSILON) * p) / p; };
   U.sum = (a) => a.reduce((s, x) => s + x, 0);

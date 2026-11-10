@@ -283,13 +283,13 @@
     const npvF = F.npv(rF, fs), irrF = F.irr(fs);
     const shield = (x) => F.pvSaldoTaxShield(AM, a, S_TAX, x), ned = (x) => F.pvSaldoTaxShield(S, a, S_TAX, x) / Math.pow(1 + x, T);
     const es = (x) => [-AM - AK + shield(x) - ned(x)].concat(U.range(1, T).map((t) => op * (1 - S_TAX) + (t === T ? S + AK : 0)));
-    const npvE = F.npv(rE, es(rE)), irrE = F.solve((x) => F.npv(x, es(x)), -0.5, 3);
+    const npvE = F.npv(rE, es(rE)), irrE = F.solve((x) => F.npv(x, es(x)), -0.15, 3);
     const plan = F.annuityLoan(L, i, T);
     const intr = plan.rows.map((x) => x.interest), rep = plan.rows.map((x) => x.repay);
     const ebt = intr.map((x) => op - x), tax = ebt.map((x) => -S_TAX * x);
     const ekY = U.range(1, T).map((t) => op - intr[t - 1] + tax[t - 1] - rep[t - 1] + (t === T ? S + AK : 0));
     const ek = (x) => [-AM - AK + L + shield(x) - ned(x)].concat(ekY);
-    const irrEk = F.solve((x) => F.npv(x, ek(x)), -0.5, 3);
+    const irrEk = F.solve((x) => F.npv(x, ek(x)), -0.15, 3);
     const irrEkFixed = F.irr(ek(rE));
     return { op, AK, fs, npvF, irrF, shieldE: shield(rE), nedE: ned(rE), esE: es(rE), npvE, irrE, payment: plan.payment, intr, rep, ebt, tax, ekY, ek, irrEk, irrEkFixed, shield, ned };
   }
@@ -349,7 +349,7 @@
           { q: 'Hva er egenkapitalens internrente etter skatt (egenkapitalavkastningen)?', answer: c.irrEk, unit: '%', tol: { abs: 0.001 },
             hint: 'Finn renten der NV av kontantstrømmen til egenkapitalen er 0 (målsøking). Skattefordelen av avskrivningene i år 0 avhenger av renten, så regn den med den samme renten.',
             sol: ekTbl +
-              `<p>Ved målsøking blir NV = 0 ved <b>${pct(c.irrEk, 2)}</b>. Skattefordelen i år 0 er regnet med denne renten. Regner du skattefordelen med kravet på ${pct(rE, 0)} i stedet, blir internrenten ${pct(c.irrEkFixed, 2)}. Forskjellen er liten, men målsøkingen er den riktige fremgangsmåten.</p>` +
+              `<p>Ved målsøking blir NV = 0 ved <b>${pct(c.irrEk, 2)}</b>. Skattefordelen i år 0 er regnet med denne renten. </p>` + O._fixedNote(c.irrEkFixed, c.irrEk, `kravet (${pct(rE, 0)})`) +
               `<p>Til sammenligning er prosjektets internrente etter skatt (uten lån) ${pct(c.irrE, 2)}. Lånet koster ${pct(i * (1 - S_TAX), 2)} etter skatt.</p>` },
           { kind: 'text', q: 'Forklar hvorfor egenkapitalens avkastning skiller seg fra prosjektets avkastning etter skatt, og hvorfor renter og avdrag ikke skal med i totalkapitalmetoden.',
             points: [`<b>Giring</b>: lånet koster ${pct(i * (1 - S_TAX), 2)} etter skatt. Er prosjektets avkastning etter skatt (${pct(c.irrE, 2)}) høyere, tjener eierne på differansen, og egenkapitalavkastningen blir ${c.irrEk > c.irrE ? 'høyere' : 'lavere'} (${pct(c.irrEk, 2)}). Er den lavere, trekker lånet ned.`,

@@ -1,6 +1,6 @@
 /* Kjør: node tools/verify.js [antall frø]
    Faglig kontroll som ikke bruker generatorenes egen fasit:
-   1) regnefunksjonene for de nye oppgavetypene mot tall i kilder/ (eksamen 2022 og 2023, kapittel-LF 2.1, 6.5, 6.9, 8.8, 8.12 og 11.13),
+   1) regnefunksjonene for de nye oppgavetypene mot tall i kilder/ (eksamen 2022 og 2023, kapittel-LF 2.1, 6.1, 6.5, 6.9, 8.1, 8.8, 8.9, 8.10, 8.12 og 11.13),
    2) uavhengig etterregning av de nye generatorene: tallene leses fra oppgaveteksten og regnes med egne formler,
    3) kontroll av rettingene fra bølge 5 (minimum-varians-vekt, markedsverdier, fortegn nær 0, entydig kombinasjon). */
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -53,6 +53,25 @@ eq('kap8.8b år 0', em.esE[0], -471463, 1); eq('kap8.8b NNV e.s.', em.npvE, 7548
 [12000, 9257, 6349, 3267].forEach((v, t) => eq('kap8.8c renter år ' + (t + 1), em.intr[t], v, 0.5));
 [-263440, 61922, 61318, 60679, 408000].forEach((v, t) => eq('kap8.8c til EK ved 0 % år ' + t, em.ek(0)[t], v, 1));
 eq('kap8.8c NV ved 0 %', F.npv(0, em.ek(0)), 328479, 1);
+// Kap. 6 oppg. 1 (følsomhet på internrenten)
+const se = O._sensCalc({ I: 350000, p: 20, v: 15, FK: 25000, Q: 20000, T: 10, d: 0.1, r: 0.1 });
+eq('kap6.1 KS', se.cf, 75000, 0.5); eq('kap6.1 IR %', se.irr * 100, 16.95, 0.005);
+[['pris', 35000, 0.00], ['vek', 45000, 4.85], ['volum', 65000, 13.19], ['inv', 75000, 14.41], ['levetid', 75000, 15.63], ['fk', 72500, 16.03]].forEach(([k, cf, ir]) => {
+  const x = se.rows.find((y) => y.k === k); eq('kap6.1 KS ' + k, x.w.cf, cf, 0.5); eq('kap6.1 IR ' + k + ' %', x.w.irr * 100, ir, 0.005); });
+// Kap. 8 oppg. 10 (leasing eller kjøp)
+const ls = O._leaseCalc({ I: 303000, L: 80000, N: 5, i: 0.08, a: 0.2, S: 0 });
+eq('kap8.10 lånerente e.s. %', ls.rd * 100, 6.24, 0.00001); eq('kap8.10 tapt skattefordel (6,24 %)', ls.shieldD, 50808, 1); eq('kap8.10 tapt skattefordel ved IR', ls.shield(ls.irr), 48909, 1);
+eq('kap8.10 år 0 (6,24 %)', ls.y0D, 252192, 1); eq('kap8.10 leie e.s.', -ls.flows(ls.rd)[1], 62400, 0.5); eq('kap8.10 NNV leasing', ls.npv, -8952, 1); eq('kap8.10 IR e.s. %', ls.irr * 100, 7.26, 0.005);
+// Kap. 8 oppg. 9 (før og etter skatt, IR etter skatt)
+const it = O._irTaxCalc({ AM: 1021000, S: 418202, wc: 0.15, Q: 4200, price: 450, mat: 100, lonn: 120, ovr: 40, FK: 420000, T: 4, rF: 0.15, rE: 0.10, a: 0.2 });
+eq('kap8.9a KS drift', it.op, 378000, 0.5); [-1304500, 378000, 378000, 378000, 1079702].forEach((v, t) => eq('kap8.9a KS år ' + t, it.fs[t], v, 0.5));
+eq('kap8.9a IR f.s. %', it.irrF * 100, 20.42, 0.005); eq('kap8.9a NNV f.s.', it.npvF, 175882, 1);
+eq('kap8.9b NV spart skatt', it.shield(0.1), 149747, 1); eq('kap8.9b nedskriving', it.ned(0.1), 41893, 1); [-1196647, 294840, 294840, 294840, 996542].forEach((v, t) => eq('kap8.9b grunnlag år ' + t, it.esE[t], v, 1));
+eq('kap8.9b NNV e.s.', it.npvE, 217228, 1); eq('kap8.9c IR e.s. %', it.irrE * 100, 16.15, 0.005);
+eq('kap8.9c spart skatt ved IR', it.shield(it.irrE), 124282, 1); eq('kap8.9c nedskriving ved IR', it.ned(it.irrE), 27973, 1); eq('kap8.9c år 0 ved IR', it.es(it.irrE)[0], -1208191, 1);
+// Kap. 8 oppg. 1 (effektiv skattesats)
+const e1 = O._irTaxCalc({ AM: 250000, S: 0, wc: 0, Q: 1, price: 87500, mat: 0, lonn: 0, ovr: 0, FK: 0, T: 4, rF: 0.15, rE: 0.08, a: 0.2 });
+eq('kap8.1a IR f.s. %', e1.irrF * 100, 14.96, 0.005); eq('kap8.1b NNV e.s.', e1.npvE, 15338, 1); eq('kap8.1c IR e.s. %', e1.irrE * 100, 10.52, 0.005); eq('kap8.1d effektiv skattesats %', e1.eff * 100, 29.72, 0.005);
   out.forEach((l) => { if (/^AVVIK/.test(l)) problems++; }); console.log(out.filter((l) => /^AVVIK/.test(l)).join('\n') || `kilder: ${out.length} kontrolltall stemmer`);
 }
 // ---------- 2) Nye generatorer, etterregnet fra oppgaveteksten ----------
@@ -175,6 +194,43 @@ for (let s = 1; s <= SEEDS; s++) {
     let lo = -0.4, hi = 2.5; const g = (rr) => npvAt(ek(rr), rr); for (let k = 0; k < 300; k++) { const m = (lo + hi) / 2; if (g(lo) * g(m) <= 0) hi = m; else lo = m; }
     const mine = [npvAt(ff, rF), irr(ff), npvAt(fe(rE), rE), pay, it[1], ek1[0], (lo + hi) / 2];
     t.parts.forEach((p, k) => { if (p.kind === 'num') cmp('egenkapitalmetoden', s, p, mine[k]); }); }
+  // ---------- Følsomhet på internrenten ----------
+  { const t = O.make('k6-folsomhet-internrente', s), x = t.text;
+    const I = num(m1(x, R('Investeringen er <b>' + NUM + '</b>'))), T = +m1(x, /levetid på <b>(\d+) år/), Q = num(m1(x, R('selge <b>' + NUM + '</b>')));
+    const p = num(m1(x, R('til <b>' + NUM + '</b> per stykk'))), v = num(m1(x, R('Variable kostnader er <b>' + NUM + '</b>'))), FK = num(m1(x, R('faste kostnader er <b>' + NUM + '</b> per år')));
+    const d = +m1(x, /med <b>(\d+) %<\/b> i ugunstig/) / 100, r = +m1(t.parts[8].q, /Avkastningskravet er <b>(\d+) %/) / 100;
+    const ir = (II, c, TT) => irr([-II].concat(Array(TT).fill(c))), cf = (pp, vv, qq, ff) => qq * (pp - vv) - ff;
+    let A = 0; for (let k = 1; k <= T; k++) A += pv(1, r, k);
+    const mine = [cf(p, v, Q, FK), ir(I, cf(p, v, Q, FK), T), ir(I, cf(p * (1 - d), v, Q, FK), T), ir(I, cf(p, v * (1 + d), Q, FK), T), ir(I, cf(p, v, Q * (1 - d), FK), T),
+      ir(I * (1 + d), cf(p, v, Q, FK), T), ir(I, cf(p, v, Q, FK), Math.round(T * (1 - d))), ir(I, cf(p, v, Q, FK * (1 + d)), T), 1 - (v + (I / A + FK) / Q) / p];
+    if (!/<svg class="chart"/.test(t.parts[9].sol) || (t.parts[9].sol.match(/<polyline/g) || []).length !== 6) { bad++; fails.push('følsomhet: stjernediagram mangler, frø ' + s); }
+    t.parts.forEach((pp, i) => { if (pp.kind === 'num') cmp('følsomhet', s, pp, mine[i]); }); }
+  // ---------- Leasing eller kjøp ----------
+  { const t = O.make('k8-leasing-kjop', s), x = t.text;
+    const I = num(m1(x, R('koster <b>' + NUM + '</b> å kjøpe'))), N = +m1(x, /brukes i <b>(\d) år/), sm = x.match(R('selges for <b>' + NUM + '</b>')), S = sm ? num(sm[1]) : 0;
+    const a = +m1(x, /saldometoden med <b>(\d+) %/) / 100, i = num(m1(x, /lån med <b>([\d,]+) %<\/b> rente/)) / 100, L = num(m1(x, R('for <b>' + NUM + '</b> per år')));
+    const rd = i * 0.78, sh = (rr) => I * a * 0.22 / (rr + a), nd2 = (rr) => S * a * 0.22 / (rr + a) / Math.pow(1 + rr, N);
+    const fl = (rr) => [I - sh(rr) + nd2(rr)].concat(Array.from({ length: N }, (_, k) => -L * 0.78 - (k === N - 1 ? S : 0)));
+    const npvAt = (f2, rr) => f2.reduce((z, c, k) => z + pv(c, rr, k), 0);
+    let lo = -0.1, hi = 0.9; const g = (rr) => npvAt(fl(rr), rr); for (let k = 0; k < 300; k++) { const m = (lo + hi) / 2; if (g(lo) * g(m) <= 0) hi = m; else lo = m; }
+    let A = 0; for (let k = 1; k <= N; k++) A += pv(1, rd, k);
+    const mine = [rd, sh(rd), fl(rd)[0], L * 0.78, npvAt(fl(rd), rd), (lo + hi) / 2, (fl(rd)[0] - pv(S, rd, N)) / (A * 0.78)];
+    if ((g(rd) > 0) !== /<b>Leasing<\/b> lønner seg/.test(t.parts[4].sol)) { bad++; fails.push('leasing: konklusjon, frø ' + s); }
+    t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('leasing', s, pp, mine[k]); }); }
+  // ---------- Internrente etter skatt og effektiv skattesats ----------
+  { const t = O.make('k8-ir-etter-skatt', s), x = t.text;
+    const Q = num(m1(x, R('selge <b>' + NUM + '</b>'))), T = +m1(x, /i <b>(\d) år<\/b> til/), price = num(m1(x, R('pris på <b>' + NUM + '</b>'))), mat = num(m1(x, R('Materialkostnadene er <b>' + NUM + '</b>')));
+    const lonn = num(m1(x, R('lønnskostnadene <b>' + NUM + '</b>'))), om = x.match(R('øvrige variable kostnader <b>' + NUM + '</b>')), ovr = om ? num(om[1]) : 0;
+    const FK = num(m1(x, R('kostnader er <b>' + NUM + '</b> per år'))), AM = num(m1(x, R('anlegget koster <b>' + NUM + '</b>'))), sm = x.match(R('selges for <b>' + NUM + '</b>')), S = sm ? num(sm[1]) : 0;
+    const wm = x.match(/utgjør <b>(\d+) %/), wc = wm ? +wm[1] / 100 : 0, rF = +m1(x, /<b>(\d+) %<\/b> før skatt/) / 100, rE = +m1(x, /<b>(\d+) %<\/b> etter skatt/) / 100;
+    const op = Q * (price - mat - lonn - ovr) - FK, AK = wc * Q * price;
+    const npvAt = (f2, rr) => f2.reduce((z, c, k) => z + pv(c, rr, k), 0);
+    const ff = [-AM - AK]; for (let k = 1; k <= T; k++) ff.push(op + (k === T ? S + AK : 0));
+    const fe = (rr) => [-AM - AK + AM * 0.044 / (rr + 0.2) - S * 0.044 / (rr + 0.2) / Math.pow(1 + rr, T)].concat(ff.slice(1).map((c) => c - 0.22 * op));
+    let lo = -0.1, hi = 2.5; const g = (rr) => npvAt(fe(rr), rr); for (let k = 0; k < 300; k++) { const m = (lo + hi) / 2; if (g(lo) * g(m) <= 0) hi = m; else lo = m; }
+    const ie = (lo + hi) / 2, ifs = irr(ff);
+    const mine = [op, ifs, npvAt(ff, rF), npvAt(fe(rE), rE), ie, 1 - ie / ifs];
+    t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('ir etter skatt', s, pp, mine[k]); }); }
 }
   problems += bad; console.log(`nye generatorer: ${checked} tallsvar over ${SEEDS} frø, ${bad} avvik`); fails.forEach((z) => console.log('  ', z));
 }

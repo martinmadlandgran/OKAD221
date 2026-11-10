@@ -26,6 +26,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 4 | Faglig kvalitetssikring: teori, 148 quizspørsmål, 27 generatorer og 10 eksamenssett etterregnet mot `kilder/` | Ferdig |
 | 5 | Fire generatorpunkter ryddet, tre nye generatorer, prøveeksamen på papir med fasit bakerst, flytting av fremdrift mellom enheter | Ferdig |
 | 6 | Fire nye generatorer fra kapittel-LF (6.5, 6.9, 8.8, 8.12), repetisjonsliste, durasjonspunktet sjekket mot forlagets lysbilder | Ferdig |
+| 7 | Tre nye generatorer fra kapittel-LF (6.1, 8.10, 8.9 med 8.1d), quiz med repetisjon | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -99,6 +100,32 @@ Durasjon og rentenivå: setningen «Durasjonen reduseres hvis diskonteringssatse
 
 Test etter bølgen: `node tools/check.js 3000` OK (34 generatorer), `node tools/verify.js 1000` OK (71 kontrolltall, 46 000 tallsvar), `tools/e2e.js` 300 bestått (36 nye kontroller, blant annet for repetisjonslisten).
 
+## Bølge 7: følsomhet på internrenten, leasing, IR etter skatt og quizrepetisjon (ferdig)
+
+Nye generatorer (37 i alt), i `js/gen/ir.js`. Regnefunksjonene gjenskaper alle tall i kapittel-LF (45 nye kontrolltall, 116 i alt). Hver generator er etterregnet over 1000 frø fra oppgaveteksten med egne formler: 22 000 nye tallsvar, 0 avvik. Fire innsatte feil (kontantstrøm, fortegn på nedskrivingseffekten, effektiv skattesats, arbeidskapital i etter-skatt-kalkylen) ble alle fanget.
+
+- `k6-folsomhet-internrente` (kap. 6 oppg. 1): kontantstrøm og internrente i basis, ny internrente når pris, variable kostnader, volum, investering, levetid og faste kostnader endres én om gangen med 10 % (eller 20 %) i ugunstig retning, og hvor mye prisen kan falle før internrenten er lik kravet. Løsningen tegner stjernediagrammet (SVG, bare linjer og tekst i temaets farger, navnene skjøvet fra hverandre) og har tabellen ved siden av. Gjenskaper 16,95 %, 0,00 %, 4,85 %, 13,19 %, 14,41 %, 15,63 % og 16,03 %. Prisen er alltid den mest kritiske variabelen (det følger av at omsetningen er større enn kontantstrømmen), men rekkefølgen etter den varierer, og 0–6 av endringene tar internrenten under kravet.
+- `k8-leasing-kjop` (kap. 8 oppg. 10): lånerente etter skatt, tapt skattefordel av saldoavskrivningene, beregningsgrunnlaget i år 0, leie etter skatt, NNV av leasing mot kjøp, leasingens internrente etter skatt (målsøking) og høyeste leie som lønner seg. Halvparten av frøene har salgsverdi ved slutten (tapt salgsverdi og slipper økt skatt ved nedskriving), og saldosatsen er 20, 24 eller 30 %. Leasing og kjøp er billigst omtrent like ofte. Gjenskaper 6,24 %, 50 808, 252 192, 62 400, −8 952, 7,26 % og 48 909 (skattefordelen ved den eksakte internrenten).
+- `k8-ir-etter-skatt` (kap. 8 oppg. 9, med effektiv skattesats fra oppg. 1d): kontantstrøm fra drift, internrente og NNV før skatt, NNV etter skatt, internrente etter skatt ved målsøking og effektiv skattesats. Varianter med salgsverdi lik restsaldo (som i LF), med annen salgsverdi, og uten salgsverdi og arbeidskapital (som 8.1). Effektiv skattesats er høyere enn 22 % i omtrent halvparten av frøene, og forklaringen følger tallene. Gjenskaper 8.9 (378 000, 20,42 %, 175 882, 149 747, −41 893, 217 228, 16,15 %, og 124 282 og −27 973 ved internrenten) og 8.1 (14,96 %, 15 338, 10,52 %, 29,72 %).
+- Koblet inn under temaene «Kritiske verdier og følsomhet», «Nåverdi etter skatt» og (leasing) «Kassekreditt, leverandørkreditt, leasing». Ikke lagt i prøveeksamenens trekkpott eller prognoseluken, som avgjort for bølge 6.
+
+Målsøking og toleranse. Internrenten etter skatt godtas innenfor 0,1 prosentpoeng av målsøkingssvaret, som eier avgjorde for egenkapitalmetoden. Etterregningen viste at tilnærmingen med skattefordelen holdt fast på kravet bommer mer enn det: median 0,25 prosentpoeng for leasing, 0,47 for IR etter skatt og 0,44 for egenkapitalmetoden (bølge 6), og den godtas bare i 5–9 % av frøene. Bølge 6-teksten kalte forskjellen «liten». Alle tre løsningene oppgir nå det faktiske avviket og sier om det er innenfor toleransen. Toleransen for effektiv skattesats er satt slik at et svar bygget på en internrente innenfor 0,1 prosentpoeng godtas (ca. ±0,5–0,8 prosentpoeng).
+
+Rettet underveis: nullpunktsøket for internrente etter skatt startet på −50 % (bølge 6) og −30 %. Saldoformelen har en singularitet ved r = −20 %, og søket kunne ende ved feil rot (det skjedde for leasing i ca. 1 av 3 frø før rettingen). Alle søk starter nå på −15 %.
+
+Quiz med repetisjon:
+
+- Et spørsmål du svarer feil på, lagres (tid og antall feil) og kommer igjen i senere runder til du svarer riktig. Hver runde tar med de eldste feilene først, høyst fem, og fyller resten med andre spørsmål. Har kapitlet for få andre spørsmål, fylles runden med flere som venter. Svarer du riktig, forsvinner det; feil igjen øker telleren.
+- Spørsmålet er merket «Repetisjon» med hvor mange ganger det er feil. Svaret sier «kommer igjen i en senere runde» eller «fjernet fra repetisjonen», og resultatet teller hvor mange som ble ryddet.
+- `#/quiz/repeter` gir en runde med bare spørsmålene som venter. Quizsiden viser antallet totalt og per kapittel, forsiden og repetisjonslisten for oppgaver lenker til den. Tom tilstand har to varianter: «ennå» og «alt er løst».
+- Spørsmålene får en stabil id fra teksten (hash), så nye spørsmål eller ny rekkefølge flytter ikke repetisjonen. `check.js` kontrollerer at alle 148 id-ene er unike. Endres teksten i et spørsmål, faller det ut av repetisjonen.
+- Flyttes med fremdriften og vises i forhåndsvisningen («Quizspørsmål å repetere»). Sammenslåing er idempotent. Ved import filtreres ukjente spørsmål (med beskjed), negativ tid, ugyldig antall, `__proto__` og en liste i stedet for et objekt bort. Ødelagt eller utgått liste i nettleseren ved oppstart gir tom liste. Virker også med sperret lagring, for økten.
+- Treffprosenten per kapittel regnes som før.
+
+Også rettet: «Slett all lagret fremdrift» sa «ingenting å slette» når bare quizsvar eller en eksamensdato var lagret.
+
+Test etter bølgen: `node tools/check.js 3000` OK (37 generatorer, unike quiz-id-er), `node tools/verify.js 1000` OK (116 kontrolltall, 68 000 tallsvar), `tools/e2e.js` 365 bestått (65 nye kontroller for quizrepetisjon, de tre nye typene og stjernediagrammet).
+
 ## Åpne punkter
 
 - Leverandørkreditt 360 dager og aktivering av installasjonskostnad, som før.
@@ -112,16 +139,16 @@ Avgjort av eier etter bølgen: de fire nye typene holdes utenfor prøveeksamenen
 
 ## Neste bølge (forslag)
 
-Siste oppgavetyper fra kapittel-LF som mangler: leasing eller kjøp etter skatt (kap. 8 oppg. 10), følsomhetstabell og stjernediagram på internrenten (kap. 6 oppg. 1) og IR etter skatt med effektiv skattesats (kap. 8 oppg. 9c). Deretter en tidsbasert repetisjon også i quizen (spørsmål man har svart feil på kommer igjen).
+Kapittel 12 er det eneste kapitlet uten oppgavetype. Kapittel-LF 12.1–12.5 gir tre generatorer: endret kredittpolitikk (frigjort kapital i kundefordringer og varelager mot tapt dekningsbidrag og tap på fordringer), kontantrabatt (rabattkostnad mot rentebesparelse) og Altmans Z (fem forholdstall fra et regnskap). Kapittel 12 er ikke gitt som egen eksamensoppgave 2016–2025, så de holdes utenfor prøveeksamenen. I tillegg mangler kap. 8 oppg. 3 (salg av driftsmiddel: inntektsføre eller nedskrive saldo).
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 7 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 8 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 7:
-1. Tre nye generatorer fra kapittel-LF i kilder/kapittel_lf.md: leasing eller kjøp etter skatt (kap. 8 oppg. 10), følsomhetstabell og stjernediagram på internrenten (kap. 6 oppg. 1), og internrente etter skatt med effektiv skattesats (kap. 8 oppg. 9c). Regnefunksjonene skal gjenskape LF-tallene, og tools/verify.js skal etterregne dem fra oppgaveteksten over 1000 frø. Ikke legg dem i prøveeksamenens trekkpott (samme avgjørelse som for bølge 6).
-2. Quiz med repetisjon: spørsmål man har svart feil på, kommer igjen i senere runder til de er besvart riktig. Lagres i fremdriften, flyttes med den og tåler ugyldige data ved import, som repetisjonslisten for oppgaver.
+Innhold i bølge 8:
+1. Tre nye generatorer for kapittel 12 fra kapittel-LF i kilder/kapittel_lf.md: endret kredittpolitikk (oppg. 1–2), kontantrabatt (oppg. 3) og Altmans Z (oppg. 5). Regnefunksjonene skal gjenskape LF-tallene, og tools/verify.js skal etterregne dem fra oppgaveteksten over 1000 frø. Ikke legg dem i prøveeksamenens trekkpott.
+2. Én generator for kap. 8 oppg. 3: salg av driftsmiddel, salgssum inntektsført direkte mot nedskrevet på saldo, med samme krav.
 3. Oppdater tools/e2e.js med kontroller for det nye, og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit og push til arbeidsgrenen når alt er grønt. Ikke lag PR.

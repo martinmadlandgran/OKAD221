@@ -8,15 +8,15 @@ Statisk øvingsnettside (ren HTML/CSS/JS, ingen byggesteg) for ØKAD 221 ved NLA
 | Del | Hva |
 |---|---|
 | Eksamensanalyse | Varmekart tema × år for de ti settene 2016–2025, hyppighet vektet mot de siste årene, og prognose for 2026 |
-| Øvingsoppgaver | 34 generatorer som lager nye tall hver gang, med svarsjekk, hint og løsning steg for steg |
+| Øvingsoppgaver | 37 generatorer som lager nye tall hver gang, med svarsjekk, hint og løsning steg for steg |
 | Repeter | Oppgavene du har bommet på (feil første forsøk, løsning åpnet før svar, feil på prøveeksamen), med den viktigste eksamenstypen øverst. Samme oppgave igjen eller nye tall |
 | Prøveeksamen 2026 | Fem oppgaver satt sammen etter prognosen, med tidtaking og automatisk retting. Kan også skrives ut med fasit bakerst og rettes på skjerm etterpå |
 | Tidligere eksamener | 10 sett, 40 oppgaver, 143 deloppgaver med ordrett tekst, fasit og løsningsmetode |
 | Teori | Kapittel 1–13: begreper, formler, fremgangsmåter, eksempler, typiske feil, Excel-funksjoner |
-| Quiz | 148 flervalgsspørsmål |
+| Quiz | 148 flervalgsspørsmål. Spørsmål du svarer feil på, kommer igjen i senere runder (høyst fem per runde) til du svarer riktig, og kan også repeteres for seg |
 | Formler og kalkulatorer | Søkbar formelsamling, og kalkulatorer for NNV/IR, lån, obligasjon og WACC/saldo |
 
-Fremdrift lagres i nettleserens `localStorage`. Den kan flyttes til en annen enhet fra forsiden (Innstillinger): last ned en fil eller kopier som tekst, og hent den inn på den andre enheten. Ved henting kan man slå sammen (beholder det beste fra begge, idempotent) eller erstatte.
+Fremdrift lagres i nettleserens `localStorage`. Den kan flyttes til en annen enhet fra forsiden (Innstillinger): last ned en fil eller kopier som tekst, og hent den inn på den andre enheten. Ved henting kan man slå sammen (beholder det beste fra begge, idempotent) eller erstatte. Repetisjonslisten for oppgaver og quizspørsmålene som venter på repetisjon, følger med.
 
 ## Kilder og forbehold
 
@@ -46,13 +46,13 @@ Siden er et arbeidsverktøy, ikke en presentasjon. Reglene den følger:
 node tools/check.js 300
 ```
 
-Røyk-tester alle generatorer over 300 frø og skriver ut antall eksamener, teorikapitler og quizspørsmål.
+Røyk-tester alle generatorer over 300 frø og skriver ut antall eksamener, teorikapitler og quizspørsmål (og kontrollerer at hvert quizspørsmål får en unik id).
 
 ```bash
 node tools/verify.js 1000
 ```
 
-Faglig kontroll uten generatorenes egen fasit: regnefunksjonene for de sju nyeste oppgavetypene mot tall i `kilder/` (eksamen 2022 og 2023, kapittel-LF 2.1, 6.5, 6.9, 8.8, 8.12 og 11.13), og uavhengig etterregning fra oppgaveteksten for de samme generatorene.
+Faglig kontroll uten generatorenes egen fasit: regnefunksjonene for de ti nyeste oppgavetypene mot tall i `kilder/` (eksamen 2022 og 2023, kapittel-LF 2.1, 6.1, 6.5, 6.9, 8.1, 8.8, 8.9, 8.10, 8.12 og 11.13), og uavhengig etterregning fra oppgaveteksten for de samme generatorene.
 
 ```bash
 python3 -m http.server 8765
@@ -62,7 +62,7 @@ python3 -m http.server 8765
 node tools/e2e.js /tmp/skjermbilder
 ```
 
-Nettlesertest (Playwright): alle sider i fire skjermstørrelser, svarsjekk og feiltilstander, prøveeksamen fra start til retting, prøveeksamen på papir (utskrift, fasit på ny side), flytting av fremdrift (eksport, import, sammenslåing, ugyldige filer), repetisjonslisten (fylles, tømmes, prøveeksamen, flytting), tastaturnavigasjon, kontrast (WCAG AA) i lyst og mørkt tema, trykkflater på mobil og sperret lagring.
+Nettlesertest (Playwright): alle sider i fire skjermstørrelser, svarsjekk og feiltilstander, prøveeksamen fra start til retting, prøveeksamen på papir (utskrift, fasit på ny side), flytting av fremdrift (eksport, import, sammenslåing, ugyldige filer), repetisjonslisten (fylles, tømmes, prøveeksamen, flytting), quizrepetisjon (fylles, tømmes, høyst fem per runde, flytting, ugyldige data), de tre nyeste oppgavetypene (fasit, toleranse for målsøking, stjernediagram på mobil, i mørkt tema og på utskrift), tastaturnavigasjon, kontrast (WCAG AA) i lyst og mørkt tema, trykkflater på mobil og sperret lagring.
 
-Struktur: `js/fin.js` (finansfunksjoner), `js/gen/*.js` (oppgavegeneratorer), `js/data/*.js`
+Struktur: `js/fin.js` (finansfunksjoner), `js/gen/*.js` (oppgavegeneratorer; `ir.js` har følsomhet på internrenten, leasing og internrente etter skatt), `js/data/*.js`
 (eksamener, teori, quiz, prognose), `js/app.js` (visninger).
