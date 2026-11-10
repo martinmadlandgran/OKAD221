@@ -175,6 +175,10 @@ dl.defs dt { font-weight: 700; margin-top: 12px; } dl.defs dd { margin: 2px 0 0;
 table.data { border-collapse: collapse; width: 100%; font-size: .88rem; }
 table.data th, table.data td { padding: 5px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 table.data.wrapth th[scope=row] { white-space: normal; min-width: 7em; }
+table.data.compact thead th { white-space: normal; hyphens: manual; vertical-align: bottom; }
+table.data.compact th[scope=row] { min-width: 0; }
+table.data.compact th, table.data.compact td { padding: 5px 4px; }
+table.data.compact thead th { letter-spacing: 0; text-transform: none; }
 table.data thead th { border-bottom: 2px solid var(--rule); border-top: 2px solid var(--rule); text-align: right; font: 700 .74rem var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); padding-block: 7px; }
 table.data thead th:first-child, table.data th[scope=row] { text-align: left; }
 table.data th[scope=row] { font-weight: 500; }

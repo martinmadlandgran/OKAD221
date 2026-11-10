@@ -329,7 +329,8 @@ for (let s = 1; s <= SEEDS; s++) {
     const tr = (lbl) => m1(x, R(lbl + '</th>((?:<td>[^<]*</td>)+)</tr>')).match(/<td>([^<]*)<\/td>/g).map((z) => z.replace(/<\/?td>/g, ''));
     const cur = VL + KF + KB, short = KK + KG2, freed = KF - S * Db / Y;
     const mine = [cur - short, cur / short, (cur - VL) / short, (LL + short) / TA, KF * Y / S, freed, (cur - freed) / (short - freed)];
-    const blRow = tr('Balanselikviditet'), b0 = num(blRow[0]), bBr = num(blRow[4]);
+    const b0 = num(tr('2022')[0]), bBr = num(tr('Bransje')[0]);
+    if (tr('2025').some((z) => z !== '?')) { bad++; fails.push('nøkkeltall: 2025 er ikke tom i tabellen, frø ' + s); }
     if ((b0 > mine[1]) !== /forverring/.test(t.parts[7].points[1])) { bad++; fails.push('nøkkeltall: utvikling, frø ' + s); }
     if ((mine[1] > bBr) !== /\(([\d,]+)\) er bedre enn bransjen/.test(t.parts[7].points[0].split(', og')[0])) { bad++; fails.push('nøkkeltall: mot bransjen, frø ' + s); }
     t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('nøkkeltall', s, pp, mine[k]); }); }

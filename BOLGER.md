@@ -164,10 +164,12 @@ Også rettet: balansetabellen fikk ikke plass i 320 px fordi alle tabellceller e
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 448 bestått (42 nye kontroller).
 
+Avgjort av eier etter bølgen: nøkkeltallstabellen snus med årene som rader, så den får plass uten sidelengs rulling på mobil (1a), og gjeldsandelen beholdes som total gjeld / totalkapital (2a). Fulgt opp: tabellen har kolonnene år, balanselikviditet, kasselikviditet, gjeldsandel (%) og kredittid (dager), med 2025 som en rad med spørsmålstegn og bransjesnittet som siste rad. Overskriftene er forkortet og står med vanlige bokstaver i denne tabellen, og teksten under forklarer forkortelsene og enhetene. Den får nå plass i 320 px, og `e2e.js` kontrollerer det (449 bestått).
+
 ## Åpne punkter
 
 - Aktivering av installasjonskostnad, som før. (360 eller 365 dager er avgjort etter bølge 8 og gjennomført i bølge 9.)
-- Kap. 12 oppg. 3: LFs gjeldsandeler (97,1 % for 2022) lar seg ikke gjenskape fra balansen (58,7 %). Siden bruker gjeld / totalkapital.
+- Kap. 12 oppg. 3: LFs gjeldsandeler (97,1 % for 2022) lar seg ikke gjenskape fra balansen (58,7 %). Siden bruker gjeld / totalkapital, som eier har avgjort. Står åpent bare til læreboka kan leses.
 - Factoring med kortere kredittid bygger på forelesningens eksempel 7-10, der løsningen er rekonstruert.
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka.
 - Durasjon og rentenivå: forlagets lysbilder sier det motsatte av standardteorien og av forlagets egne tall (se bølge 6). Siden følger standardteorien. Læreboka er ikke lest, så det står igjen å se hva den sier.
