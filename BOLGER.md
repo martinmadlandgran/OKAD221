@@ -30,6 +30,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 8 | Fire nye generatorer fra kapittel-LF: kapittel 12 (12.1–12.2, 12.3, 12.5) og salg av driftsmiddel (8.3) | Ferdig |
 | 9 | Factoring (7.7b, 7.8) og nøkkeltall for likviditet (12.3), dager i året gjort konsekvent | Ferdig |
 | 10 | 14 nye quizspørsmål (factoring og nøkkeltall for likviditet), åpne punkter gjennomgått, installasjonskostnad lukket | Ferdig |
+| 11 | 21 nye quizspørsmål (kontantrabatt, kredittpolitikk, Altmans Z, prisstigning), forklaringer i eldre spørsmål fullført, tall brytes ikke i quizen på mobil | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -194,6 +195,26 @@ Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 162 gyldige q
 
 Avgjort av eier etter bølgen: de fire punktene lukkes som foreslått (1a), quizspørsmålet om factoring med kortere kredittid blir stående (2a), og bølge 11 er quiz for resten av kapittel 12 og kapittel 9 pluss funn fra mobiltesten (3a).
 
+## Bølge 11: quiz for resten av kapittel 12 og kapittel 9 (ferdig)
+
+Nye quizspørsmål (183 i alt, 162 før). Alle tall er regnet med et eget skript. Hvert feil alternativ er en bestemt feil, og forklaringen sier hvilken. Riktig svar står på alle fire plassene i dataene, og rekkefølgen stokkes på skjermen som før.
+
+- Kapittel 12, kontantrabatt (6 nye): frigjort kapital (feil: de nye kundefordringene i stedet for endringen, rabattkundenes 10 dager glemt, 360 i stedet for 365 dager), rabattkostnad (feil: hele omsetningen, andelen som ikke tar rabatten, prosent av frigjort kapital), netto resultatøkning (feil: frigjort kapital som gevinst, rabatt på hele omsetningen, reduserte tap glemt), høyeste rabatt (feil: administrasjon glemt, delt på hele omsetningen, administrasjon med feil fortegn), kundens effektive årsrente (feil: enkel rente, 2 % i stedet for 2/98, hele kredittiden i stedet for de ekstra dagene), og hvorfor rabatten er dyrest når kunder som allerede betaler raskt tar den. Tallene er egne (omsetning 36 500, 365 dager), med samme metode som kapittel-LF 12.3 og generatoren `k12-kontantrabatt`.
+- Kapittel 12, kredittpolitikk (4 nye, 5 med det fra før): nye kundefordringer (feil: gammel omsetning, 365 i stedet for 360 dager, reduksjonen i stedet for nivået), tapt dekningsbidrag (feil: tapt omsetning, sparte variable kostnader, fallet regnet av ny omsetning), netto redusert kapitalbehov (feil: kreditorene med feil fortegn eller glemt, bare kundefordringer), og hvilken post som ikke er en kostnad.
+- Kapittel 12, Altmans Z (5 nye, 6 i alt): X1 med negativ arbeidskapital, X4 med markedsverdi og total gjeld, Z og sone (feil: fortegnet på X1 droppet, grensene forvekslet, vektene på X4 og X5 byttet), hvor mye driftsresultatet må øke for å nå 2,99 (som i generatoren `k12-altman-z`), og hvilken egenkapital X2 bruker. Grensene 1,81 og 2,99 står i spørsmålet, som avgjort for oppgaveteksten.
+- Kapittel 9, prisstigning (6 nye, 14 i alt): reell internrente, lønnsomhet med nominell internrente og realkrav, deflatering, blanding av nominell kontantstrøm og realkrav, skattefordel av saldoavskrivning i faste priser, og en post med egen prisstigning.
+- Kapittel 12 har nå 26 spørsmål og kapittel 9 14. Kapittel 1 (5) er fortsatt det minste.
+
+Rettet:
+
+- Seks eldre spørsmål i kapittel 9 og 12 hadde feil alternativer som forklaringen ikke nevnte. Den nye kontrollen i `e2e.js` fant dem. Forklaringene sier nå hva feilen er. I spørsmålet om nøyaktig realrente (5 % og 2 %) var alternativet 2,50 % ikke en feil som lot seg navngi. Det er byttet med 7,10 % (regnet motsatt vei). Id-en lages fra spørsmålsteksten, så det spørsmålet blir værende i repetisjonen.
+- Mobil (funnet på skjermbildet i 320 px, ikke meldt fra brukertesten): tall som «183 028» ble brutt over to linjer i quizen, fordi tusenskillet i quizdataene var et vanlig mellomrom. Det byttes nå med hardt mellomrom når siden lastes, etter at id-en er laget, så ingen repetisjon flyttes. Gjelder alle 183 spørsmål.
+- Brukertesten på mobil: meldingen for bølge 11 hadde fortsatt plassholderen «<lim inn funn …>», så ingen funn fra eier er rettet (se spørsmål 1 i rapporten).
+
+Kontroller i `e2e.js` (33 nye): antall spørsmål per tema, at hvert feil tallalternativ i kapittel 9 og i de nye temaene i kapittel 12 står i forklaringen, kapittel 9 gir full runde, alle spørsmålene kommer i repetisjonsrunden (fem runder på høyst 10), feil svar gir forklaring, ingen sidelengs rulling i 320 px, riktig svar står på ulike plasser, feil igjen holder dem i repetisjonen, hardt mellomrom i tallene, og at id-en ikke endres av mellomrommet.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 183 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 495 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -207,15 +228,15 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Quizen er fortsatt tynn i resten av kapittel 12 (ett spørsmål om Altmans Z, ingen om kontantrabatt eller kredittpolitikk ut over kapitalbinding), i kapittel 9 (8 spørsmål) og i kapittel 1 (5). Forslag til bølge 11: quizspørsmål for kontantrabatt, kredittpolitikk og Altmans Z, og for kapittel 9, med samme krav som i bølge 10. I tillegg det eier finner i brukertesten på mobil.
+Quizen dekker nå alle temaene i kapittel 12 og har 14 spørsmål i kapittel 9. Kapittel 1 har bare 5 og gir en kort runde. Forslag til bølge 12: quizspørsmål for kapittel 1 (opp til minst 10) og det eier finner i brukertesten på mobil.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 11 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 12 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 11:
-1. Nye quizspørsmål for kapittel 12 (kontantrabatt, kredittpolitikk, Altmans Z) og kapittel 9, der hvert feil alternativ er en navngitt typisk feil. check.js skal fortsatt melde gyldige spørsmål med unike id-er.
+Innhold i bølge 12:
+1. Nye quizspørsmål for kapittel 1, så kapitlet gir en full runde på 10, der hvert feil alternativ er en navngitt typisk feil. check.js skal fortsatt melde gyldige spørsmål med unike id-er.
 2. Rett det jeg fant i brukertesten på mobil: <lim inn funn, eller skriv «ingen funn»>.
 3. Oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
