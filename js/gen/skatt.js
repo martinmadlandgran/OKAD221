@@ -40,6 +40,11 @@
     topic: 'Nåverdi etter skatt',
     blurb: 'Relevante kontantstrømmer med feller, arbeidskapital, saldoavskrivning, WACC og salg av anleggsmiddel. Har kommet hvert eneste år.',
     gen(R) {
+      // Trekk på nytt til nåverdien er realistisk (innenfor ±22 % av investeringen), slik at konklusjonen ikke er opplagt.
+      let t; for (let i = 0; i < 120; i++) { t = this.build(R); if (Math.abs(t.npv) < 0.22 * t.AM) break; }
+      return t;
+    },
+    build(R) {
       const [firm, prod] = R.pick(firms);
       const N = 5;
       const W = waccSetup(R, firm);
@@ -145,6 +150,7 @@
         : `Salgsprisen er ${n(price0)} per enhet og de variable enhetskostnadene er ${n(vcu)}. Det er budsjettert med salg på ${vol.map((v, i) => `${n(v)} enheter i år ${i + 1}`).join(', ')}. Betalbare faste kostnader er budsjettert til ${n(FK0)} årlig.`;
 
       return {
+        npv, AM,
         text: `<p>${firm} har utviklet ${prod} og vurderer nå om produktet skal lanseres. Prosjektets levetid er ${N} år.</p>` +
           `<p>Prosjektet krever en investering i anleggsmidler på <b>${n(AM)}</b>. Anleggsmidlene avskrives etter saldometoden med <b>${pct(a, 0)}</b> årlig, og man regner foreløpig ikke med noen salgsverdi ved levetidens slutt.</p>` +
           `<p>${volTxt}</p><p>Prosjektet medfører økt arbeidskapital, og man antar at arbeidskapitalen vil utgjøre <b>${pct(wcPct, 0)}</b> av omsetningen.</p>` +
