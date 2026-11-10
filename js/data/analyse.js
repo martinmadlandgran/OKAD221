@@ -16,7 +16,7 @@
     levetid: { name: 'Økonomisk levetid og årskostnad', ch: [4], gens: ['k4-okonomisk-levetid', 'k4-arskostnad-ulik-levetid'] },
     rente: { name: 'Renteregning og annuiteter', ch: [3], gens: ['k3-effektiv-rente-grunn', 'k3-sparing-pensjon', 'k3-annuitetslan-arlig', 'k3-aksje-gordon'] },
     payback: { name: 'Payback og andre metoder', ch: [5], gens: ['k5-payback-kapitalrasjonering'] },
-    kortfin: { name: 'Kassekreditt, leverandørkreditt, leasing', ch: [7], gens: ['k7-kortsiktig-finansiering', 'k8-leasing-kjop'] },
+    kortfin: { name: 'Kassekreditt, leverandørkreditt, leasing', ch: [7], gens: ['k7-kortsiktig-finansiering', 'k8-leasing-kjop', 'k7-factoring'] },
     inflasjon: { name: 'Inflasjon og realrente', ch: [9], gens: ['k9-inflasjon-realrente'] },
     opsjon: { name: 'Opsjoner', ch: [13], gens: ['k13-opsjoner-binomial', 'k13-opsjonsposisjoner'] },
   };

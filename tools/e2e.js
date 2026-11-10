@@ -10,7 +10,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
 
   // 1) Alle ruter, desktop + mobil, lyst + mørkt: ingen feil, ingen sidelengs rulling
-  const routes = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'eksamen/2025', 'eksamen/2016', 'tema', 'tema/8', 'tema/4', 'tema/12', 'formler', 'quiz', 'quiz/alle', 'quiz/repeter', 'verktoy', 'repeter', 'oving/k6-folsomhet-internrente/11', 'oving/k12-altman-z/7', 'oving/k12-kredittpolitikk/7'];
+  const routes = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'eksamen/2025', 'eksamen/2016', 'tema', 'tema/8', 'tema/4', 'tema/12', 'formler', 'quiz', 'quiz/alle', 'quiz/repeter', 'verktoy', 'repeter', 'oving/k6-folsomhet-internrente/11', 'oving/k12-altman-z/7', 'oving/k12-kredittpolitikk/7', 'oving/k7-factoring/7', 'oving/k12-nokkeltall-likviditet/7'];
   for (const o of [{ w: 1200 }, { w: 390, h: 800 }, { w: 390, h: 800, dark: true }, { w: 320, h: 640 }]) {
     const p = await mk(o);
     for (const r of routes) { await go(p, r); ok(!(await overflow(p)), `ingen sidelengs rulling ${o.w}px ${r || 'hjem'}`); }
@@ -19,7 +19,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   // 2) Alle generatorer åpner, viser løsninger, ingen overflow på mobil
   { const p = await mk({ w: 390, h: 800 }); const ids = await (async () => { await go(p, 'oving'); return p.evaluate(() => OKAD.gens.map((g) => g.id)); })();
     for (const id of ids) { await go(p, 'oving/' + id + '/11'); await p.click('#all'); ok(!(await overflow(p)), 'mobil gen ' + id); ok((await p.locator('.solution').count()) > 0, 'løsning vises ' + id); }
-    ok(ids.length === 41, '41 generatorer'); await p.context().close(); }
+    ok(ids.length === 43, '43 generatorer'); await p.context().close(); }
 
   const p = await mk();
   // 3) Svarsjekk: tomt, ugyldig, feil fortegn, desimal i stedet for prosent, riktig, Enter
@@ -292,7 +292,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await go(q, 'oving/k8-salg-driftsmiddel/7'); const inn = await q.evaluate(() => OKAD.fmtAnswer(OKAD.make('k8-salg-driftsmiddel', 7).parts[2]));
     await q.fill('#p4-in', inn); await q.press('#p4-in', 'Enter'); ok(!/Riktig/.test(await q.textContent('#p4-fb')), 'salg: NNV med inntektsføring godtas ikke ved nedskriving');
     // Kapittel 12 i teorien og på Øv-siden, ikke i prøveeksamenen
-    await go(q, 'tema/12'); ok((await q.locator('a[href^="#/oving/k12-"]').count()) === 3, 'tema 12: tre oppgavetyper under «Øv på kapitlet»');
+    await go(q, 'tema/12'); ok((await q.locator('a[href^="#/oving/k12-"]').count()) === 4, 'tema 12: fire oppgavetyper under «Øv på kapitlet»');
     await go(q, 'oving'); ok(/Kapittel 12/.test(await q.textContent('#view')), 'Øv-siden har kapittel 12');
     ok(await q.evaluate(() => !OKAD.mockSlots.some((m) => m.pool.some(([g]) => /^k12-|k8-salg-driftsmiddel/.test(g)))), 'bølge 8: de nye typene er ikke i prøveeksamenens trekkpott');
     ok(await q.evaluate(() => OKAD.topics.skatt.gens.includes('k8-salg-driftsmiddel')), 'salg av driftsmiddel ligger under temaet nåverdi etter skatt');
@@ -301,6 +301,45 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     const M = await mk({ w: 320, h: 640 }); for (const [id, seed] of NEW) { await go(M, `oving/${id}/${seed}`); await M.click('#all'); ok(!(await overflow(M)), `bølge 8 ${id}: ingen sidelengs rulling i 320 px`); }
     await go(M, 'oving/k12-altman-z/7'); ok(await M.evaluate(() => { const e = document.querySelector('.task-text .formula.wrap'); return e && e.scrollWidth <= e.clientWidth + 1; }), 'altman: Z-formelen vises hel i 320 px'); await M.screenshot({ path: out + '/m-altman.png', fullPage: true }); await M.context().close();
     const D = await mk({ w: 1200, dark: true }); await go(D, 'oving/k12-kredittpolitikk/7'); await D.click('#all'); await D.screenshot({ path: out + '/kreditt-mork.png', fullPage: true }); await D.context().close();
+    await q.context().close(); }
+  // 20) Bølge 9: factoring (7.7b, 7.8), nøkkeltall for likviditet (12.3) og dager i året
+  { const q = await mk({ w: 390, h: 800 }); const NEW = [['k7-factoring', 7], ['k12-nokkeltall-likviditet', 7]];
+    // Et frø med kortere kredittid (forskudd ≠ frigjort) og et med forsinket forskudd
+    await go(q, 'oving');
+    const fs = await q.evaluate(() => { let a = 0, b = 0; for (let s = 1; s < 300 && !(a && b); s++) { const t = OKAD.make('k7-factoring', s); if (!a && /ned til/.test(t.text)) a = s; if (!b && /dager<\/b> etter at fakturaen/.test(t.text)) b = s; } return [a, b]; });
+    NEW.push(['k7-factoring', fs[0]], ['k7-factoring', fs[1]]);
+    for (const [id, seed] of NEW) {
+      await go(q, `oving/${id}/${seed}`); const fa = await q.evaluate(([g, s]) => OKAD.make(g, s).parts.map((x) => (x.kind === 'num' ? OKAD.fmtAnswer(x) : null)), [id, seed]);
+      for (let i = 0; i < fa.length; i++) if (fa[i]) { await q.fill(`#p${i}-in`, fa[i]); await q.press(`#p${i}-in`, 'Enter'); }
+      const fb = await q.evaluate(() => [...document.querySelectorAll('.fb')].map((x) => x.textContent).filter(Boolean)); ok(fb.length === fa.filter(Boolean).length && fb.every((x) => /Riktig/.test(x)), `bølge 9 ${id}/${seed}: alle fasitsvar godtas`);
+      await q.click('#all'); ok(!(await overflow(q)), `bølge 9 ${id}/${seed}: ingen sidelengs rulling i 390 px med løsninger åpne`); }
+    // Factoring: frigjort kapital godtas ikke som forskuttert beløp når kredittiden blir kortere; prosent som desimaltall gir beskjed
+    await go(q, 'oving/k7-factoring/' + fs[0]); const fr = await q.evaluate((s) => { const t = OKAD.make('k7-factoring', s); return [OKAD.fmtAnswer(t.parts[2]), t.parts[7].answer]; }, fs[0]);
+    await q.fill('#p3-in', fr[0]); await q.press('#p3-in', 'Enter'); ok(!/Riktig/.test(await q.textContent('#p3-fb')), 'factoring: frigjort kapital godtas ikke som forskudd ved kortere kredittid');
+    await q.fill('#p7-in', String(fr[1]).replace('.', ',')); await q.press('#p7-in', 'Enter'); ok(/desimaltall/.test(await q.textContent('#p7-fb')), 'factoring: kostnad som desimaltall gir beskjed');
+    await go(q, 'oving/k7-factoring/' + fs[1]); await q.click('[data-act=hint][data-i="1"]'); ok(/dagene før forskuddet/.test(await q.textContent('#p1-hint')), 'factoring: hintet nevner dagene før forskuddet');
+    // Nøkkeltall: «… dager» godtas, kasselikviditet med varelager godtas ikke, gjeldsandel som desimaltall gir beskjed
+    await go(q, 'oving/k12-nokkeltall-likviditet/7'); const nk = await q.evaluate(() => { const t = OKAD.make('k12-nokkeltall-likviditet', 7); return [t.parts[4].answer, t.parts[1].answer, t.parts[3].answer]; });
+    ok(/dager/.test(await q.textContent('#p4-in + .unit')), 'nøkkeltall: enheten «dager» står ved feltet');
+    await q.fill('#p4-in', nk[0].toFixed(1).replace('.', ',') + ' dager'); await q.press('#p4-in', 'Enter'); ok(/Riktig/.test(await q.textContent('#p4-fb')), 'nøkkeltall: «… dager» godtas');
+    await q.fill('#p2-in', nk[1].toFixed(2).replace('.', ',')); await q.press('#p2-in', 'Enter'); ok(!/Riktig/.test(await q.textContent('#p2-fb')), 'nøkkeltall: balanselikviditet godtas ikke som kasselikviditet');
+    await q.fill('#p3-in', nk[2].toFixed(3).replace('.', ',')); await q.press('#p3-in', 'Enter'); ok(/desimaltall/.test(await q.textContent('#p3-fb')), 'nøkkeltall: gjeldsandel som desimaltall gir beskjed');
+    await q.focus('#p6-in'); await q.keyboard.press('Tab'); ok(await q.evaluate(() => document.activeElement.dataset.act === 'check'), 'nøkkeltall: Tab fra siste tallfelt går til Sjekk');
+    ok(/\?/.test(await q.textContent('.task-text table')), 'nøkkeltall: året som skal regnes, står med spørsmålstegn i tabellen');
+    // Teori, Øv, formler, trekkpott
+    await go(q, 'tema/7'); ok((await q.locator('a[href="#/oving/k7-factoring"]').count()) > 0, 'tema 7: factoring under «Øv på kapitlet»'); ok(/Factoring: frigjort kapital og kostnad i prosent/.test(await q.textContent('#view')) && /15,9 %/.test(await q.textContent('#view')), 'tema 7: fremgangsmåte og eksempel 7.8 for factoring');
+    await go(q, 'tema/12'); ok(/Nøkkeltall for likviditet mot bransjen/.test(await q.textContent('#view')) && /58,7 %/.test(await q.textContent('#view')), 'tema 12: fremgangsmåte og eksempel for nøkkeltall, med merknad om gjeldsandelen');
+    await go(q, 'formler'); await q.fill('#fs', 'kasselikviditet'); ok((await q.locator('.fitem').count()) > 0, 'formelsøk: kasselikviditet gir treff');
+    await q.fill('#fs', 'oppgaveteksten sier'); ok((await q.locator('.fitem').count()) >= 4, 'formelsøk: regelen om dager i året står i formlene');
+    ok(await q.evaluate(() => !OKAD.mockSlots.some((m) => m.pool.some(([g]) => g === 'k7-factoring' || g === 'k12-nokkeltall-likviditet'))), 'bølge 9: de nye typene er ikke i prøveeksamenens trekkpott');
+    ok(await q.evaluate(() => !OKAD.prediction.slots.concat(OKAD.prediction.jokers).some((x) => x.gens.includes('k7-factoring') || x.gens.includes('k12-nokkeltall-likviditet'))), 'bølge 9: de nye typene er ikke i prognosen');
+    // Dager i året: alle oppgavetyper som regner med kredittdager eller dager til bortfall, oppgir antallet i teksten
+    const days = await q.evaluate(() => { const bad = []; for (const g of OKAD.gens) for (let s = 1; s <= 40; s++) { const t = OKAD.make(g.id, s), all = t.text + t.parts.map((p) => p.q).join(' ');
+      if (/kreditt|kundefordring|kontantrabatt|factoring|bortfall/i.test(all) && /\d+ dager/.test(all) && !/(360|365) dager/.test(all)) { bad.push(g.id + '/' + s); break; } } return bad; });
+    ok(days.length === 0, 'alle oppgavetyper med dager oppgir antall dager i året' + (days.length ? ': ' + days.join(', ') : ''));
+    const M = await mk({ w: 320, h: 640 }); for (const [id, seed] of NEW) { await go(M, `oving/${id}/${seed}`); await M.click('#all'); ok(!(await overflow(M)), `bølge 9 ${id}/${seed}: ingen sidelengs rulling i 320 px`); }
+    await go(M, 'oving/k12-nokkeltall-likviditet/7'); ok(await M.evaluate(() => { const w = document.querySelectorAll('.task-text .tablewrap')[1]; return w && w.scrollWidth <= w.clientWidth + 1; }), 'nøkkeltall: balansen med beløp vises hel i 320 px'); await M.screenshot({ path: out + '/m-nokkeltall.png', fullPage: true }); await M.context().close();
+    const D = await mk({ w: 1200, dark: true }); await go(D, 'oving/k7-factoring/' + fs[0]); await D.click('#all'); await D.screenshot({ path: out + '/factoring-mork.png', fullPage: true }); await D.context().close();
     await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }

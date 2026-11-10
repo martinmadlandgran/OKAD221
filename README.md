@@ -8,7 +8,7 @@ Statisk øvingsnettside (ren HTML/CSS/JS, ingen byggesteg) for ØKAD 221 ved NLA
 | Del | Hva |
 |---|---|
 | Eksamensanalyse | Varmekart tema × år for de ti settene 2016–2025, hyppighet vektet mot de siste årene, og prognose for 2026 |
-| Øvingsoppgaver | 41 generatorer som lager nye tall hver gang, med svarsjekk, hint og løsning steg for steg |
+| Øvingsoppgaver | 43 generatorer som lager nye tall hver gang, med svarsjekk, hint og løsning steg for steg |
 | Repeter | Oppgavene du har bommet på (feil første forsøk, løsning åpnet før svar, feil på prøveeksamen), med den viktigste eksamenstypen øverst. Samme oppgave igjen eller nye tall |
 | Prøveeksamen 2026 | Fem oppgaver satt sammen etter prognosen, med tidtaking og automatisk retting. Kan også skrives ut med fasit bakerst og rettes på skjerm etterpå |
 | Tidligere eksamener | 10 sett, 40 oppgaver, 143 deloppgaver med ordrett tekst, fasit og løsningsmetode |
@@ -52,7 +52,7 @@ Røyk-tester alle generatorer over 300 frø og skriver ut antall eksamener, teor
 node tools/verify.js 1000
 ```
 
-Faglig kontroll uten generatorenes egen fasit: regnefunksjonene for de 14 nyeste oppgavetypene mot tall i `kilder/` (eksamen 2022 og 2023, kapittel-LF 2.1, 6.1, 6.5, 6.9, 8.1, 8.3, 8.8, 8.9, 8.10, 8.12, 11.13, 12.1, 12.2, 12.3 og 12.5), og uavhengig etterregning fra oppgaveteksten for de samme generatorene.
+Faglig kontroll uten generatorenes egen fasit: regnefunksjonene for de 16 nyeste oppgavetypene mot tall i `kilder/` (eksamen 2022 og 2023, kapittel-LF 2.1, 6.1, 6.5, 6.9, 7.7b, 7.8, 8.1, 8.3, 8.8, 8.9, 8.10, 8.12, 11.13, 12.1, 12.2, 12.3 og 12.5, og forelesningens factoringeksempel 7-10), og uavhengig etterregning fra oppgaveteksten for de samme generatorene.
 
 ```bash
 python3 -m http.server 8765
@@ -62,7 +62,7 @@ python3 -m http.server 8765
 node tools/e2e.js /tmp/skjermbilder
 ```
 
-Nettlesertest (Playwright): alle sider i fire skjermstørrelser, svarsjekk og feiltilstander, prøveeksamen fra start til retting, prøveeksamen på papir (utskrift, fasit på ny side), flytting av fremdrift (eksport, import, sammenslåing, ugyldige filer), repetisjonslisten (fylles, tømmes, prøveeksamen, flytting), quizrepetisjon (fylles, tømmes, høyst fem per runde, flytting, ugyldige data), oppgavetypene fra bølge 7 (fasit, toleranse for målsøking, stjernediagram på mobil, i mørkt tema og på utskrift) og bølge 8 (fasit, svar i tusen kroner, fortegn, kapittel 12 i teori og Øv, utenfor prøveeksamenen), tastaturnavigasjon, kontrast (WCAG AA) i lyst og mørkt tema, trykkflater på mobil og sperret lagring.
+Nettlesertest (Playwright): alle sider i fire skjermstørrelser, svarsjekk og feiltilstander, prøveeksamen fra start til retting, prøveeksamen på papir (utskrift, fasit på ny side), flytting av fremdrift (eksport, import, sammenslåing, ugyldige filer), repetisjonslisten (fylles, tømmes, prøveeksamen, flytting), quizrepetisjon (fylles, tømmes, høyst fem per runde, flytting, ugyldige data), oppgavetypene fra bølge 7 (fasit, toleranse for målsøking, stjernediagram på mobil, i mørkt tema og på utskrift), bølge 8 (fasit, svar i tusen kroner, fortegn, kapittel 12 i teori og Øv, utenfor prøveeksamenen) og bølge 9 (factoring og nøkkeltall: fasit, svar i dager, typiske forvekslinger, tabeller i 320 px, og at alle oppgaver med dager oppgir antall dager i året), tastaturnavigasjon, kontrast (WCAG AA) i lyst og mørkt tema, trykkflater på mobil og sperret lagring.
 
-Struktur: `js/fin.js` (finansfunksjoner), `js/gen/*.js` (oppgavegeneratorer; `ir.js` har følsomhet på internrenten, leasing og internrente etter skatt, `salg.js` salg av driftsmiddel, `kreditt.js` kapittel 12), `js/data/*.js`
+Struktur: `js/fin.js` (finansfunksjoner), `js/gen/*.js` (oppgavegeneratorer; `ir.js` har følsomhet på internrenten, leasing og internrente etter skatt, `salg.js` salg av driftsmiddel, `kreditt.js` kapittel 12 og factoring), `js/data/*.js`
 (eksamener, teori, quiz, prognose), `js/app.js` (visninger).
