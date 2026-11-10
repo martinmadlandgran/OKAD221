@@ -41,7 +41,8 @@
     blurb: 'Relevante kontantstrømmer med feller, arbeidskapital, saldoavskrivning, WACC og salg av anleggsmiddel. Har kommet hvert eneste år.',
     gen(R) {
       // Trekk på nytt til nåverdien er realistisk (innenfor ±22 % av investeringen), slik at konklusjonen ikke er opplagt.
-      let t; for (let i = 0; i < 120; i++) { t = this.build(R); if (Math.abs(t.npv) < 0.22 * t.AM) break; }
+      // Nedre grense: |NV| over 0,6 % av investeringen, slik at et svar med motsatt fortegn aldri faller innenfor toleransen (±0,4 %).
+      let t; for (let i = 0; i < 120; i++) { t = this.build(R); if (Math.abs(t.npv) < 0.22 * t.AM && Math.abs(t.npv) > 0.006 * t.AM) break; }
       return t;
     },
     build(R) {
@@ -235,7 +236,8 @@
     blurb: 'Egenkapitalkrav med KVM, gjeldskrav etter skatt og veid totalkapitalkostnad.',
     gen(R) {
       const firm = R.pick(firms)[0]; const W = waccSetup(R, firm);
-      const E = R.int(20, 90) * 10; const G = Math.round(E * W.wD / W.wE);
+      // Markedsverdiene velges slik at andelene blir nøyaktig de oppgitte (E/V = egenkapitalandelen).
+      const V = R.int(5, 20) * 100; const E = Math.round(V * W.wE); const G = V - E;
       const beta2 = U.round(W.beta + R.pick([-0.4, -0.3, 0.3, 0.4]), 2);
       const re2 = F.capm(W.rf, beta2, W.rm);
       const ret = U.round(W.re + R.pick([-0.03, -0.02, 0.02, 0.03]), 3);

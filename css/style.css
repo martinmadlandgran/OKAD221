@@ -88,6 +88,9 @@ footer { max-width: 1120px; margin: 0 auto; border-top: 1px solid var(--line); c
 input[type=text], input[type=date], select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--ink-3); padding: 8px 10px; min-height: 40px; border-radius: 0; }
 input[type=text]:hover, textarea:hover, select:hover { border-color: var(--ink); }
 textarea { width: 100%; min-height: 84px; resize: vertical; display: block; }
+input[type=file] { font: inherit; font-size: .9rem; color: var(--ink-2); max-width: 100%; }
+input[type=file]::file-selector-button { font: 600 .92rem var(--sans); border: 1.5px solid var(--ink); background: var(--bg); color: var(--ink); padding: 8px 14px; min-height: 40px; margin-right: 10px; cursor: pointer; }
+input[type=file]::file-selector-button:hover { background: var(--ink); color: var(--bg); }
 input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); vertical-align: -3px; margin-right: 6px; }
 label { font-size: .9rem; color: var(--ink-2); }
 .row { display: flex; gap: 10px 14px; align-items: center; flex-wrap: wrap; }
@@ -229,16 +232,39 @@ ol.steps { padding-left: 1.3em; } ol.steps li { margin: .5em 0; }
   .next { grid-template-columns: 1fr; padding: 14px; } .next .btn { width: 100%; justify-content: center; }
   .part { grid-template-columns: 1.9rem minmax(0, 1fr); } .part > .letter { font-size: 1.25rem; }
   .answer input { flex: 1 1 8rem; width: auto; min-height: 48px; font-size: 1.05rem; } .answer .btn.primary { min-height: 48px; }
-  .btn { min-height: 44px; }
+  .btn { min-height: 44px; } input[type=file]::file-selector-button { min-height: 44px; }
   .rowlink { grid-template-columns: 1fr; } .rl-meta { grid-row: auto; grid-column: 1; text-align: left; }
   .slot { grid-template-columns: 1fr; } .slot .big { font-size: 1.6rem; } .slot .big small { display: inline; margin-left: 8px; }
   .bar-row { grid-template-columns: 1fr 3.2rem; } .bar-row > :first-child { grid-column: 1 / -1; }
   .sticky-bar { top: 49px; } .sticky-bar .hide-m { display: none; }
   table.data th, table.data td { padding: 5px 8px; }
   footer { padding-bottom: 90px; }
+  #impbox .callout { padding: 10px 10px 10px 12px; } #impbox table.data th, #impbox table.data td { padding: 5px 5px; } #impbox table.data thead th { letter-spacing: 0; }
 }
+/* Prøveeksamen på papir */
+.printonly { display: none; }
+.ansline { margin: 10px 0 4px; color: var(--ink-2); }
+.ansline .blank { display: inline-block; width: 12rem; max-width: 60%; border-bottom: 1px solid var(--ink); vertical-align: -2px; margin: 0 4px; }
+.writelines { margin: 8px 0 4px; } .writelines i { display: block; height: 1.9em; border-bottom: 1px solid var(--line); }
+.pagebreak { border-top: 3px double var(--rule); margin-top: 40px; }
+.keybody.closed { display: none; }
+.pk h3 { margin-top: 1.8em; }
+
 @media print {
-  .topbar, .tabbar, footer, .noprint, .btn, .fb, .skip { display: none !important; }
+  :root, :root:not([data-theme="light"]), :root[data-theme="dark"] {
+    --bg: #fff; --tint: #f2f2f2; --ink: #000; --ink-2: #222; --ink-3: #444; --line: #999; --rule: #000;
+    --accent: #000; --mark: #fff; --mark-ink: #000; --good: #000; --bad: #000; --warn: #000; --bad-bg: #fff; --warn-bg: #fff; --good-bg: #fff;
+  }
+  body { font-size: 11pt; }
+  .topbar, .tabbar, footer, .noprint, .btn, .fb, .skip, .notice, .sticky-bar { display: none !important; }
+  .printonly { display: block; }
   main { padding: 0; max-width: none; } .answer input, textarea { border: 0; border-bottom: 1px solid #000; }
-  h2 { break-after: avoid; } .part { break-inside: avoid; }
+  h2 { break-after: avoid; } .part { break-inside: avoid; } h3 { break-after: avoid; }
+  .tablewrap { overflow: visible; } table.data { font-size: 9pt; } table.data td { font-size: 9pt; }
+  .formula { white-space: normal; overflow: visible; background: none; }
+  .keybody.closed { display: block !important; }
+  .pagebreak { break-before: page; border: 0; margin: 0; }
+  .solution { border-left: 2px solid #000; }
+  .solution .svar span { border: 1px solid #000; }
+  a { color: #000; text-decoration: none; }
 }

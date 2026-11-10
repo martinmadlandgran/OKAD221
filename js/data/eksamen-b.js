@@ -230,6 +230,7 @@
         nr: 1, weight: 20,
         title: 'Homansbyen Hotell: utvidelse med nabobygg',
         topics: ['prosjekt', 'payback'],
+        gens: ['k2-hotell-differanse'],
         text: `<p>Homansbyen Hotell AS er et veldrevet hotell sentralt i Oslo. Hotellet har 50 rom og er åpent 350 dager i året. Romprisen er 1 000, og variable kostnader pr. natt er 150. Beleggsprosenten er praktisk talt 100 %, dvs. det er betalende gjester på et rom så godt som hele tiden.</p>
 <p>Betalbare faste kostnader til drift av resepsjon, vedlikehold osv. er 2 000 000 årlig.</p>
 <p>Hotellet opplever flere ganger at de må avvise gjester fordi det er fullt. Det har nå dukket opp et interessant forslag. Man har muligheten til å leie et nabobygg for 800 000 årlig. Avtalen kan vare i 5 år. Bygget nå oppgraderes for å kunne fungere som hotell, og denne oppgraderingen er beregnet å koste 11 000 000. Dersom man tar dette bygget i bruk øker romkapasiteten til 65 rom, og de faste kostnadene øker til 2 500 000 årlig. Etter at perioden på 5 år er over, overdras bygget igjen til eier uten betaling. Bedriften bruker et avkastningskrav på 10 %.</p>
@@ -610,6 +611,7 @@
         nr: 4, weight: 35,
         title: 'Kapasitetsutvidelse linser: WACC og NNV etter skatt',
         topics: ['kvm', 'skatt'],
+        gens: ['k8-kapasitetsutvidelse'],
         text: `<p>En bedrift produserer og selger blant annet en linse som brukes i fotoenheten i smarttelefoner. Kundene er produsenter av mobiltelefoner verden over. Etterspørselen er svært høy og de siste årene har salget ligget konstant på 100 000 enheter, som er kapasitetsgrensen. Lønnsomheten er meget god, og bedriften kan vise til store overskudd.</p>
 <p>Produktet omsettes for 48 pr. enhet, og de variable enhetskostnadene er 25. Man antar at salget neste år kunne økt til 400 000 enheter, dersom man hadde hatt kapasitet til å produsere så mye. Faktisk har markedsavdelingen estimert et mulig salg på 400 000, 500 000, 600 000, 600 000 og 500 000 enheter årlig over de neste 5 år. For å kunne oppnå denne produksjonen, må man investere i produksjonsutstyr for 20 000 000. Utstyret avskrives etter saldometoden med 20 % årlig. Man antar at utrangeringsverdien på produksjonsutstyret er 0. Utstyret må gjennomgå et større vedlikehold i år 4. Dette er kostnadsberegnet til 3 500 000.</p>
 <p>Andre betalbare faste kostnader er budsjettert til 2 500 000 årlig. Bedriftens toppledelse krever også at prosjektet må bære en andel av selskapets indirekte faste kostnader. Man anslår at det vil bli 500 000 årlig. Prosjektet vil også medføre økning i arbeidskapitalen. Man anslår at arbeidskapitalen vil utgjøre 20 % av omsetningen.</p>

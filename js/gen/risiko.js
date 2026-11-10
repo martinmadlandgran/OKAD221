@@ -49,7 +49,13 @@
     topic: 'Portefølje',
     blurb: 'Tilstandstabell med sannsynligheter. Forventning, standardavvik, dominans, kovarians, korrelasjon, portefølje og minimum varians.',
     gen(R) {
-      const S = makeStates(R, R.bool(0.4));
+      // Trekk på nytt til minimum-varians-vekten er pedagogisk (−50 % til 150 %). Ekstreme vekter (over 300 %) er riktig regnet, men lærer lite.
+      const eq = R.bool(0.4); let S;
+      for (let k = 0; k < 60; k++) {
+        S = makeStates(R, eq);
+        const vA0 = F.variance(S.a, S.ps), vB0 = F.variance(S.b, S.ps), c0 = F.covariance(S.a, S.b, S.ps), w0 = (vB0 - c0) / (vA0 + vB0 - 2 * c0);
+        if (w0 >= -0.5 && w0 <= 1.5) break;
+      }
       const { ps, names, a, b } = S;
       const EA = F.mean(a, ps), EB = F.mean(b, ps), vA = F.variance(a, ps), vB = F.variance(b, ps), sA = Math.sqrt(vA), sB = Math.sqrt(vB);
       const cov = F.covariance(a, b, ps), rho = cov / (sA * sB);

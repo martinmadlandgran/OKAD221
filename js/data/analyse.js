@@ -5,9 +5,9 @@
   O.exams = O.exams || []; O.theory = O.theory || []; O.quiz = O.quiz || [];
 
   O.topics = {
-    skatt: { name: 'Nåverdi etter skatt (saldoavskrivning)', ch: [8], gens: ['k8-nv-etter-skatt-komplett', 'k8-saldo-arlig-kontantstrom'] },
+    skatt: { name: 'Nåverdi etter skatt (saldoavskrivning)', ch: [8], gens: ['k8-nv-etter-skatt-komplett', 'k8-saldo-arlig-kontantstrom', 'k8-kapasitetsutvidelse'] },
     kvm: { name: 'KVM, beta og WACC', ch: [11], gens: ['k11-wacc-kvm', 'k11-kml-beta'] },
-    prosjekt: { name: 'Kontantstrøm, NNV og internrente før skatt', ch: [2, 4], gens: ['k2-prosjekt-for-skatt', 'k4-resultat-til-kontantstrom'] },
+    prosjekt: { name: 'Kontantstrøm, NNV og internrente før skatt', ch: [2, 4], gens: ['k2-prosjekt-for-skatt', 'k4-resultat-til-kontantstrom', 'k2-hotell-differanse', 'k2-kontantstrom-egenkapital'] },
     toprosjekt: { name: 'Gjensidig utelukkende prosjekter / Fisher-rente', ch: [4], gens: ['k4-to-prosjekter-fisher', 'k4-resultat-til-kontantstrom'] },
     folsomhet: { name: 'Kritiske verdier og følsomhet', ch: [6], gens: ['k6-kritiske-verdier', 'k2-prosjekt-for-skatt'] },
     portefolje: { name: 'Portefølje: forventning, risiko, korrelasjon', ch: [10], gens: ['k10-to-aksjer-tilstander', 'k10-kurser-til-avkastning'] },
@@ -28,7 +28,7 @@
   O.prediction = {
     slots: [
       { nr: 1, title: 'Prosjektanalyse før skatt', weight: [15, 25], prob: 0.97, topics: ['prosjekt', 'toprosjekt', 'folsomhet'],
-        gens: ['k2-prosjekt-for-skatt', 'k4-to-prosjekter-fisher', 'k4-resultat-til-kontantstrom', 'k6-kritiske-verdier'],
+        gens: ['k2-prosjekt-for-skatt', 'k4-to-prosjekter-fisher', 'k4-resultat-til-kontantstrom', 'k6-kritiske-verdier', 'k2-hotell-differanse'],
         why: 'Har åpnet settet 10 av 10 ganger. Veksler mellom ett prosjekt med kalkyletabell og feller (2018, 2022, 2023, 2025) og to gjensidig utelukkende prosjekter med Fisher-rente (2016, 2017, 2019, 2020, 2021, 2024). Etter 2025 (ett prosjekt) taler vekslingen svakt for to prosjekter i 2026. Nesten alltid en «baklengs»-deloppgave: kritisk verdi, maks pris eller ekvivalent annuitet.' },
       { nr: 2, title: 'Obligasjoner', weight: [10, 15], prob: 0.8, topics: ['obligasjon'],
         gens: ['k4-obligasjon-kurs-ytm-durasjon', 'k4-spotrenter-terminrenter'],
@@ -40,7 +40,7 @@
         gens: ['k10-to-aksjer-tilstander', 'k10-kurser-til-avkastning'],
         why: 'Seks år på rad (2020–2025) og vekten har økt fra 20 til 25–30 %. De to siste årene er avkastningen oppgitt som kurser som må regnes om. Alltid forventning og standardavvik, så dominans, portefølje (50/50 eller 60/40), og et kort «hvorfor»-spørsmål. Minimum varians (2016, 2021, 2023), risikofri kombinasjon (2021) og systematisk risiko (2024) roterer.' },
       { nr: 5, title: 'WACC og nåverdi etter skatt', weight: [25, 35], prob: 0.99, topics: ['skatt', 'kvm'],
-        gens: ['k8-nv-etter-skatt-komplett'],
+        gens: ['k8-nv-etter-skatt-komplett', 'k8-kapasitetsutvidelse'],
         why: 'Eneste oppgave som har kommet i alle ti sett, alltid til slutt og alltid tyngst (25–40 %). Oppskriften er helt fast: KVM uten skattejustering → WACC → relevant kontantstrøm med 2–4 feller → arbeidskapital → NV spart skatt på saldoavskrivning (alltid 20 % saldo, 22 % skatt). Salgsverdi «på skattemessig gunstigste måte» kom i 2016, 2020, 2021, 2023 og 2024 – ikke i 2025, så den er sannsynlig i 2026.' },
     ],
     jokers: [
@@ -75,10 +75,10 @@
 
   /** Sammensetning av prøveeksamen 2026. Hver luke trekker én generator. Vekter summerer til 100. */
   O.mockSlots = [
-    { weight: 20, pool: [['k4-to-prosjekter-fisher', 3], ['k2-prosjekt-for-skatt', 3], ['k4-resultat-til-kontantstrom', 1], ['k6-kritiske-verdier', 1]] },
+    { weight: 20, pool: [['k4-to-prosjekter-fisher', 3], ['k2-prosjekt-for-skatt', 3], ['k4-resultat-til-kontantstrom', 1], ['k6-kritiske-verdier', 1], ['k2-hotell-differanse', 1.5]] },
     { weight: 10, pool: [['k4-obligasjon-kurs-ytm-durasjon', 3], ['k4-spotrenter-terminrenter', 2]] },
     { weight: 20, pool: [['k7-annuitetslan-maanedlig', 4], ['k7-avbetaling-nominell-effektiv', 1], ['k7-rentefri-kreditt', 1], ['k4-okonomisk-levetid', 1.5], ['k4-arskostnad-ulik-levetid', 1], ['k13-opsjoner-binomial', 0.6], ['k9-inflasjon-realrente', 0.5]] },
     { weight: 20, pool: [['k10-kurser-til-avkastning', 3], ['k10-to-aksjer-tilstander', 3]] },
-    { weight: 30, pool: [['k8-nv-etter-skatt-komplett', 1]] },
+    { weight: 30, pool: [['k8-nv-etter-skatt-komplett', 2], ['k8-kapasitetsutvidelse', 1]] },
   ];
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -307,11 +307,21 @@
       const pb = F.payback(cfs);
       const disc = cfs.map((c, t) => c / Math.pow(1 + r, t)); const dpb = F.payback(disc);
       const names = 'ABCDE'.split('');
-      const projs = names.map((nm) => { const inv = R.int(4, 16) * 100000; const pi = R.int(5, 45) / 100; return { nm, inv, npv: Math.round(inv * pi / 10000) * 10000 }; });
-      const budget = Math.round(U.sum(projs.map((x) => x.inv)) * R.pick([0.45, 0.55, 0.6]) / 100000) * 100000;
-      let best = { npv: -1, set: [] };
-      for (let m = 0; m < 32; m++) { let inv = 0, v = 0; const set = []; projs.forEach((x, i) => { if (m >> i & 1) { inv += x.inv; v += x.npv; set.push(x.nm); } }); if (inv <= budget && v > best.npv) best = { npv: v, set, inv }; }
+      // Trekk prosjektene på nytt til den beste udelelige kombinasjonen er entydig (ingen annen kombinasjon gir like høy NNV).
+      let projs, budget, combos;
+      for (let k = 0; k < 80; k++) {
+        projs = names.map((nm) => { const inv = R.int(4, 16) * 100000; const pi = R.int(5, 45) / 100; return { nm, inv, npv: Math.round(inv * pi / 10000) * 10000 }; });
+        budget = Math.round(U.sum(projs.map((x) => x.inv)) * R.pick([0.45, 0.55, 0.6]) / 100000) * 100000;
+        combos = [];
+        for (let m = 1; m < 32; m++) { let inv = 0, v = 0; const set = []; projs.forEach((x, i) => { if (m >> i & 1) { inv += x.inv; v += x.npv; set.push(x.nm); } }); if (inv <= budget) combos.push({ npv: v, set, inv }); }
+        combos.sort((a, b) => b.npv - a.npv || a.inv - b.inv);
+        if (combos.length > 1 && combos[0].npv > combos[1].npv) break;
+      }
+      const best = combos[0], second = combos[1];
       const ranked = projs.slice().sort((a, b) => b.npv / b.inv - a.npv / a.inv);
+      let gLeft = budget; const greedy = { set: [], npv: 0, inv: 0 };
+      ranked.forEach((x) => { if (x.inv <= gLeft) { gLeft -= x.inv; greedy.set.push(x.nm); greedy.npv += x.npv; greedy.inv += x.inv; } });
+      const greedySame = greedy.set.slice().sort().join() === best.set.slice().sort().join();
       let left = budget, fracNpv = 0; const used = [];
       ranked.forEach((x) => { if (left <= 0) return; const share = Math.min(1, left / x.inv); fracNpv += share * x.npv; left -= share * x.inv; used.push(`${x.nm} (${pct(share, share === 1 ? 0 : 1)})`); });
       return {
@@ -332,7 +342,8 @@
             sol: table(['Prosjekt', 'Investering', 'NNV', 'NVI'], ranked.map((x) => [x.nm, n(x.inv), n(x.npv), n(x.npv / x.inv, 3)])) + `<p>Velg i rekkefølge etter NVI: ${used.join(', ')}. Samlet NNV = <b>${n(fracNpv)}</b>.</p>` },
           { q: 'Anta at prosjektene <b>ikke</b> er delbare. Hva er den høyeste samlede NNV innenfor budsjettet?', answer: best.npv, unit: 'kr', tol: { abs: 1 },
             hint: 'Nåverdiindeksen er bare en rettesnor når prosjektene er udelelige – prøv kombinasjoner.',
-            sol: `<p>Beste kombinasjon er <b>${best.set.join(' + ')}</b> med samlet investering ${n(best.inv)} (budsjett ${n(budget)}) og samlet NNV <b>${n(best.npv)}</b>.</p><p>Med udelelige prosjekter kan rangering etter NVI gi feil svar fordi budsjettet ikke utnyttes fullt – man må sammenligne samlet NNV for aktuelle kombinasjoner.</p>` },
+            sol: `<p>Beste kombinasjon er <b>${best.set.join(' + ')}</b> med samlet investering ${n(best.inv)} (budsjett ${n(budget)}) og samlet NNV <b>${n(best.npv)}</b>. Nest beste er ${second.set.join(' + ')} med NNV ${n(second.npv)}.</p>` +
+              `<p>${greedySame ? `Her gir det samme svar å velge etter NVI og hoppe over prosjekter som ikke får plass (${greedy.set.join(' + ')}), men det er ikke gitt.` : `Velger du etter NVI og hopper over prosjekter som ikke får plass, får du ${greedy.set.join(' + ')} med NNV ${n(greedy.npv)} – lavere enn beste kombinasjon.`} Med udelelige prosjekter kan rangering etter NVI gi feil svar fordi budsjettet ikke utnyttes fullt – man må sammenligne samlet NNV for aktuelle kombinasjoner.</p>` },
           { kind: 'text', q: 'Hva kan du si om payback-metoden som verktøy for å analysere prosjektlønnsomhet?',
             points: ['Tar ikke hensyn til tidsverdien av penger (vanlig payback).', 'Ser bort fra alle kontantstrømmer etter tilbakebetalingstidspunktet – kan forkaste lønnsomme, langsiktige prosjekter.',
               'Kravet til maksimal tilbakebetalingstid er vilkårlig satt.', 'Fordeler: enkel, sier noe om likviditet og risiko (rask tilbakebetaling = mindre eksponering). Brukes som supplement, ikke som lønnsomhetsmål.'] },
