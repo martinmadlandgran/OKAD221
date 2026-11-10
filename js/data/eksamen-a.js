@@ -249,7 +249,8 @@
     year: 2017,
     title: 'Mars 2017',
     note: `<p><b>LF er bare et regneark med tall.</b> Sluttsvarene er hentet fra LF-regnearket, mens metodebeskrivelsene er en tolkning av regnearkets linjer (kontrollregnet). Drøftingsdelene (4c, forklaringen i 4d og 4e) har ingen LF-tekst; det som står der er egen skisse.</p>
-<p><b>Skattejustert KVM:</b> LF til oppgave 2d bruker kapitalverdimodellen <em>med</em> skattejustert risikofri rente, r<sub>e</sub> = r<sub>f</sub> · (1 − s) + β · [r<sub>m</sub> − r<sub>f</sub> · (1 − s)]. Dagens pensum (7. utg.) bruker KVM <em>uten</em> skattejustering, slik at avkastningskrav og nåverdi vil avvike noe fra LF. Egen utregning (ikke LF): uten skattejustering blir r<sub>e</sub> = 9,33 % og WACC = 8,04 %, som fortsatt avrundes til 8 % – nåverdien i 2e blir da den samme så lenge du runder av til hel prosent.</p>`,
+<p><b>Skattejustert KVM:</b> LF til oppgave 2d bruker kapitalverdimodellen <em>med</em> skattejustert risikofri rente, r<sub>e</sub> = r<sub>f</sub> · (1 − s) + β · [r<sub>m</sub> − r<sub>f</sub> · (1 − s)]. Dagens pensum (7. utg.) bruker KVM <em>uten</em> skattejustering, slik at avkastningskrav og nåverdi vil avvike noe fra LF. Egen utregning (ikke LF): uten skattejustering blir r<sub>e</sub> = 9,33 % og WACC = 8,04 %, som fortsatt avrundes til 8 % – nåverdien i 2e blir da den samme så lenge du runder av til hel prosent.</p>
+<p><b>Oppgave 4d/4e:</b> LF oppgir internrenten på differanseinvesteringen Y − X til 9,17 %. Etterregning (egen utregning, ikke LF) gir 8,68 %; konklusjonene endres ikke.</p>`,
     tasks: [
       {
         nr: 1, weight: 20,
@@ -459,18 +460,20 @@
             label: 'd',
             q: `Vis kontantstrømmen og beregn internrenten til differanseinvesteringen for de to investeringsalternativene. Forklar hvordan internrenten kan brukes til å sammenligne lønnsomheten til de to alternativene.`,
             topics: ['toprosjekt'],
-            answer: `Differansekontantstrøm Y − X: 0, −1 200 000, 200 000, 1 200 000. Internrente = <b>9,17 %</b>, NV (8 %) = 12 955.`,
+            answer: `Differansekontantstrøm Y − X: 0, −1 200 000, 200 000, 1 200 000. Internrente = <b>9,17 %</b> ifølge LF (etterregnet: <b>8,68 %</b>), NV (8 %) = 12 955.`,
             method: `<p>LF-regnearket:</p>
 <div class="tablewrap"><table class="data"><thead><tr><th>År</th><th>0</th><th>1</th><th>2</th><th>3</th><th>NPV (8 %)</th><th>IRR</th></tr></thead><tbody><tr><th scope="row">Prosjekt Y − X</th><td>0</td><td>−1 200 000</td><td>200 000</td><td>1 200 000</td><td>12 955</td><td>9,17 %</td></tr></tbody></table></div>
-<p>Tolkning (egen, standard – LF har ingen tekst): Internrenten på differanseinvesteringen (9,17 %) er større enn avkastningskravet (8 %) → merinvesteringen i Y er lønnsom → velg Y.</p>`,
+<p>Tolkning (egen, standard – LF har ingen tekst): Internrenten på differanseinvesteringen (9,17 %) er større enn avkastningskravet (8 %) → merinvesteringen i Y er lønnsom → velg Y.</p>
+<p><b>Merk – LF-tallet stemmer ikke ved etterregning (egen utregning, ikke LF):</b> Kontantstrømmen 0, −1 200 000, 200 000, 1 200 000 har internrente <b>8,68 %</b>, ikke 9,17 %. Kontroll: ved 8,68 % er NV(X) ≈ NV(Y) ≈ 105 434, mens ved 9,17 % er NV(X) = 90 688 og NV(Y) = 81 595. Konklusjonen er den samme (8,68 % &gt; 8 % → velg Y).</p>`,
             src: 'LF+egen'
           },
           {
             label: 'e',
             q: `Vil et annet avkastningskrav kunne endre rangeringen av lønnsomhet?`,
             topics: ['toprosjekt'],
-            answer: `Ja – ved avkastningskrav over <b>9,17 %</b> blir NV(X) &gt; NV(Y), og rangeringen snur (utledet av LF-tallet; LF mangler tekst).`,
-            method: `<p><b>LF mangler tekst.</b> Utledet av LF-tallet: internrenten på differanseinvesteringen Y − X (9,17 %) er avkastningskravet der prosjektene har lik nåverdi. Ved avkastningskrav over 9,17 % blir NV(X) &gt; NV(Y), og rangeringen snur.</p>`,
+            answer: `Ja – ved avkastningskrav over <b>9,17 %</b> blir NV(X) &gt; NV(Y), og rangeringen snur (utledet av LF-tallet; LF mangler tekst). Etterregnet er skjæringspunktet <b>8,68 %</b>.`,
+            method: `<p><b>LF mangler tekst.</b> Utledet av LF-tallet: internrenten på differanseinvesteringen Y − X (9,17 %) er avkastningskravet der prosjektene har lik nåverdi. Ved avkastningskrav over 9,17 % blir NV(X) &gt; NV(Y), og rangeringen snur.</p>
+<p><b>Merk (egen utregning, ikke LF):</b> Etterregning gir at skjæringspunktet er 8,68 %, ikke LF-tallet 9,17 % (se d).</p>`,
             src: 'LF+egen'
           }
         ]

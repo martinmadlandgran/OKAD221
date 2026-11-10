@@ -193,7 +193,7 @@
     const p = d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
     return x >= 0 ? 1 - p : p;
   };
-  /** Black–Scholes (kontinuerlig rente rc = ln(1+rf)). */
+  /** Black–Scholes (rc er kontinuerlig rente; generatorene setter inn rf direkte, som LF kap. 13). */
   F.blackScholes = (S, K, rc, sigma, T) => {
     const d1 = (Math.log(S / K) + (rc + sigma * sigma / 2) * T) / (sigma * Math.sqrt(T));
     const d2 = d1 - sigma * Math.sqrt(T);

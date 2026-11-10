@@ -88,7 +88,7 @@
             rho > 0.8 ? `Gevinsten er <b>beskjeden</b> fordi korrelasjonen er høy og positiv (${n(rho, 2)}) – aksjene svinger i takt.` : rho < 0 ? `Gevinsten er <b>stor</b> fordi korrelasjonen er negativ (${n(rho, 2)}) – når den ene aksjen gjør det dårlig, gjør den andre det bra.` : `Korrelasjonen er ${n(rho, 2)}, som gir en merkbar diversifikasjonsgevinst.`,
             'Bare ved ρ = +1 blir porteføljens standardavvik lik det veide snittet. For all ρ &lt; 1 blir risikoen lavere enn snittet.',
             'Forventet avkastning påvirkes ikke av korrelasjonen – den er alltid det veide snittet. Diversifisering reduserer risiko «gratis».'] },
-          { q: 'Hvilken andel i aksje A gir porteføljen med lavest mulig standardavvik? (Svar i prosent; negativ = shortsalg.)', answer: wMin, unit: '%', tol: { abs: 0.003 },
+          { label: 'k', q: 'Hvilken andel i aksje A gir porteføljen med lavest mulig standardavvik? (Svar i prosent; negativ = shortsalg.)', answer: wMin, unit: '%', tol: { abs: Math.max(0.003, Math.abs(wMin) * 0.01) },
             hint: 'w<sub>A</sub> = (σ<sub>B</sub>² − Kov) / (σ<sub>A</sub>² + σ<sub>B</sub>² − 2·Kov).',
             sol: f(`w<sub>A</sub> = ${frac(`${n(vB, 6)} − ${n(cov, 6)}`, `${n(vA, 6)} + ${n(vB, 6)} − 2 · ${n(cov, 6)}`)} = ${pct(wMin, 2)}`) +
               `<p>Minimum-varians-porteføljen har standardavvik ${pct(sMin, 2)}.` + (wMin < 0 || wMin > 1 ? ' Andelen ligger utenfor 0–100 % fordi korrelasjonen er svært høy: uten shortsalg er det da best å eie bare aksjen med lavest risiko.' : '') + '</p>' },
@@ -111,7 +111,7 @@
         const pa = mk(p0A, R.pick([0.25, 0.3, 0.4])), pb = mk(p0B, R.pick([0.45, 0.6, 0.75]));
         const a = pa.map((x) => x / p0A - 1), b = pb.map((x) => x / p0B - 1);
         const sA = F.sd(a, ps), sB = F.sd(b, ps);
-        if (Math.abs(sA - sB) < 0.03 || F.mean(a, ps) < 0.02 || F.mean(b, ps) < 0.02) continue;
+        if (Math.abs(sA - sB) < 0.03 || F.mean(a, ps) < 0.05 || F.mean(b, ps) < 0.05) continue;
         S = { ps, p0A, p0B, pa, pb, a, b }; break;
       }
       const { ps, p0A, p0B, pa, pb, a, b } = S;

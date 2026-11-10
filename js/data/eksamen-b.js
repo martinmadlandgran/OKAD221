@@ -208,9 +208,9 @@
 <li><b>Skatt</b> beregnes som 22 % av driftskontantstrømmen (før avskrivninger). Skatteeffekten av avskrivningene tas separat med formelen for evigvarende saldoavskrivning:</li>
 </ul>
 <div class="formula">NV spart skatt = <span class="frac"><span>AM · a · s</span><span>r + a</span></span></div>
-<div class="formula">NV spart skatt = <span class="frac"><span>5 000 000 · 0,20 · 0,22</span><span>0,0687 + 0,20</span></span> = 818 696</div>
+<div class="formula">NV spart skatt = <span class="frac"><span>5 000 000 · 0,20 · 0,22</span><span>0,06872 + 0,20</span></span> = 818 696</div>
 <ul><li><b>Salg «skattemessig gunstigst»</b> = salgssummen nedskrives på saldo. Tapt skattebesparelse (lagt i år 0-kolonnen som nåverdi):</li></ul>
-<div class="formula"><span class="frac"><span>SV · a · s</span><span>r + a</span></span> · <span class="frac"><span>1</span><span>(1 + r)<sup>5</sup></span></span> = <span class="frac"><span>850 000 · 0,20 · 0,22</span><span>0,2687 · 1,0687<sup>5</sup></span></span> = 99 828</div>`,
+<div class="formula"><span class="frac"><span>SV · a · s</span><span>r + a</span></span> · <span class="frac"><span>1</span><span>(1 + r)<sup>5</sup></span></span> = <span class="frac"><span>850 000 · 0,20 · 0,22</span><span>0,26872 · 1,06872<sup>5</sup></span></span> = 99 828</div>`,
             src: 'LF'
           }
         ]
@@ -223,7 +223,7 @@
     id: '2022',
     year: 2022,
     title: 'Desember 2022',
-    note: `<p><b>Vekting:</b> I originalen står oppgavene som 20 % + 20 % + 20 % + 30 %, altså bare <b>90 %</b> til sammen (trykkfeil i eksamenssettet). Den fjerde oppgaven er dessuten feilnummerert «Oppgave 3 (30 %)» i settet (LF kaller den Oppgave 4). Her er den vist med 30 % slik det står trykt, men den skulle trolig vært 40 %.</p>
+    note: `<p><b>Vekting:</b> I originalen står oppgavene som 20 % + 20 % + 20 % + 30 %, altså bare <b>90 %</b> til sammen (trykkfeil i eksamenssettet). Den fjerde oppgaven er dessuten feilnummerert «Oppgave 3 (30 %)» i settet (LF kaller den Oppgave 4). Her er den vist med 30 % slik det står trykt. Trolig skulle én av de tre første vært 30 %, eller den siste 40 %.</p>
 <p><b>Internrente i 1a</b> er ikke oppgitt i løsningsforslaget – tallet her (≈ 13,46 %) er egen utregning. Drøftingen av payback-metoden i 1b er også egen kommentar. Forsiden (varighet og hjelpemidler) var ikke med i kilden. LF bruker KVM <b>uten</b> skattejustering.</p>`,
     tasks: [
       {
@@ -541,7 +541,7 @@
             answer: `Ja, den påvirkes. LF skriver at effektiv rente blir «noe lavere» med serielån, men LFs egen begrunnelse (og faglig riktig svar etter egen vurdering) tilsier at den blir noe <b>høyere</b> med serielån. Les forbeholdet i løsningen.`,
             method: `<p>LF (ordrett): «Effektiv årsente hadde blitt noe lavere med serielån. Annuitetslån nedbetales saktere slik at gjennomsnittlig gjeld er høyere, og da slår gebyrene mindre ut.»</p>
 <p><b>NB – LF er selvmotsigende her.</b> Begrunnelsen (gebyrene slår <em>mindre</em> ut på annuitetslånet fordi gjennomsnittlig gjeld er høyere) tilsier at annuitetslånet har <em>lavest</em> effektiv rente, dvs. at serielånet får noe <b>høyere</b> effektiv rente – ikke lavere slik første setning sier.</p>
-<p class="muted small">Egen vurdering (ikke fra LF): Faglig riktig er at serielån nedbetales raskere → lavere gjennomsnittlig gjeld → faste gebyrer utgjør en større andel → effektiv rente blir noe høyere med serielån. Ta dette med forbehold om at LF-ordlyden sier «lavere».</p>`,
+<p class="muted small">Egen vurdering (ikke fra LF): Faglig riktig er at serielån nedbetales raskere → lavere gjennomsnittlig gjeld → faste gebyrer utgjør en større andel → effektiv rente blir noe høyere med serielån. Etterregnet med oppgavens tall: ca. 8,11 % som serielån mot 8,04 % som annuitetslån. Ta dette med forbehold om at LF-ordlyden sier «lavere».</p>`,
             src: 'LF+egen'
           },
           {
@@ -646,7 +646,7 @@
             answer: `Nåverdien øker med <b>551 286</b> (ny NNV ≈ 1 595 308 – egen sum).`,
             method: `<p>«Skattemessig gunstigste måte» betyr at salgssummen nedskrives på saldoen, slik at man taper fremtidige avskrivninger i stedet for å skatte av hele gevinsten med en gang.</p>
 <div class="formula">NV av salg = <span class="frac"><span>1 000 000</span><span>1,090016<sup>5</sup></span></span> = 649 884</div>
-<div class="formula">NV av økt skatt = <span class="frac"><span>1 000 000 · 0,20 · 0,22</span><span>0,290016 · 1,090016<sup>5</sup></span></span> = −98 598</div>
+<div class="formula">NV av økt skatt = <span class="frac"><span>1 000 000 · 0,20 · 0,22</span><span>0,290016 · 1,090016<sup>5</sup></span></span> = 98 598</div>
 <div class="formula">Endring i nåverdi = 649 884 − 98 598 = <b>551 286</b></div>
 <p class="muted small">Ny NNV ≈ 1 595 308 (egen sum av 1 044 022 + 551 286, ikke oppgitt i LF).</p>`,
             src: 'LF'
@@ -845,7 +845,7 @@
             answer: `Nåverdien øker med <b>763 962</b> (ny NV ≈ 2 089 437 – egen sum).`,
             method: `<p>Salgssummen nedskrives på saldoen (skattemessig gunstigst), slik at man taper fremtidige avskrivninger.</p>
 <div class="formula">NV av salg = <span class="frac"><span>1 500 000</span><span>1,109956<sup>5</sup></span></span> = 890 353</div>
-<div class="formula">NV av økt skatt = <span class="frac"><span>1 500 000 · 0,20 · 0,22</span><span>0,309956 · 1,109956<sup>5</sup></span></span> = −126 390</div>
+<div class="formula">NV av økt skatt = <span class="frac"><span>1 500 000 · 0,20 · 0,22</span><span>0,309956 · 1,109956<sup>5</sup></span></span> = 126 390</div>
 <p><b>Nåverdien øker med 763 962.</b></p>
 <p class="muted small">Ny NV ≈ 2 089 437 (egen sum av 1 325 475 + 763 962, ikke oppgitt i LF).</p>`,
             src: 'LF'
