@@ -359,6 +359,33 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
       ok(pos.size >= 3, `bølge 10 ${nm}: riktig svar står ikke på samme plass i dataene`);
       const left = await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length); ok(left === ids.length, `bølge 10 ${nm}: feil igjen holder spørsmålene i repetisjonen`); }
     await q.screenshot({ path: out + '/m-quiz-bolge10.png', fullPage: true }); await q.context().close(); }
+  // 21) Bølge 11: quizspørsmål om kontantrabatt, kredittpolitikk og Altmans Z (kap. 12) og prisstigning (kap. 9)
+  { const q = await mk({ w: 320, h: 640 }); await go(q, 'quiz');
+    const sets = await q.evaluate(() => { const d = document.createElement('div'), txt = (h) => { d.innerHTML = h; return d.textContent; }, c12 = OKAD.quiz.filter((x) => x.ch === 12), c9 = OKAD.quiz.filter((x) => x.ch === 9);
+      const r = (x) => /rabatt/i.test(txt(x.q)), k = (x) => !r(x) && /kredittpolitikk/i.test(txt(x.q)), z = (x) => /Altman|X\d|Z = /.test(txt(x.q));
+      // Tall som står først i et feil alternativ, skal være forklart i forklaringen (navngitt feil)
+      const unexplained = c12.filter((x) => r(x) || k(x) || z(x)).concat(c9).flatMap((x) => x.options.filter((o, i) => i !== x.correct && /^−?\d/.test(o) && !txt(x.why).includes(o.match(/^−?[\d \u00a0,]+\d/)[0])).map((o) => txt(x.q).slice(0, 30) + ' → ' + o));
+      return { r: c12.filter(r).map((x) => x.id), k: c12.filter(k).map((x) => x.id), z: c12.filter(z).map((x) => x.id), n9a: c9.slice(0, 10).map((x) => x.id), n9b: c9.slice(10).map((x) => x.id), c9: c9.length, unexplained }; });
+    ok(sets.r.length >= 6, 'bølge 11: minst seks spørsmål om kontantrabatt (' + sets.r.length + ')');
+    ok(sets.k.length >= 5, 'bølge 11: minst fem spørsmål om kredittpolitikk (' + sets.k.length + ')');
+    ok(sets.z.length >= 6, 'bølge 11: minst seks spørsmål om Altmans Z (' + sets.z.length + ')');
+    ok(sets.c9 >= 14, 'bølge 11: minst 14 spørsmål i kapittel 9 (' + sets.c9 + ')');
+    ok(sets.unexplained.length === 0, 'bølge 11: hvert feil tallalternativ er forklart' + (sets.unexplained.length ? ': ' + sets.unexplained.join(' | ') : ''));
+    const brk = await q.evaluate(() => OKAD.quiz.filter((x) => [x.q, x.why].concat(x.options).some((t) => /\d \d{3}(?!\d)/.test(t))).length);
+    ok(brk === 0, 'bølge 11: tusenskillet i quizen er hardt mellomrom, så tall ikke brytes på mobil (' + brk + ' med vanlig mellomrom)');
+    ok(await q.evaluate(() => { const st = OKAD.quiz.find((x) => /183\u00a0028/.test(x.why)); return !!st && st.id === OKAD.U.hash(st.q.replace(/\u00a0/g, ' ')); }), 'bølge 11: id-en er laget før mellomrommene byttes, så repetisjonen ikke flyttes');
+    await go(q, 'quiz/9'); ok(/av 10/.test(await q.textContent('.eyebrow')), 'bølge 11: kapittel 9 gir full runde');
+    for (const [nm, ids] of [['kontantrabatt', sets.r], ['kredittpolitikk', sets.k], ['Altmans Z', sets.z], ['kapittel 9 del 1', sets.n9a], ['kapittel 9 del 2', sets.n9b]]) {
+      await q.evaluate((ids) => { const st = JSON.parse(localStorage.getItem('okad221:v1') || '{"gen":{},"exam":{},"quiz":{}}'); st.qmiss = {}; ids.forEach((id, k) => { st.qmiss[id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); }, ids);
+      await q.reload(); await go(q, 'quiz/repeter'); const tot = +(await q.textContent('.eyebrow')).match(/av (\d+)/)[1]; ok(tot === ids.length, `bølge 11 ${nm}: repetisjonsrunden har alle (${tot})`);
+      let wide = 0, why = 0, pos = new Set();
+      for (let k = 0; k < tot; k++) { const r = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); const x = OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }); return { c: x.correct }; });
+        pos.add(r.c); if (await overflow(q)) wide++;
+        await q.click(`.choice:not([data-o="${r.c}"]) >> nth=0`); const w = await q.textContent('#why'); if (w.length > 80) why++; if (await overflow(q)) wide++; await q.click('#nx'); }
+      ok(wide === 0, `bølge 11 ${nm}: spørsmål og forklaring uten sidelengs rulling i 320 px`); ok(why === tot, `bølge 11 ${nm}: feil svar gir forklaring på alle (${why} av ${tot})`);
+      if (tot >= 4) ok(pos.size >= 3, `bølge 11 ${nm}: riktig svar står ikke på samme plass i dataene`);
+      const left = await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length); ok(left === ids.length, `bølge 11 ${nm}: feil igjen holder spørsmålene i repetisjonen`); }
+    await q.screenshot({ path: out + '/m-quiz-bolge11.png', fullPage: true }); await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });

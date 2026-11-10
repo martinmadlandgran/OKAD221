@@ -56,6 +56,9 @@
   // S.qmiss[id] = { t: sist feil (ms), n: antall feil }. id er en hash av spørsmålsteksten, så den tåler at spørsmål legges til eller flyttes.
   const QREP = 5, QMISSMAX = 1000;
   O.quiz.forEach((q) => { q.id = U.hash(q.q); });
+  // Tusenskille som hardt mellomrom, så «183 028» ikke brytes over to linjer på mobil. Etter id-en, så repetisjonen ikke flyttes.
+  const nb = (t) => t.replace(/(\d) (?=\d{3}(?!\d))/g, '$1\u00a0');
+  O.quiz.forEach((q) => { q.q = nb(q.q); q.options = q.options.map(nb); q.why = nb(q.why); });
   const quizById = {}; O.quiz.forEach((q) => { quizById[q.id] = q; });
   if (!S.qmiss || typeof S.qmiss !== 'object' || Array.isArray(S.qmiss)) S.qmiss = {};
   Object.keys(S.qmiss).forEach((k) => { if (!quizById[k]) delete S.qmiss[k]; });
