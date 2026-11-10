@@ -227,8 +227,8 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     // Kapittel 8 etter ti feil har bare fire andre spørsmål: runden fylles med flere som venter, fortsatt ti spørsmål
     await q.evaluate(() => { const st = JSON.parse(localStorage.getItem('okad221:v1')); st.qmiss = {}; OKAD.quiz.filter((x) => x.ch === 8).slice(0, 10).forEach((x, k) => { st.qmiss[x.id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); });
     await q.reload(); await q.waitForTimeout(200); await go(q, 'quiz/8'); const r4 = await round(q, () => true); ok(r4.tot === 10 && r4.reps === 6, 'quiz-rep: kapittel med for få andre spørsmål fylles med flere som venter (' + r4.reps + ' av ' + r4.tot + ')');
-    // Lite kapittel (3 spørsmål) og mobil 320 px
-    await go(q2, 'quiz/12'); ok(/av 3/.test(await q2.textContent('.eyebrow')), 'quiz-rep: kapittel med tre spørsmål gir kort runde');
+    // Lite kapittel (5 spørsmål) og mobil 320 px
+    await go(q2, 'quiz/1'); ok(/av 5/.test(await q2.textContent('.eyebrow')), 'quiz-rep: kapittel med fem spørsmål gir kort runde');
     const M = await mk({ w: 320, h: 640 }); await M.goto(B); await M.evaluate((t) => localStorage.setItem('okad221:v1', JSON.stringify(JSON.parse(t).data)), txt);
     await go(M, 'quiz'); await M.reload(); await M.waitForTimeout(250); ok(!(await overflow(M)), 'quiz-rep: oversikten i 320 px'); await M.screenshot({ path: out + '/m-quiz.png', fullPage: true });
     await go(M, 'quiz/repeter'); ok(!(await overflow(M)) && /Repetisjon/.test(await M.textContent('.eyebrow')), 'quiz-rep: repetisjonsspørsmål i 320 px'); await M.screenshot({ path: out + '/m-quiz-rep.png' });
@@ -341,6 +341,24 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await go(M, 'oving/k12-nokkeltall-likviditet/7'); ok(await M.evaluate(() => { const w = document.querySelectorAll('.task-text .tablewrap')[1]; return w && w.scrollWidth <= w.clientWidth + 1; }), 'nøkkeltall: balansen med beløp vises hel i 320 px'); ok(await M.evaluate(() => { const w = document.querySelectorAll('.task-text .tablewrap')[0]; return w && w.scrollWidth <= w.clientWidth + 1; }), 'nøkkeltall: tabellen over nøkkeltallene vises hel i 320 px uten sidelengs rulling'); await M.screenshot({ path: out + '/m-nokkeltall.png', fullPage: true }); await M.context().close();
     const D = await mk({ w: 1200, dark: true }); await go(D, 'oving/k7-factoring/' + fs[0]); await D.click('#all'); await D.screenshot({ path: out + '/factoring-mork.png', fullPage: true }); await D.context().close();
     await q.context().close(); }
+  // 20) Bølge 10: quizspørsmål om factoring (kap. 7) og nøkkeltall for likviditet (kap. 12)
+  { const q = await mk({ w: 320, h: 640 }); await go(q, 'quiz');
+    const sets = await q.evaluate(() => { const d = document.createElement('div'), txt = (h) => { d.innerHTML = h; return d.textContent; };
+      return { f: OKAD.quiz.filter((x) => x.ch === 7 && /factoring/i.test(txt(x.q))).map((x) => x.id), n: OKAD.quiz.filter((x) => x.ch === 12 && /likviditet|gjeldsandel|kundekredittid|varelageret utenfor/i.test(txt(x.q))).map((x) => x.id) }; });
+    ok(sets.f.length >= 6, 'bølge 10: minst seks factoringspørsmål i kapittel 7 (' + sets.f.length + ')');
+    ok(sets.n.length >= 8, 'bølge 10: minst åtte nøkkeltallspørsmål i kapittel 12 (' + sets.n.length + ')');
+    await go(q, 'quiz/12'); ok(/av 10/.test(await q.textContent('.eyebrow')), 'bølge 10: kapittel 12 gir full runde');
+    for (const [nm, ids] of [['factoring', sets.f], ['nøkkeltall', sets.n]]) {
+      await q.evaluate((ids) => { const st = JSON.parse(localStorage.getItem('okad221:v1') || '{"gen":{},"exam":{},"quiz":{}}'); st.qmiss = {}; ids.forEach((id, k) => { st.qmiss[id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); }, ids);
+      await q.reload(); await go(q, 'quiz/repeter'); const tot = +(await q.textContent('.eyebrow')).match(/av (\d+)/)[1]; ok(tot === ids.length, `bølge 10 ${nm}: repetisjonsrunden har alle (${tot})`);
+      let wide = 0, why = 0, pos = new Set();
+      for (let k = 0; k < tot; k++) { const r = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); const x = OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }); return { c: x.correct, opt: x.options[x.correct] }; });
+        pos.add(r.c); if (await overflow(q)) wide++;
+        await q.click(`.choice:not([data-o="${r.c}"]) >> nth=0`); const w = await q.textContent('#why'); if (w.length > 80) why++; if (await overflow(q)) wide++; await q.click('#nx'); }
+      ok(wide === 0, `bølge 10 ${nm}: spørsmål og forklaring uten sidelengs rulling i 320 px`); ok(why === tot, `bølge 10 ${nm}: feil svar gir forklaring på alle (${why} av ${tot})`);
+      ok(pos.size >= 3, `bølge 10 ${nm}: riktig svar står ikke på samme plass i dataene`);
+      const left = await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length); ok(left === ids.length, `bølge 10 ${nm}: feil igjen holder spørsmålene i repetisjonen`); }
+    await q.screenshot({ path: out + '/m-quiz-bolge10.png', fullPage: true }); await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });
