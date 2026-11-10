@@ -238,7 +238,7 @@
       const E = R.int(20, 90) * 10; const G = Math.round(E * W.wD / W.wE);
       const beta2 = U.round(W.beta + R.pick([-0.4, -0.3, 0.3, 0.4]), 2);
       const re2 = F.capm(W.rf, beta2, W.rm);
-      const ret = W.re + R.pick([-0.03, -0.02, 0.02, 0.03]);
+      const ret = U.round(W.re + R.pick([-0.03, -0.02, 0.02, 0.03]), 3);
       const betaA = W.beta * W.wE;
       return {
         text: W.text + `<p class="small muted">Markedsverdien av egenkapitalen er ${n(E)} mill. og av gjelden ${n(G)} mill.</p>`,

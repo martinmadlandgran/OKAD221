@@ -114,7 +114,8 @@
             sol: (() => { let acc = 0; const rows = cfA.map((c, t) => { acc += c; return [t, n(c), n(acc)]; }); return table(['År', 'Kontantstrøm', 'Akkumulert'], rows, { allNum: true }); })() +
               `<p>Payback A = <b>${n(pbA, 2)} år</b>. Tilsvarende for B: ${n(pbB, 2)} år.</p>` },
           { kind: 'text', q: 'Hvilket prosjekt vil du velge? Begrunn, og kommenter hva de ulike metodene sier.',
-            points: [`Prosjektene er gjensidig utelukkende → velg det med <b>høyest nåverdi</b>: prosjekt <b>${best}</b> (NNV ${n(Math.max(nA, nB))} mot ${n(Math.min(nA, nB))}).`,
+            points: [Math.max(nA, nB) < 0 ? `<b>Begge prosjektene har negativ nåverdi</b> (A: ${n(nA)}, B: ${n(nB)}) → ingen av dem bør gjennomføres. Må man likevel velge ett, er prosjekt <b>${best}</b> minst ulønnsomt.`
+              : `Prosjektene er gjensidig utelukkende → velg det med <b>høyest nåverdi</b>: prosjekt <b>${best}</b> (NNV ${n(Math.max(nA, nB))} mot ${n(Math.min(nA, nB))}).`,
               conflict ? `<b>Rangeringskonflikt:</b> prosjekt ${best === 'A' ? 'B' : 'A'} har høyest internrente, men internrenten måler avkastning per krone og tar ikke hensyn til prosjektets størrelse. NNV måler formuesøkningen i kroner og er riktig kriterium.` : 'Her gir NNV og internrente samme rangering, men det er NNV som er det riktige kriteriet for gjensidig utelukkende prosjekter.',
               'Payback ignorerer tidsverdien av penger og alle kontantstrømmer etter tilbakebetalingstidspunktet, og har et vilkårlig krav. Den sier noe om likviditet/risiko, ikke om lønnsomhet.',
               `Differanseinvesteringen (B − A) har internrente ${pct(fisher, 2)}; den er ${fisher > r ? 'høyere' : 'lavere'} enn kravet (${pct(r, 0)}), så merinvesteringen i B er ${fisher > r ? 'lønnsom → velg B' : 'ulønnsom → velg A'}.`] },
@@ -266,7 +267,7 @@
       const k0 = R.int(3, 8) * 100000;
       const cost = [k0, k0 + R.int(15, 25) * 10000, k0 + R.int(35, 50) * 10000];
       const m0 = Math.round(k0 * R.pick([0.14, 0.16, 0.18]) / 5000) * 5000;
-      const maint = [m0, m0 - R.int(4, 6) * 5000, m0 - R.int(7, 9) * 5000];
+      const maint = [m0, Math.max(10000, m0 - R.int(4, 6) * 5000), Math.max(5000, m0 - R.int(7, 9) * 5000)];
       const pv = cost.map((c, i) => c + maint[i] * F.annuityFactor(r, lives[i]));
       const eac = pv.map((x, i) => x / F.annuityFactor(r, lives[i]));
       const bi = eac.indexOf(Math.min(...eac)), wi = eac.indexOf(Math.max(...eac));
@@ -312,7 +313,7 @@
       for (let m = 0; m < 32; m++) { let inv = 0, v = 0; const set = []; projs.forEach((x, i) => { if (m >> i & 1) { inv += x.inv; v += x.npv; set.push(x.nm); } }); if (inv <= budget && v > best.npv) best = { npv: v, set, inv }; }
       const ranked = projs.slice().sort((a, b) => b.npv / b.inv - a.npv / a.inv);
       let left = budget, fracNpv = 0; const used = [];
-      ranked.forEach((x) => { if (left <= 0) return; const share = Math.min(1, left / x.inv); fracNpv += share * x.npv; left -= share * x.inv; used.push(`${x.nm} (${pct(share, 0)})`); });
+      ranked.forEach((x) => { if (left <= 0) return; const share = Math.min(1, left / x.inv); fracNpv += share * x.npv; left -= share * x.inv; used.push(`${x.nm} (${pct(share, share === 1 ? 0 : 1)})`); });
       return {
         text: `<p><b>Del 1.</b> Et prosjekt har følgende kontantstrøm, og avkastningskravet er ${pct(r, 0)}:</p>` + cfTable([['Kontantstrøm', cfs]], N) +
           `<p><b>Del 2.</b> En bedrift har et investeringsbudsjett på <b>${n(budget)}</b> og kan velge blant fem uavhengige prosjekter:</p>` +
