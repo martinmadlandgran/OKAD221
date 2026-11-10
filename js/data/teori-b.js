@@ -35,9 +35,9 @@
       { name: 'Renter og avdrag i en termin', html: `Rente<sub>t</sub> = i · Restgjeld<sub>t−1</sub> &nbsp;&nbsp;&nbsp; Avdrag<sub>t</sub> = Terminbeløp − Rente<sub>t</sub>`, note: `Gjelder annuitetslån. For serielån er avdraget lån / n, og terminbeløpet = avdrag + rente.` },
       { name: 'Restgjeld', html: `Restgjeld<sub>k</sub> = Terminbeløp · <span class="frac"><span>1 − (1 + i)<sup>−(n − k)</sup></span><span>i</span></span>`, note: `Nåverdien av de <i>n − k</i> gjenstående terminbeløpene (uten gebyr) med nominell perioderente <i>i</i>.` },
       { name: 'Over-/underkurs på fastrentelån', html: `Kurs = NV(gjenstående terminbeløp; ny markedsrente) − Restgjeld`, note: `Positiv differanse = overkurs (markedsrenten har falt), negativ = underkurs (markedsrenten har økt).` },
-      { name: 'Leverandørkreditt', html: `q = <span class="frac"><span>rabatt</span><span>1 − rabatt</span></span> &nbsp;&nbsp;&nbsp; p = (1 + q)<sup>360 / kredittdager</sup> − 1`, note: `Kredittdager = dagene mellom rabattfrist og forfall. Lærebokens løsninger bruker 360 dager i året. Eksempel: 98 om 15 dager eller 100 om 45 dager gir q = 2/98 = 2,04 % per 30 dager og p = 1,0204<sup>12</sup> − 1 = 27,43 %.` },
+      { name: 'Leverandørkreditt', html: `q = <span class="frac"><span>rabatt</span><span>1 − rabatt</span></span> &nbsp;&nbsp;&nbsp; p = (1 + q)<sup>360 / kredittdager</sup> − 1`, note: `Kredittdager = dagene mellom rabattfrist og forfall. Bruk antall dager i året som oppgaveteksten sier. Løsningsforslagene til kapittel 7 bruker 360, kapittel 12 oppg. 3 bruker 365. Står det ingenting, bruk 360 og skriv det i svaret. Eksempel: 98 om 15 dager eller 100 om 45 dager gir q = 2/98 = 2,04 % per 30 dager og p = 1,0204<sup>12</sup> − 1 = 27,43 %.` },
       { name: 'Kassekreditt, effektiv rente per kvartal', html: `q = rente per kvartal + <span class="frac"><span>provisjon per kvartal</span><span>utnyttelsesgrad</span></span>`, note: `Utnyttelsesgrad = trukket beløp / limit. Årsrente = (1 + q)<sup>4</sup> − 1. Eksempel: 6,2 %/4 + 0,33 %/0,50 = 2,21 % per kvartal → 9,14 % per år.` },
-      { name: 'Factoring', html: `Kostnad i % = <span class="frac"><span>renter på forskudd + gebyrer − sparte adm.kostnader</span><span>frigjort kapital</span></span>`, note: `Kundefordringer = kredittsalg · kredittdager / 360. Frigjort kapital = reduksjonen i egne bundne kundefordringer.` }
+      { name: 'Factoring', html: `Kostnad i % = <span class="frac"><span>renter på forskudd + gebyrer − sparte adm.kostnader</span><span>frigjort kapital</span></span>`, note: `Kundefordringer = kredittsalg · kredittdager / 360 (eller 365 hvis oppgaven sier det). Frigjort kapital = reduksjonen i egne bundne kundefordringer.` }
     ],
     methods: [
       { title: 'Annuitetslån med gebyrer (den typiske eksamensoppgaven)', steps: [
@@ -559,7 +559,7 @@
     formulas: [
       { name: 'Kapital bundet i kundefordringer', html: `Kundefordringer = Kredittsalg · <span class="frac"><span>kredittdager</span><span>360</span></span>`, note: `Lærebokens løsninger bruker både 360 og 365 dager – følg oppgaveteksten.` },
       { name: 'Gevinst ved redusert kapitalbinding', html: `Spart rentekostnad = Frigjort kapital · rente`, note: `Sammenholdes med reduserte tap på krav, tapt dekningsbidrag, rabattkostnad og administrasjonskostnader.` },
-      { name: 'Altmans Z-score', html: `Z = 1,2 · X<sub>1</sub> + 1,4 · X<sub>2</sub> + 3,3 · X<sub>3</sub> + 0,6 · X<sub>4</sub> + 0,999 · X<sub>5</sub>`, note: `X<sub>1</sub> = arbeidskapital / totale eiendeler, X<sub>2</sub> = opptjent egenkapital / totale eiendeler, X<sub>3</sub> = driftsresultat / totale eiendeler, X<sub>4</sub> = markedsverdi egenkapital / total gjeld, X<sub>5</sub> = omsetning / totale eiendeler.` }
+      { name: 'Altmans Z-score', html: `Z = 1,2 · X<sub>1</sub> + 1,4 · X<sub>2</sub> + 3,3 · X<sub>3</sub> + 0,6 · X<sub>4</sub> + 0,999 · X<sub>5</sub>`, note: `X<sub>1</sub> = arbeidskapital / totale eiendeler, X<sub>2</sub> = opptjent egenkapital / totale eiendeler, X<sub>3</sub> = driftsresultat / totale eiendeler, X<sub>4</sub> = markedsverdi egenkapital / total gjeld, X<sub>5</sub> = omsetning / totale eiendeler. Altman (1968) brukte grensene 1,81 og 2,99: under 1,81 høy konkursrisiko, over 2,99 lav, imellom gråsone. Grensene står ikke i løsningsforslaget og er tatt fra standardteorien.` }
     ],
     methods: [
       { title: 'Lønnsomhet av endret kredittpolitikk', steps: [
@@ -568,6 +568,11 @@
         `Legg til reduserte tap på krav.`,
         `Trekk fra tapt dekningsbidrag, kontantrabatt og økte administrasjonskostnader.`,
         `Positiv nettoeffekt → endringen er lønnsom.`
+      ] },
+      { title: 'Altmans Z-score', steps: [
+        `Arbeidskapital = omløpsmidler − kortsiktig gjeld (kan være negativ). Total gjeld = kortsiktig + langsiktig gjeld.`,
+        `Regn de fem forholdstallene. X<sub>2</sub> bruker bare opptjent egenkapital, X<sub>4</sub> markedsverdien av egenkapitalen.`,
+        `Gang med vektene og summer. Sammenlign med grensene 1,81 og 2,99.`
       ] }
     ],
     examples: [

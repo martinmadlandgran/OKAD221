@@ -193,6 +193,8 @@ table.heat td.h3 { background: var(--accent); color: var(--accent-ink); font-wei
 
 /* ---------- Formler ---------- */
 .formula { font: 1.05rem/2 var(--serif); background: var(--tint); padding: 8px 16px; margin: 10px 0; overflow-x: auto; white-space: nowrap; border-left: 2px solid var(--ink-3); }
+.formula.wrap { white-space: normal; }
+.formula.wrap > span { white-space: nowrap; }
 .frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 .2em; line-height: 1.25; }
 .frac > span:first-child { border-bottom: 1px solid currentColor; padding: 0 .3em .05em; }
 .frac > span:last-child { padding: .05em .3em 0; }

@@ -27,6 +27,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 5 | Fire generatorpunkter ryddet, tre nye generatorer, prøveeksamen på papir med fasit bakerst, flytting av fremdrift mellom enheter | Ferdig |
 | 6 | Fire nye generatorer fra kapittel-LF (6.5, 6.9, 8.8, 8.12), repetisjonsliste, durasjonspunktet sjekket mot forlagets lysbilder | Ferdig |
 | 7 | Tre nye generatorer fra kapittel-LF (6.1, 8.10, 8.9 med 8.1d), quiz med repetisjon | Ferdig |
+| 8 | Fire nye generatorer fra kapittel-LF: kapittel 12 (12.1–12.2, 12.3, 12.5) og salg av driftsmiddel (8.3) | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -126,9 +127,26 @@ Også rettet: «Slett all lagret fremdrift» sa «ingenting å slette» når bar
 
 Test etter bølgen: `node tools/check.js 3000` OK (37 generatorer, unike quiz-id-er), `node tools/verify.js 1000` OK (116 kontrolltall, 68 000 tallsvar), `tools/e2e.js` 365 bestått (65 nye kontroller for quizrepetisjon, de tre nye typene og stjernediagrammet).
 
+## Bølge 8: kapittel 12 og salg av driftsmiddel (ferdig)
+
+Nye generatorer (41 i alt), i `js/gen/kreditt.js` og `js/gen/salg.js`. Regnefunksjonene gjenskaper alle tall i kapittel-LF (54 nye kontrolltall, 170 i alt). Hver generator er etterregnet over 1000 frø fra oppgaveteksten med egne formler: 34 000 nye tallsvar, 0 avvik. Fem innsatte feil (360/365 dager, tapt omsetning i stedet for tapt DB, rabatt på hele omsetningen, X5 delt på gjeld, salgssum uten skatt ved inntektsføring) ble alle fanget.
+
+- `k12-kredittpolitikk` (kap. 12 oppg. 1 og 2): del 1 er en prosjektkalkyle der kundefordringene (omsetning · dager / 360) bindes i år 0 og frigjøres siste år, med NNV, internrente og hva lengre kredittid koster. Del 2 er strammere kredittpolitikk fra resultat og balanse: nye kundefordringer, netto redusert kapitalbehov (kunder og varelager ned, kreditorer ned øker behovet, nytt utstyr), sparte renter og reduserte tap mot tapt dekningsbidrag, administrasjon og avskrivning. Tiltaket lønner seg i 46 % av frøene. Gjenskaper 150 000, −1 050 000 / 342 000 / 742 000, 25,0 %, 133 540, og 2 550 000, 450 000, 700 000, 2 240 000, 336 000, 707 000, 1 043 000, 756 000, 1 026 000 og 17 000. LF sier ikke hvordan tallene i 12.2 er utledet. Oppgaveteksten er rekonstruert slik at de stemmer: 10 % omsetningsfall, kredittid fra 52,5 til 30 dager, varelager og kreditorer ned 10 %, tap 2 % av ny omsetning, utstyr 60 000 over 3 år.
+- `k12-kontantrabatt` (kap. 12 oppg. 3, tall i 1 000 kr, 365 dager som i LF): kundefordringer for dem som tar rabatten og samlet, frigjort kapital, rabattkostnad, sparte renter, reduserte tap, netto resultatøkning, høyeste rabatt som lønner seg, og kundens effektive årsrente ved å ikke ta rabatten. Lønner seg i 41 % av frøene. Gjenskaper 1 398, 10 985, 12 383, −9 587, 1 094, 1 594, 1 342, 656, 1 998 og 405. Svarene oppgis i tusen kroner. Feltet er merket «tusen kr», «1 398 tusen» godtas, og et svar i hele kroner gir egen beskjed.
+- `k12-altman-z` (kap. 12 oppg. 5): de fem forholdstallene fra en balanse og resultatlinjer, Z og sone, og hvor mye driftsresultatet må øke (eller kan falle) for å nå neste grense. Arbeidskapitalen er negativ i ca. halvparten av frøene, som i LF. Sonene fordeler seg 31 % høy risiko, 49 % gråsone og 20 % lav. Z ligger aldri nærmere en grense enn 0,03. Gjenskaper alle forholdstall og bidrag og Z = 2,8565. Grensene 1,81 og 2,99 står ikke i kildene. De er tatt fra standardteorien og oppgitt i oppgaveteksten.
+- `k8-salg-driftsmiddel` (kap. 8 oppg. 3): internrente før skatt, NV spart skatt, NNV etter skatt med salgssummen inntektsført direkte og nedskrevet på saldo, NV av den økte skatten og forskjellen. Oppgaveteksten forklarer begge måtene. Gjenskaper 20,73 %, 88 000, −512 000 / 195 000 / 156 000 / 351 000, 57 910, 38 567, −550 567 … 428 000 og 77 194.
+- Koblet inn: kapittel 12 får tre oppgavetyper på Øv-siden og under «Øv på kapitlet» i teorien. 8.3 ligger under temaet «Nåverdi etter skatt». Ingen av de fire er lagt i prøveeksamenens trekkpott eller prognoseluken. Kapittel 12 har ikke fått eget tema i eksamensanalysen, fordi det aldri er gitt og bare ville gitt en tom rad i varmekartet.
+- Teori kap. 12: ny fremgangsmåte for Altmans Z, og grensene står i formelnoten med merknad om kilden.
+- Også endret: tallfeltene godtar «tusen» (som «kr» og «%»). Z-formelen i oppgaveteksten brytes mellom leddene på smal skjerm i stedet for å rulle sidelengs.
+
+Test etter bølgen: `node tools/check.js 3000` OK (41 generatorer), `node tools/verify.js 1000` OK (170 kontrolltall, 102 000 tallsvar), `tools/e2e.js` 406 bestått (41 nye kontroller: alle fasitsvar godtas i 390 px, ingen sidelengs rulling i 320 og 390 px, tusen kroner, fortegn på netto og negativ arbeidskapital, sone i løsningen, inntektsført NNV godtas ikke som nedskrevet, kapittel 12 i teori og Øv, utenfor trekkpotten, Tab til Sjekk, Z-formelen hel i 320 px).
+
+Avgjort av eier etter bølgen: salg av driftsmiddel holdes utenfor prøveeksamenens trekkpott som de andre nye typene (1b). Antall dager i året følger oppgaveteksten, og teorisiden sier det (2a). Altmans grenser 1,81 og 2,99 beholdes i oppgaveteksten (3a). Fulgt opp: alle generatorer som regner med dager, oppgir antallet i teksten (leverandørkreditt 360, kredittpolitikk 360, kontantrabatt 365, opsjoner 365). Teorien for kapittel 7 (leverandørkreditt og factoring) sier nå at man skal følge oppgaveteksten, og bruke 360 og si det i svaret hvis ingenting står. Kapittel 12 sa dette fra før.
+
 ## Åpne punkter
 
-- Leverandørkreditt 360 dager og aktivering av installasjonskostnad, som før.
+- Aktivering av installasjonskostnad, som før. (360 eller 365 dager er avgjort etter bølge 8: følg oppgaveteksten.)
+- Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka.
 - Durasjon og rentenivå: forlagets lysbilder sier det motsatte av standardteorien og av forlagets egne tall (se bølge 6). Siden følger standardteorien. Læreboka er ikke lest, så det står igjen å se hva den sier.
 - 2025 oppg. 4: LFs varians for aksje B (0,00579) lar seg ikke gjenskape; eksakt er 0,005852. Siden godtar begge.
 - 2025 oppg. 5b: begge versjoner er etterregnet og står.
@@ -139,16 +157,16 @@ Avgjort av eier etter bølgen: de fire nye typene holdes utenfor prøveeksamenen
 
 ## Neste bølge (forslag)
 
-Kapittel 12 er det eneste kapitlet uten oppgavetype. Kapittel-LF 12.1–12.5 gir tre generatorer: endret kredittpolitikk (frigjort kapital i kundefordringer og varelager mot tapt dekningsbidrag og tap på fordringer), kontantrabatt (rabattkostnad mot rentebesparelse) og Altmans Z (fem forholdstall fra et regnskap). Kapittel 12 er ikke gitt som egen eksamensoppgave 2016–2025, så de holdes utenfor prøveeksamenen. I tillegg mangler kap. 8 oppg. 3 (salg av driftsmiddel: inntektsføre eller nedskrive saldo).
+Alle kapitlene har nå oppgavetyper. Det som står igjen i kapittel-LF uten generator, er factoring (kap. 7 oppg. 7b og 8: kapitalbinding før og etter, margin, renter på forskutt beløp, gebyr og sparte administrasjonskostnader, kostnad i prosent av frigjort kapital) og nøkkeltall for likviditet (kap. 12 oppg. 3: balanselikviditet, kasselikviditet, gjeldsandel og kredittid mot bransjen).
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 8 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 9 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 8:
-1. Tre nye generatorer for kapittel 12 fra kapittel-LF i kilder/kapittel_lf.md: endret kredittpolitikk (oppg. 1–2), kontantrabatt (oppg. 3) og Altmans Z (oppg. 5). Regnefunksjonene skal gjenskape LF-tallene, og tools/verify.js skal etterregne dem fra oppgaveteksten over 1000 frø. Ikke legg dem i prøveeksamenens trekkpott.
-2. Én generator for kap. 8 oppg. 3: salg av driftsmiddel, salgssum inntektsført direkte mot nedskrevet på saldo, med samme krav.
+Innhold i bølge 9:
+1. Én generator for factoring fra kapittel-LF i kilder/kapittel_lf.md (kap. 7 oppg. 7b og 8). Regnefunksjonen skal gjenskape LF-tallene, og tools/verify.js skal etterregne den fra oppgaveteksten over 1000 frø. Ikke legg den i prøveeksamenens trekkpott.
+2. Én generator for nøkkeltall og likviditet (kap. 12 oppg. 3: balanselikviditet, kasselikviditet, gjeldsandel, kredittid mot bransjesnitt), med samme krav. Antall dager i året skal stå i oppgaveteksten (avgjort etter bølge 8).
 3. Oppdater tools/e2e.js med kontroller for det nye, og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit og push til arbeidsgrenen når alt er grønt. Ikke lag PR.

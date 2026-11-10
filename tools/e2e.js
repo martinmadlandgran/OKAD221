@@ -10,7 +10,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
 
   // 1) Alle ruter, desktop + mobil, lyst + mørkt: ingen feil, ingen sidelengs rulling
-  const routes = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'eksamen/2025', 'eksamen/2016', 'tema', 'tema/8', 'tema/4', 'tema/12', 'formler', 'quiz', 'quiz/alle', 'quiz/repeter', 'verktoy', 'repeter', 'oving/k6-folsomhet-internrente/11'];
+  const routes = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'eksamen/2025', 'eksamen/2016', 'tema', 'tema/8', 'tema/4', 'tema/12', 'formler', 'quiz', 'quiz/alle', 'quiz/repeter', 'verktoy', 'repeter', 'oving/k6-folsomhet-internrente/11', 'oving/k12-altman-z/7', 'oving/k12-kredittpolitikk/7'];
   for (const o of [{ w: 1200 }, { w: 390, h: 800 }, { w: 390, h: 800, dark: true }, { w: 320, h: 640 }]) {
     const p = await mk(o);
     for (const r of routes) { await go(p, r); ok(!(await overflow(p)), `ingen sidelengs rulling ${o.w}px ${r || 'hjem'}`); }
@@ -19,7 +19,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   // 2) Alle generatorer åpner, viser løsninger, ingen overflow på mobil
   { const p = await mk({ w: 390, h: 800 }); const ids = await (async () => { await go(p, 'oving'); return p.evaluate(() => OKAD.gens.map((g) => g.id)); })();
     for (const id of ids) { await go(p, 'oving/' + id + '/11'); await p.click('#all'); ok(!(await overflow(p)), 'mobil gen ' + id); ok((await p.locator('.solution').count()) > 0, 'løsning vises ' + id); }
-    ok(ids.length === 37, '37 generatorer'); await p.context().close(); }
+    ok(ids.length === 41, '41 generatorer'); await p.context().close(); }
 
   const p = await mk();
   // 3) Svarsjekk: tomt, ugyldig, feil fortegn, desimal i stedet for prosent, riktig, Enter
@@ -268,6 +268,39 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await go(q, 'oving/k8-leasing-kjop/5'); const npv = await q.evaluate(() => OKAD.make('k8-leasing-kjop', 5).parts[4].answer);
     await q.fill('#p4-in', String(Math.round(-npv))); await q.press('#p4-in', 'Enter'); ok(/fortegnet er feil/.test(await q.textContent('#p4-fb')), 'leasing: motsatt fortegn på NNV gjenkjennes');
     const rd = await q.evaluate(() => OKAD.make('k8-leasing-kjop', 5).parts[0].answer); await q.fill('#p0-in', String(rd).replace('.', ',')); await q.press('#p0-in', 'Enter'); ok(/desimaltall/.test(await q.textContent('#p0-fb')), 'leasing: lånerente som desimaltall gir beskjed');
+    await q.context().close(); }
+  // 19) Bølge 8: kapittel 12 (kredittpolitikk, kontantrabatt, Altmans Z) og salg av driftsmiddel (8.3)
+  { const q = await mk({ w: 390, h: 800 }); const NEW = [['k12-kredittpolitikk', 7], ['k12-kontantrabatt', 7], ['k12-altman-z', 7], ['k8-salg-driftsmiddel', 7]];
+    for (const [id, seed] of NEW) {
+      await go(q, `oving/${id}/${seed}`); const fa = await q.evaluate(([g, s]) => OKAD.make(g, s).parts.map((x) => (x.kind === 'num' ? OKAD.fmtAnswer(x) : null)), [id, seed]);
+      for (let i = 0; i < fa.length; i++) if (fa[i]) { await q.fill(`#p${i}-in`, fa[i]); await q.press(`#p${i}-in`, 'Enter'); }
+      const fb = await q.evaluate(() => [...document.querySelectorAll('.fb')].map((x) => x.textContent).filter(Boolean)); ok(fb.length === fa.filter(Boolean).length && fb.every((x) => /Riktig/.test(x)), `bølge 8 ${id}: alle fasitsvar godtas`);
+      await q.click('#all'); ok(!(await overflow(q)), `bølge 8 ${id}: ingen sidelengs rulling i 390 px med løsninger åpne`); }
+    // Tusen kroner: svar i kroner gir egen beskjed, «tusen» i svaret godtas
+    await go(q, 'oving/k12-kontantrabatt/7'); const k = await q.evaluate(() => OKAD.make('k12-kontantrabatt', 7).parts[0].answer);
+    ok(/tusen kr/.test(await q.textContent('#p0-in + .unit')), 'kontantrabatt: enheten «tusen kr» står ved feltet');
+    await q.fill('#p0-in', String(Math.round(k * 1000))); await q.press('#p0-in', 'Enter'); ok(/tusen kroner/.test(await q.textContent('#p0-fb')), 'kontantrabatt: svar i kroner gir beskjed om tusen kroner');
+    await q.fill('#p0-in', Math.round(k) + ' tusen'); await q.press('#p0-in', 'Enter'); ok(/Riktig/.test(await q.textContent('#p0-fb')), 'kontantrabatt: «… tusen» godtas');
+    // Netto resultatøkning med motsatt fortegn gjenkjennes
+    const net = await q.evaluate(() => OKAD.make('k12-kontantrabatt', 7).parts[6].answer); await q.fill('#p6-in', String(Math.round(-net))); await q.press('#p6-in', 'Enter'); ok(/fortegnet er feil/.test(await q.textContent('#p6-fb')), 'kontantrabatt: motsatt fortegn på netto gjenkjennes');
+    // Altman: negativ arbeidskapital uten minus gjenkjennes, sonen står i løsningen
+    const zs = await q.evaluate(() => { for (let s = 1; s < 200; s++) if (OKAD.make('k12-altman-z', s).parts[0].answer < -0.01) return s; return 0; });
+    await go(q, 'oving/k12-altman-z/' + zs); const x1 = await q.evaluate((s) => OKAD.make('k12-altman-z', s).parts[0].answer, zs);
+    await q.fill('#p0-in', (-x1).toFixed(4).replace('.', ',')); await q.press('#p0-in', 'Enter'); ok(/fortegnet er feil/.test(await q.textContent('#p0-fb')), 'altman: negativ arbeidskapital uten minus gir fortegnsbeskjed');
+    await q.click('#all'); ok(/høy konkursrisiko|gråsone|lav konkursrisiko/.test(await q.textContent('#p5-sol')), 'altman: løsningen plasserer Z i en sone');
+    // Salg av driftsmiddel: NNV med inntektsføring godtas ikke som svar på nedskriving
+    await go(q, 'oving/k8-salg-driftsmiddel/7'); const inn = await q.evaluate(() => OKAD.fmtAnswer(OKAD.make('k8-salg-driftsmiddel', 7).parts[2]));
+    await q.fill('#p4-in', inn); await q.press('#p4-in', 'Enter'); ok(!/Riktig/.test(await q.textContent('#p4-fb')), 'salg: NNV med inntektsføring godtas ikke ved nedskriving');
+    // Kapittel 12 i teorien og på Øv-siden, ikke i prøveeksamenen
+    await go(q, 'tema/12'); ok((await q.locator('a[href^="#/oving/k12-"]').count()) === 3, 'tema 12: tre oppgavetyper under «Øv på kapitlet»');
+    await go(q, 'oving'); ok(/Kapittel 12/.test(await q.textContent('#view')), 'Øv-siden har kapittel 12');
+    ok(await q.evaluate(() => !OKAD.mockSlots.some((m) => m.pool.some(([g]) => /^k12-|k8-salg-driftsmiddel/.test(g)))), 'bølge 8: de nye typene er ikke i prøveeksamenens trekkpott');
+    ok(await q.evaluate(() => OKAD.topics.skatt.gens.includes('k8-salg-driftsmiddel')), 'salg av driftsmiddel ligger under temaet nåverdi etter skatt');
+    // Tastatur: Tab fra siste tallfelt til Sjekk
+    await go(q, 'oving/k12-altman-z/7'); await q.focus('#p6-in'); await q.keyboard.press('Tab'); ok(await q.evaluate(() => document.activeElement.dataset.act === 'check'), 'altman: Tab fra siste tallfelt går til Sjekk');
+    const M = await mk({ w: 320, h: 640 }); for (const [id, seed] of NEW) { await go(M, `oving/${id}/${seed}`); await M.click('#all'); ok(!(await overflow(M)), `bølge 8 ${id}: ingen sidelengs rulling i 320 px`); }
+    await go(M, 'oving/k12-altman-z/7'); ok(await M.evaluate(() => { const e = document.querySelector('.task-text .formula.wrap'); return e && e.scrollWidth <= e.clientWidth + 1; }), 'altman: Z-formelen vises hel i 320 px'); await M.screenshot({ path: out + '/m-altman.png', fullPage: true }); await M.context().close();
+    const D = await mk({ w: 1200, dark: true }); await go(D, 'oving/k12-kredittpolitikk/7'); await D.click('#all'); await D.screenshot({ path: out + '/kreditt-mork.png', fullPage: true }); await D.context().close();
     await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
