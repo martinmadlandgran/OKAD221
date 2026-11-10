@@ -25,7 +25,7 @@ løsningsforslagene til kapitteloppgavene i Bredesen, *Investering og finansieri
 - Regnemotoren (`js/fin.js`) er kontrollert mot fasit i løsningsforslagene.
 - Lysbildenes formler og tabeller var bilder og er rekonstruert fra standardteori; teoristoffet bør leses sammen med læreboka.
 - Løsningsforslaget til 2025 oppgave 5b bygger på andre tall enn eksamensteksten. Siden viser begge.
-- Varighet og hjelpemidler sto ikke i eksamensfilene.
+- Eksamen varer 4 timer (oppgitt av emneansvarlig student). Tillatte hjelpemidler sto ikke i eksamensfilene.
 - Prognosen for 2026 er et anslag ut fra mønstre, ikke en fasit.
 
 ## Utforming

@@ -147,7 +147,7 @@
       ${table(['Felle', 'Riktig behandling', 'Sett i'], P.traps, { cls: 'left wrap' })}
       <h2>Forbehold</h2>
       <p>Dette er et kvalifisert anslag, ikke en fasit. Samme foreleser har laget alle settene og strukturen har vært stabil, men 2024 og 2025 viser at nye temaer kan komme inn. Pensum er hele læreboka: bruk prognosen til å prioritere, ikke til å velge bort.</p>
-      <p>Varighet og tillatte hjelpemidler sto ikke i eksamensfilene. Løsningsforslagene er regneark og godtar målsøking, så eksamen løses etter alt å dømme i Excel.</p>`;
+      <p>Eksamen varer 4 timer. Tillatte hjelpemidler sto ikke i eksamensfilene. Løsningsforslagene er regneark og godtar målsøking, så eksamen løses etter alt å dømme i Excel.</p>`;
   };
 
   // ---------- Øvingsoppgaver ----------
@@ -242,7 +242,7 @@
         <p class="lead">Ett helt sett etter prognosen: prosjektanalyse (20 %), obligasjoner (10 %), lån eller en joker (20 %), portefølje (20 %) og WACC med nåverdi etter skatt (30 %).</p>
         <p class="row" style="margin:20px 0"><label for="dur">Tid</label> <select id="dur"><option value="240">4 timer</option><option value="300">5 timer</option><option value="180">3 timer</option><option value="0">Uten tidtaking</option></select>
         <button class="btn primary big" type="button" id="start">Start prøveeksamen</button></p>
-        <p class="small muted">Ha Excel åpent – du taster bare sluttsvarene her. Svarene lagres underveis, så du kan lukke fanen og fortsette. Varigheten på den ordentlige eksamenen sto ikke i eksamensfilene; velg det emnebeskrivelsen sier.</p>
+        <p class="small muted">Ha Excel åpent – du taster bare sluttsvarene her. Svarene lagres underveis, så du kan lukke fanen og fortsette. Den ordentlige eksamenen varer 4 timer.</p>
         <h2>Tidligere forsøk</h2>` +
         (log.length ? table(['Dato', 'Resultat', 'Tid brukt'], log.slice().reverse().map((x) => [x.date, `${x.score} %`, x.min + ' min'])) : '<p class="muted">Ingen ennå. Resultatene dine havner her.</p>');
       $('#start').onclick = () => { S.mock = { seed: U.newSeed(), start: Date.now(), dur: +$('#dur').value, ans: {} }; save(); routes.prove(); };
