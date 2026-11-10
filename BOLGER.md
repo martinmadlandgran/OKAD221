@@ -28,6 +28,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 6 | Fire nye generatorer fra kapittel-LF (6.5, 6.9, 8.8, 8.12), repetisjonsliste, durasjonspunktet sjekket mot forlagets lysbilder | Ferdig |
 | 7 | Tre nye generatorer fra kapittel-LF (6.1, 8.10, 8.9 med 8.1d), quiz med repetisjon | Ferdig |
 | 8 | Fire nye generatorer fra kapittel-LF: kapittel 12 (12.1–12.2, 12.3, 12.5) og salg av driftsmiddel (8.3) | Ferdig |
+| 9 | Factoring (7.7b, 7.8) og nøkkeltall for likviditet (12.3), dager i året gjort konsekvent | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -143,9 +144,31 @@ Test etter bølgen: `node tools/check.js 3000` OK (41 generatorer), `node tools/
 
 Avgjort av eier etter bølgen: salg av driftsmiddel holdes utenfor prøveeksamenens trekkpott som de andre nye typene (1b). Antall dager i året følger oppgaveteksten, og teorisiden sier det (2a). Altmans grenser 1,81 og 2,99 beholdes i oppgaveteksten (3a). Fulgt opp: alle generatorer som regner med dager, oppgir antallet i teksten (leverandørkreditt 360, kredittpolitikk 360, kontantrabatt 365, opsjoner 365). Teorien for kapittel 7 (leverandørkreditt og factoring) sier nå at man skal følge oppgaveteksten, og bruke 360 og si det i svaret hvis ingenting står. Kapittel 12 sa dette fra før.
 
+## Bølge 9: factoring, nøkkeltall og dager i året (ferdig)
+
+Nye generatorer (43 i alt), i `js/gen/kreditt.js`. Regnefunksjonene gjenskaper alle tall i kapittel-LF og forelesningens factoringeksempel (23 nye kontrolltall, 193 i alt). Begge er etterregnet over 1000 frø fra oppgaveteksten med egne formler: 16 000 nye tallsvar, 0 avvik. Fire innsatte feil (renter av hele forskuddsperioden, varelager i kasselikviditeten, 360 i stedet for dagene i teksten, kortsiktig gjeld ikke nedbetalt) ble alle fanget.
+
+- `k7-factoring` (kap. 7 oppg. 7b og 8, og forelesningens eksempel 7-10): kundefordringer før, det bedriften selv binder etter (marginen, og hele fakturaen til forskuddet kommer), frigjort kapital, gjennomsnittlig forskuttert beløp, renter, gebyr (prosent av kredittsalget eller per faktura), netto kostnad, kostnad i prosent av frigjort kapital, og høyeste gebyr før factoring blir dyrere enn kassekreditt. Varianter: forskudd straks eller etter 5–10 dager (halvparten), og kortere kredittid med factoring (3 av 10 frø). Da er forskuddet mindre enn den frigjorte kapitalen, og rentene regnes bare av forskuddet, som i forelesningen. Factoring er billigst i 58 % av frøene. 360 dager i 8 av 10 frø, 365 ellers, alltid oppgitt. Gjenskaper 400 000, 100 000, 300 000, 60 000, 12 600, 72 600, 24,2 % (7b), 1 500 000, 300 000, 140 000, 440 000, 1 060 000, 159 000, 169 000, 15,9 % (8) og 1 300 000, 104 000, 114 000, 8,8 % (7-10, rekonstruert løsning).
+- `k12-nokkeltall-likviditet` (kap. 12 oppg. 3): arbeidskapital, balanselikviditet, kasselikviditet, gjeldsandel og kundekredittid fra balansen, frigjort kapital hvis kredittiden kommer ned på bransjesnittet, og ny balanselikviditet når den frigjorte kapitalen nedbetaler kassekreditten (øker når likviditeten er over 1, faller under 1). Tabellen viser de tre foregående årene og bransjesnittet; utviklingen er en forverring i ca. 2 av 3 frø. Balanselikviditeten er under 1 i ca. 19 % av frøene. 365 dager i 8 av 10 frø, 360 ellers. Gjenskaper 73 850, 1,36, 0,78 og 110 dager. LFs gjeldsandeler (80,2–97,1 %) lar seg ikke gjenskape fra balansen, som gir 58,7 %. Generatoren bruker total gjeld / totalkapital, og teorien sier dette.
+- Koblet inn: factoring under kapittel 7 og temaet «Kassekreditt, leverandørkreditt, leasing», nøkkeltall under kapittel 12. Ingen av dem er i prøveeksamenens trekkpott eller prognosen.
+- Tallfeltene godtar «dager» (som «kr», «%» og «tusen»).
+- Teori: fremgangsmåte og eksempel (7.8) for factoring i kapittel 7, fremgangsmåte, to formler, begrep og eksempel (12.3) for nøkkeltall i kapittel 12, nye «typiske feil».
+
+Dager i året, etter eiers avgjørelse (følg oppgaveteksten; står det ingenting, bruk 360 og si det). Gjennomgått alle steder:
+
+- Teori og formelsamling (formelsamlingen bygges fra teorien): samme setning i formlene for leverandørkreditt, factoring, kundefordringer og kundekredittid. Kapittel 12 manglet regelen om 360 når ingenting står; nå med. Eksemplene 12.1 og 12.3 sier hvilket antall oppgaven bruker. Ny «typisk feil» i kapittel 7. Kildemerknaden for leverandørkreditt sier nå at forelesningens eksempel ikke oppgir antallet.
+- Black–Scholes: alle kildene bruker 365, og teorien sier det og at oppgaveteksten går foran. Oppgaveteksten i `k13-opsjonsposisjoner` oppgir nå 365 dager i selve spørsmålet (før stod det bare i hintet).
+- Generatorer: alle som regner med kredittdager eller dager til bortfall, oppgir antallet. `e2e.js` kontrollerer dette for alle 43 typer over 40 frø. Hotellets åpningsdager (350/360/365) er ikke en dagekonvensjon og er urørt. Renteteoriens tabell med daglig rentesrente (365) er også urørt.
+
+Også rettet: balansetabellen fikk ikke plass i 320 px fordi alle tabellceller er `nowrap`. Radnavnene i de to nye tabellene brytes nå.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 448 bestått (42 nye kontroller).
+
 ## Åpne punkter
 
-- Aktivering av installasjonskostnad, som før. (360 eller 365 dager er avgjort etter bølge 8: følg oppgaveteksten.)
+- Aktivering av installasjonskostnad, som før. (360 eller 365 dager er avgjort etter bølge 8 og gjennomført i bølge 9.)
+- Kap. 12 oppg. 3: LFs gjeldsandeler (97,1 % for 2022) lar seg ikke gjenskape fra balansen (58,7 %). Siden bruker gjeld / totalkapital.
+- Factoring med kortere kredittid bygger på forelesningens eksempel 7-10, der løsningen er rekonstruert.
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka.
 - Durasjon og rentenivå: forlagets lysbilder sier det motsatte av standardteorien og av forlagets egne tall (se bølge 6). Siden følger standardteorien. Læreboka er ikke lest, så det står igjen å se hva den sier.
 - 2025 oppg. 4: LFs varians for aksje B (0,00579) lar seg ikke gjenskape; eksakt er 0,005852. Siden godtar begge.
@@ -157,17 +180,17 @@ Avgjort av eier etter bølgen: de fire nye typene holdes utenfor prøveeksamenen
 
 ## Neste bølge (forslag)
 
-Alle kapitlene har nå oppgavetyper. Det som står igjen i kapittel-LF uten generator, er factoring (kap. 7 oppg. 7b og 8: kapitalbinding før og etter, margin, renter på forskutt beløp, gebyr og sparte administrasjonskostnader, kostnad i prosent av frigjort kapital) og nøkkeltall for likviditet (kap. 12 oppg. 3: balanselikviditet, kasselikviditet, gjeldsandel og kredittid mot bransjen).
+Alle oppgavetypene i kapittel-LF som egner seg for generator, har nå generator (kap. 12 oppg. 6, regresjon, er utelatt med vilje). Forslag til bølge 10: en gjennomgang av quizen for kapittel 7 og 12 (factoring og nøkkeltall har ingen quizspørsmål), og helhetlig brukertest på mobil av de nyeste oppgavetypene.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 9 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 10 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 9:
-1. Én generator for factoring fra kapittel-LF i kilder/kapittel_lf.md (kap. 7 oppg. 7b og 8). Regnefunksjonen skal gjenskape LF-tallene, og tools/verify.js skal etterregne den fra oppgaveteksten over 1000 frø. Ikke legg den i prøveeksamenens trekkpott.
-2. Én generator for nøkkeltall og likviditet (kap. 12 oppg. 3: balanselikviditet, kasselikviditet, gjeldsandel, kredittid mot bransjesnitt), med samme krav. Antall dager i året skal stå i oppgaveteksten (avgjort etter bølge 8).
-3. Oppdater tools/e2e.js med kontroller for det nye, og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
+Innhold i bølge 10:
+1. Nye quizspørsmål for factoring (kap. 7) og nøkkeltall for likviditet (kap. 12), med forklaringer som peker på de typiske feilene. check.js skal fortsatt melde unike id-er.
+2. Gå gjennom de åpne punktene i BOLGER.md og si hva som kan lukkes uten læreboka.
+3. Oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
-Commit og push til arbeidsgrenen når alt er grønt. Ikke lag PR.
+Commit og push til arbeidsgrenen når alt er grønt.
 ```

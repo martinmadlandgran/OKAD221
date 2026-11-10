@@ -35,9 +35,9 @@
       { name: 'Renter og avdrag i en termin', html: `Rente<sub>t</sub> = i · Restgjeld<sub>t−1</sub> &nbsp;&nbsp;&nbsp; Avdrag<sub>t</sub> = Terminbeløp − Rente<sub>t</sub>`, note: `Gjelder annuitetslån. For serielån er avdraget lån / n, og terminbeløpet = avdrag + rente.` },
       { name: 'Restgjeld', html: `Restgjeld<sub>k</sub> = Terminbeløp · <span class="frac"><span>1 − (1 + i)<sup>−(n − k)</sup></span><span>i</span></span>`, note: `Nåverdien av de <i>n − k</i> gjenstående terminbeløpene (uten gebyr) med nominell perioderente <i>i</i>.` },
       { name: 'Over-/underkurs på fastrentelån', html: `Kurs = NV(gjenstående terminbeløp; ny markedsrente) − Restgjeld`, note: `Positiv differanse = overkurs (markedsrenten har falt), negativ = underkurs (markedsrenten har økt).` },
-      { name: 'Leverandørkreditt', html: `q = <span class="frac"><span>rabatt</span><span>1 − rabatt</span></span> &nbsp;&nbsp;&nbsp; p = (1 + q)<sup>360 / kredittdager</sup> − 1`, note: `Kredittdager = dagene mellom rabattfrist og forfall. Bruk antall dager i året som oppgaveteksten sier. Løsningsforslagene til kapittel 7 bruker 360, kapittel 12 oppg. 3 bruker 365. Står det ingenting, bruk 360 og skriv det i svaret. Eksempel: 98 om 15 dager eller 100 om 45 dager gir q = 2/98 = 2,04 % per 30 dager og p = 1,0204<sup>12</sup> − 1 = 27,43 %.` },
+      { name: 'Leverandørkreditt', html: `q = <span class="frac"><span>rabatt</span><span>1 − rabatt</span></span> &nbsp;&nbsp;&nbsp; p = (1 + q)<sup>360 / kredittdager</sup> − 1`, note: `Kredittdager = dagene mellom rabattfrist og forfall. Bruk antall dager i året som oppgaveteksten sier. Står det ingenting, bruk 360 og skriv det i svaret. Løsningsforslagene til kapittel 7 bruker 360, kapittel 12 oppg. 3 bruker 365, og forelesningens eksempel sier ikke hvilket. Eksempel: 98 om 15 dager eller 100 om 45 dager gir q = 2/98 = 2,04 % per 30 dager og p = 1,0204<sup>12</sup> − 1 = 27,43 %.` },
       { name: 'Kassekreditt, effektiv rente per kvartal', html: `q = rente per kvartal + <span class="frac"><span>provisjon per kvartal</span><span>utnyttelsesgrad</span></span>`, note: `Utnyttelsesgrad = trukket beløp / limit. Årsrente = (1 + q)<sup>4</sup> − 1. Eksempel: 6,2 %/4 + 0,33 %/0,50 = 2,21 % per kvartal → 9,14 % per år.` },
-      { name: 'Factoring', html: `Kostnad i % = <span class="frac"><span>renter på forskudd + gebyrer − sparte adm.kostnader</span><span>frigjort kapital</span></span>`, note: `Kundefordringer = kredittsalg · kredittdager / 360 (eller 365 hvis oppgaven sier det). Frigjort kapital = reduksjonen i egne bundne kundefordringer.` }
+      { name: 'Factoring', html: `Kostnad i % = <span class="frac"><span>renter på forskudd + gebyrer − sparte adm.kostnader</span><span>frigjort kapital</span></span>`, note: `Kundefordringer = kredittsalg · kredittdager / 360. Bruk antall dager i året som oppgaveteksten sier. Står det ingenting, bruk 360 og skriv det i svaret. Løsningsforslagene til 7.7b og 7.8 bruker 360. Frigjort kapital = kundefordringer før − det bedriften selv binder etter (marginen til kunden betaler, og hele fakturaen til forskuddet kommer). Rentene regnes av forskuttert beløp, som er lik frigjort kapital når kredittiden ikke endres.` }
     ],
     methods: [
       { title: 'Annuitetslån med gebyrer (den typiske eksamensoppgaven)', steps: [
@@ -60,6 +60,14 @@
         `Restgjeld = NV av gjenstående terminbeløp med avtalt rente.`,
         `Markedsverdi = NV av de samme terminbeløpene med ny markedsrente.`,
         `Markedsverdi − restgjeld > 0: overkurs. < 0: underkurs.`
+      ] },
+      { title: 'Factoring: frigjort kapital og kostnad i prosent', steps: [
+        `Kundefordringer før = kredittsalg · kredittdager / 360 (eller 365 hvis oppgaven sier det).`,
+        `Bundet etter factoring = marginen · kredittsalg · kredittdager / 360, pluss resten av fakturaen i dagene før forskuddet kommer.`,
+        `Frigjort kapital = før − etter.`,
+        `Renter = rente på forskudd · forskuttert beløp. Forskuttert beløp = (1 − margin) · kredittsalg · (kredittdager − dager før forskuddet) / 360.`,
+        `Netto kostnad = renter + factoringgebyr − sparte administrasjonskostnader.`,
+        `Kostnad i % = netto kostnad / frigjort kapital. Sammenlign med effektiv rente på alternativ finansiering, for eksempel kassekreditt.`
       ] }
     ],
     examples: [
@@ -90,7 +98,19 @@
       { title: 'Eksempel 4: «Rentefri» avbetaling med gebyrer (eget eksempel, eksamenstypen fra 2025)', html: `<p>En vare til 12 000 kr kjøpes på «rentefri» avbetaling: 12 månedlige avdrag à 1 000. Etableringsgebyr 395 kr betales ved kjøpet, og termingebyret er 45 kr per måned.</p>
 <p>Kontantstrøm sett fra kunden: i måned 0 mottas en vare verdt 12 000 mot 395 i gebyr, altså netto «lån» 11 605. Deretter betales 1 045 i 12 måneder.</p>
 <div class="formula">RENTE(12; −1 045; 11 605) = 1,2127 % per måned</div>
-<p>Effektiv årsrente = 1,012127<sup>12</sup> − 1 = <strong>15,56 %</strong>. Perioderenten ganget med 12 (uten rentesrente) er 14,55 %. Den avtalte nominelle renten er 0 %: nominell rente regnes uten gebyrer, slik LF til eksamen 2025 oppg. 3b gjør (terminbeløp minus gebyr). Kreditten er altså langt fra rentefri – gebyrene er skjult rente.</p>` }
+<p>Effektiv årsrente = 1,012127<sup>12</sup> − 1 = <strong>15,56 %</strong>. Perioderenten ganget med 12 (uten rentesrente) er 14,55 %. Den avtalte nominelle renten er 0 %: nominell rente regnes uten gebyrer, slik LF til eksamen 2025 oppg. 3b gjør (terminbeløp minus gebyr). Kreditten er altså langt fra rentefri – gebyrene er skjult rente.</p>` },
+      { title: 'Eksempel 5: Factoring med forsinket forskudd (lærebokens oppgave 7.8)', html: `<p>Kredittsalg 9 000 000 per år, kredittid 60 dager, 360 dager i året. Factoringselskapet beholder 20 % margin og forskutterer resten etter 7 dager. Renten på forskuddet er 15 %, fakturagebyret 60 000 per år, og bedriften sparer 50 000 i administrasjon.</p>
+<div class="tablewrap"><table class="data"><thead><tr><th></th><th>Beregning</th><th>Beløp</th></tr></thead><tbody>
+<tr><th scope="row">Kundefordringer før</th><td>9 000 000 · 60 / 360</td><td>1 500 000</td></tr>
+<tr><th scope="row">Margin, bundet i 60 dager</th><td>0,2 · 1 500 000</td><td>300 000</td></tr>
+<tr><th scope="row">Resten, bundet i 7 dager</th><td>9 000 000 · 0,8 · 7 / 360</td><td>140 000</td></tr>
+<tr class="sum"><th scope="row">Frigjort kapital</th><td>1 500 000 − 440 000</td><td>1 060 000</td></tr>
+<tr><th scope="row">Renter</th><td>15 % · 1 060 000</td><td>159 000</td></tr>
+<tr><th scope="row">Fakturagebyr</th><td></td><td>60 000</td></tr>
+<tr><th scope="row">Sparte administrasjonskostnader</th><td></td><td>−50 000</td></tr>
+<tr class="sum"><th scope="row">Netto kostnad</th><td></td><td>169 000</td></tr>
+</tbody></table></div>
+<p>Kostnad i prosent av frigjort kapital: 169 000 / 1 060 000 = <strong>15,9 %</strong>. Factoring lønner seg hvis bedriften ellers må låne dyrere enn dette. Her er forskuttert beløp (0,8 · 9 000 000 · 53 / 360 = 1 060 000) lik den frigjorte kapitalen. Blir kredittiden også kortere med factoring, frigjøres mer kapital enn det som forskutteres, og rentene skal bare regnes av forskuddet.</p>` }
     ],
     pitfalls: [
       `Å gange perioderenten med m i stedet for å bruke (1 + q)<sup>m</sup> − 1. 1 % per måned er 12,68 % effektivt, ikke 12 %.`,
@@ -101,6 +121,8 @@
       `Å bruke RENTE på et serielån. Betalingene er ulike, så hele kontantstrømmen må settes opp og IR brukes.`,
       `Kassekreditt: provisjonen beregnes av hele rammen, men må fordeles på det beløpet som faktisk er trukket. Lav utnyttelsesgrad gir høy effektiv rente.`,
       `Leverandørkreditt: rabatten skal deles på (1 − rabatt), ikke brukes direkte, og kredittiden er dagene mellom rabattfrist og forfall – ikke hele betalingsfristen.`,
+      `Factoring: å dele kostnaden på hele kundefordringene i stedet for den frigjorte kapitalen, eller å glemme at marginen fortsatt er bundet til kunden betaler.`,
+      `Å bruke et annet antall dager i året enn oppgaveteksten, eller å blande 360 og 365 i samme oppgave. Står det ingenting, bruk 360 og skriv det.`,
       `Fortegn i Excel: nåverdi og betaling må ha motsatt fortegn i RENTE, AVDRAG og PERIODER.`
     ],
     excel: [
@@ -548,16 +570,19 @@
     examWeight: 'lav',
     summary: `<p><strong>Kapittel 12 er ikke forelest</strong> – det finnes ingen forelesningslysbilder, og temaet har ikke vært gitt som egen eksamensoppgave. Oversikten her bygger bare på lærebokens oppgaver med løsningsforslag, og er ment som orientering.</p>
 <p>Kapitlet handler om forvaltning av <strong>arbeidskapitalen</strong>: hvor mye kapital som er bundet i kundefordringer og varelager, og hvordan <strong>kredittpolitikken</strong> (kredittid, kontantrabatt, strammere oppfølging) påvirker kapitalbinding, rentekostnader, tap på krav og salg. Analysen er en avveining: frigjort kapital · rente og reduserte tap på den ene siden, mot tapt dekningsbidrag, rabattkostnad og økte administrasjonskostnader på den andre.</p>
-<p>Kapitlet omtaler også <strong>konkursprediksjon</strong> med Altmans Z-score. Det som er nyttig å ta med seg til eksamen, er koblingen til de andre kapitlene: arbeidskapital i investeringskalkylen (kapittel 2, 8 og 11) og kostnaden ved leverandørkreditt og factoring (kapittel 7).</p>`,
+<p>Likviditeten måles med <strong>nøkkeltall</strong> som balanselikviditet, kasselikviditet, gjeldsandel og kundekredittid, sammenlignet med bransjen. Kapitlet omtaler også <strong>konkursprediksjon</strong> med Altmans Z-score. Det som er nyttig å ta med seg til eksamen, er koblingen til de andre kapitlene: arbeidskapital i investeringskalkylen (kapittel 2, 8 og 11) og kostnaden ved leverandørkreditt og factoring (kapittel 7).</p>`,
     concepts: [
       { term: 'Arbeidskapital', def: `Omløpsmidler minus kortsiktig gjeld. I investeringskalkyler: varelager + kundefordringer − leverandørgjeld.` },
       { term: 'Kundekredittid', def: `Antall dager kundene i gjennomsnitt bruker på å betale. Bestemmer hvor mye kapital som er bundet i kundefordringer.` },
       { term: 'Kredittpolitikk', def: `Bedriftens regler for kredittid, kontantrabatt, kredittvurdering og innkreving.` },
       { term: 'Kontantrabatt', def: `Rabatt til kunder som betaler raskt. Reduserer kundefordringer og tap, men koster rabatten.` },
-      { term: 'Altmans Z-score', def: `Veid sum av fem regnskapsbaserte forholdstall som brukes til å vurdere konkursrisiko. Lav Z betyr høy risiko.` }
+      { term: 'Altmans Z-score', def: `Veid sum av fem regnskapsbaserte forholdstall som brukes til å vurdere konkursrisiko. Lav Z betyr høy risiko.` },
+      { term: 'Balanselikviditet og kasselikviditet', def: `Mål på evnen til å betale kortsiktig gjeld. Balanselikviditet (likviditetsgrad 1) tar med alle omløpsmidler, kasselikviditet (likviditetsgrad 2) holder varelageret utenfor. Sammenlignes med bransjesnitt og tidligere år.` }
     ],
     formulas: [
-      { name: 'Kapital bundet i kundefordringer', html: `Kundefordringer = Kredittsalg · <span class="frac"><span>kredittdager</span><span>360</span></span>`, note: `Lærebokens løsninger bruker både 360 og 365 dager – følg oppgaveteksten.` },
+      { name: 'Kapital bundet i kundefordringer', html: `Kundefordringer = Kredittsalg · <span class="frac"><span>kredittdager</span><span>360</span></span>`, note: `Bruk antall dager i året som oppgaveteksten sier. Står det ingenting, bruk 360 og skriv det i svaret. Løsningsforslagene bruker 360 i oppg. 1 og 2 og 365 i oppg. 3.` },
+      { name: 'Balanselikviditet og kasselikviditet', html: `Balanselikviditet = <span class="frac"><span>omløpsmidler</span><span>kortsiktig gjeld</span></span> &nbsp;&nbsp;&nbsp; Kasselikviditet = <span class="frac"><span>omløpsmidler − varelager</span><span>kortsiktig gjeld</span></span>`, note: `Kalles også likviditetsgrad 1 og 2. Vanlige tommelfingerregler er over 2 og over 1, men bransjesnittet er et bedre sammenligningsgrunnlag. Eksempel (12.3): 38 570 / 28 360 = 1,36 og 22 120 / 28 360 = 0,78.` },
+      { name: 'Gjeldsandel og kundekredittid', html: `Gjeldsandel = <span class="frac"><span>total gjeld</span><span>totalkapital</span></span> &nbsp;&nbsp;&nbsp; Kundekredittid = <span class="frac"><span>kundefordringer</span><span>kredittsalg</span></span> · 365`, note: `Bruk antall dager i året som oppgaveteksten sier. Står det ingenting, bruk 360 og skriv det i svaret. Løsningsforslaget til 12.3 bruker 365: 21 970 / 72 900 · 365 = 110 dager.` },
       { name: 'Gevinst ved redusert kapitalbinding', html: `Spart rentekostnad = Frigjort kapital · rente`, note: `Sammenholdes med reduserte tap på krav, tapt dekningsbidrag, rabattkostnad og administrasjonskostnader.` },
       { name: 'Altmans Z-score', html: `Z = 1,2 · X<sub>1</sub> + 1,4 · X<sub>2</sub> + 3,3 · X<sub>3</sub> + 0,6 · X<sub>4</sub> + 0,999 · X<sub>5</sub>`, note: `X<sub>1</sub> = arbeidskapital / totale eiendeler, X<sub>2</sub> = opptjent egenkapital / totale eiendeler, X<sub>3</sub> = driftsresultat / totale eiendeler, X<sub>4</sub> = markedsverdi egenkapital / total gjeld, X<sub>5</sub> = omsetning / totale eiendeler. Altman (1968) brukte grensene 1,81 og 2,99: under 1,81 høy konkursrisiko, over 2,99 lav, imellom gråsone. Grensene står ikke i løsningsforslaget og er tatt fra standardteorien.` }
     ],
@@ -573,13 +598,20 @@
         `Arbeidskapital = omløpsmidler − kortsiktig gjeld (kan være negativ). Total gjeld = kortsiktig + langsiktig gjeld.`,
         `Regn de fem forholdstallene. X<sub>2</sub> bruker bare opptjent egenkapital, X<sub>4</sub> markedsverdien av egenkapitalen.`,
         `Gang med vektene og summer. Sammenlign med grensene 1,81 og 2,99.`
+      ] },
+      { title: 'Nøkkeltall for likviditet mot bransjen', steps: [
+        `Summer omløpsmidlene (varelager, kundefordringer, kontanter) og den kortsiktige gjelden (kassekreditt, leverandørgjeld og annen kortsiktig gjeld).`,
+        `Balanselikviditet = omløpsmidler / kortsiktig gjeld. Kasselikviditet = (omløpsmidler − varelager) / kortsiktig gjeld.`,
+        `Gjeldsandel = (langsiktig + kortsiktig gjeld) / sum eiendeler.`,
+        `Kundekredittid = kundefordringer / kredittsalg · antall dager i året (som oppgaveteksten sier).`,
+        `Sammenlign med bransjesnittet og med tidligere år: er tallene svakere, og blir de verre?`
       ] }
     ],
     examples: [
-      { title: 'Eksempel 1: Kundefordringer som del av investeringen', html: `<p>Et prosjekt gir driftsinntekter på 1 800 000 per år, og kundene får 30 dagers kreditt. (Lærebokens oppgave 12.1.)</p>
+      { title: 'Eksempel 1: Kundefordringer som del av investeringen', html: `<p>Et prosjekt gir driftsinntekter på 1 800 000 per år, og kundene får 30 dagers kreditt. Det regnes med 360 dager i året, som i oppgaven. (Lærebokens oppgave 12.1.)</p>
 <div class="formula">Kundefordringer = 1 800 000 · 30 / 360 = 150 000</div>
 <p>Beløpet bindes i år 0 sammen med anlegg (750 000) og andre omløpsmidler (150 000), til sammen 1 050 000, og frigjøres i siste år. Med dekningsgrad 40 % og faste kostnader 378 000 blir den årlige kontantstrømmen 342 000, og 742 000 i år 5 (inkludert frigjort arbeidskapital 300 000 og restverdi 100 000). IR = 25,0 % og NNV ved 20 % = 133 540.</p>` },
-      { title: 'Eksempel 2: Innføring av kontantrabatt (tall i 1 000 kr)', html: `<p>Omsetning 72 900, kundefordringer 21 970 (kredittid 110 dager). Bedriften innfører 3 % kontantrabatt ved betaling innen 14 dager. Halvparten av kundene forventes å bruke rabatten, resten betaler fortsatt etter 110 dager. Kassekredittrente 14 %, økte administrasjonskostnader 500, og tap på krav halveres (fra 1,8 % til 0,9 % av omsetningen). (Lærebokens oppgave 12.3.)</p>
+      { title: 'Eksempel 2: Innføring av kontantrabatt (tall i 1 000 kr)', html: `<p>Omsetning 72 900, kundefordringer 21 970 (kredittid 110 dager). Bedriften innfører 3 % kontantrabatt ved betaling innen 14 dager. Halvparten av kundene forventes å bruke rabatten, resten betaler fortsatt etter 110 dager. Kassekredittrente 14 %, økte administrasjonskostnader 500, og tap på krav halveres (fra 1,8 % til 0,9 % av omsetningen). Det regnes med 365 dager i året, som i oppgaven. (Lærebokens oppgave 12.3.)</p>
 <div class="tablewrap"><table class="data"><thead><tr><th></th><th>Beregning</th><th>Beløp</th></tr></thead><tbody>
 <tr><th scope="row">Nye kundefordringer</th><td>72 900 · 0,5 · 14/365 + 72 900 · 0,5 · 110/365</td><td>12 383</td></tr>
 <tr><th scope="row">Frigjort kapital</th><td>21 970 − 12 383</td><td>9 587</td></tr>
@@ -588,12 +620,22 @@
 <tr><th scope="row">Kontantrabatt</th><td>3 % · 50 % · 72 900</td><td>−1 094</td></tr>
 <tr><th scope="row">Økte administrasjonskostnader</th><td></td><td>−500</td></tr>
 <tr class="sum"><th scope="row">Netto resultatøkning</th><td></td><td>405</td></tr>
-</tbody></table></div>` }
+</tbody></table></div>` },
+      { title: 'Eksempel 3: Nøkkeltall fra balansen (tall i 1 000 kr)', html: `<p>Samme bedrift som i eksempel 2. Balansen for 2022: varelager 16 450, kundefordringer 21 970, kontanter 150, anleggsmidler 35 280 (sum 73 850). Egenkapital 30 490, langsiktig lån 15 000, kassekreditt 14 600, annen kortsiktig gjeld 13 760. Salgsinntekter 72 900, 365 dager i året. (Lærebokens oppgave 12.3.)</p>
+<div class="tablewrap"><table class="data"><thead><tr><th></th><th>Beregning</th><th>2022</th><th>Bransjen</th></tr></thead><tbody>
+<tr><th scope="row">Balanselikviditet</th><td>38 570 / 28 360</td><td>1,36</td><td>1,5</td></tr>
+<tr><th scope="row">Kasselikviditet</th><td>22 120 / 28 360</td><td>0,78</td><td>0,9</td></tr>
+<tr><th scope="row">Kundekredittid</th><td>21 970 / 72 900 · 365</td><td>110 dager</td><td>60 dager</td></tr>
+<tr><th scope="row">Gjeldsandel</th><td>43 360 / 73 850</td><td>58,7 %</td><td>86 %</td></tr>
+</tbody></table></div>
+<p>Likviditeten er svakere enn bransjen og har falt hvert år siden 2019 (balanselikviditet 1,83, kasselikviditet 0,95, kredittid 60 dager). Årsaken er særlig kredittiden: kundene bruker nesten dobbelt så lang tid som i bransjen, og fordringene er finansiert med kassekreditt. Det er bakgrunnen for kontantrabatten i eksempel 2.</p>
+<p class="small muted">Løsningsforslaget oppgir gjeldsandeler fra 80,2 % (2019) til 97,1 % (2022). De lar seg ikke gjenskape fra balansen, som gir 58,7 %. Tallene for balanselikviditet, kasselikviditet og kredittid stemmer.</p>` }
     ],
     pitfalls: [
       `Å glemme at frigjort kapital i seg selv ikke er en gevinst – gevinsten er den sparte rentekostnaden på kapitalen.`,
       `Å regne tapt omsetning som kostnad. Det er tapt dekningsbidrag som er relevant.`,
-      `Å blande 360 og 365 dager i samme oppgave.`
+      `Å blande 360 og 365 dager i samme oppgave. Bruk det oppgaveteksten sier, og 360 hvis ingenting står.`,
+      `Å ta med varelageret i kasselikviditeten, eller å regne gjeldsandelen av egenkapitalen i stedet for av totalkapitalen.`
     ],
     excel: [
       { fn: 'Data → Dataanalyse → Regresjon', use: `Brukes i læreboken til en enkel konkursprediksjonsmodell (konkursstatus mot totalrentabilitet).` }
@@ -636,7 +678,7 @@
       { name: 'Binomialmodellen: lån', html: `L = − <span class="frac"><span>m · d · P<sub>0</sub> − K<sub>d</sub></span><span>1 + r<sub>f</sub></span></span>`, note: `Negativt tall (lån). Lånet med renter skal akkurat dekkes av aksjeposten i nedtilstanden.` },
       { name: 'Binomialmodellen: verdi av kjøpsopsjon', html: `K<sub>0</sub> = m · P<sub>0</sub> + L`, note: `Verdien av opsjonsekvivalenten. Sannsynligheten for oppgang inngår ikke.` },
       { name: 'Salg-kjøp-paritet', html: `S<sub>0</sub> = K<sub>0</sub> + <span class="frac"><span>I</span><span>1 + r<sub>f</sub></span></span> − P<sub>0</sub>`, note: `Salgsopsjon = kjøpsopsjon + nåverdi av innløsningskurs − aksjekurs. Samme innløsningskurs og bortfallsdato.` },
-      { name: 'Black-Scholes, kjøpsopsjon', html: `K<sub>0</sub> = P<sub>0</sub> · N(d<sub>1</sub>) − I · e<sup>−r<sub>f</sub> · T</sup> · N(d<sub>2</sub>)`, note: `N(·) = kumulativ standard normalfordeling, T = tid til bortfall i år (dager / 365). Salgsopsjon: S<sub>0</sub> = K<sub>0</sub> + I · e<sup>−r<sub>f</sub> · T</sup> − P<sub>0</sub>.` },
+      { name: 'Black-Scholes, kjøpsopsjon', html: `K<sub>0</sub> = P<sub>0</sub> · N(d<sub>1</sub>) − I · e<sup>−r<sub>f</sub> · T</sup> · N(d<sub>2</sub>)`, note: `N(·) = kumulativ standard normalfordeling, T = tid til bortfall i år (dager / 365). Løsningsforslagene og forelesningen bruker 365 dager her. Står det noe annet i oppgaveteksten, følg det. Salgsopsjon: S<sub>0</sub> = K<sub>0</sub> + I · e<sup>−r<sub>f</sub> · T</sup> − P<sub>0</sub>.` },
       { name: 'Black-Scholes, d₁ og d₂', html: `d<sub>1</sub> = <span class="frac"><span>LN(P<sub>0</sub> / I) + (r<sub>f</sub> + σ<sup>2</sup> / 2) · T</span><span>σ · √T</span></span> &nbsp;&nbsp;&nbsp; d<sub>2</sub> = d<sub>1</sub> − σ · √T`, note: `σ = aksjens årlige standardavvik (volatilitet).` }
     ],
     methods: [

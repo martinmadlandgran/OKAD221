@@ -1,4 +1,5 @@
-/* Kapittel 12: kapitalbinding og endret kredittpolitikk (kap. 12 oppg. 1–2), kontantrabatt (oppg. 3) og Altmans Z (oppg. 5). */
+/* Kapittel 12: kapitalbinding og endret kredittpolitikk (kap. 12 oppg. 1–2), kontantrabatt og nøkkeltall for likviditet (oppg. 3) og Altmans Z (oppg. 5).
+   Kapittel 7: factoring (kap. 7 oppg. 7b og 8). Antall dager i året står alltid i oppgaveteksten. */
 (function (root) {
   'use strict';
   const O = root.OKAD, F = O.F, U = O.U;
@@ -277,6 +278,181 @@
               `Største bidrag: ${names[top].toLowerCase()} (${n(c.parts[top], 4)}).${c.X[0] < 0 ? ' Arbeidskapitalen er negativ, så kortsiktig gjeld er større enn omløpsmidlene. Det trekker ned og er et likviditetsvarsel.' : ''}`,
               '<b>Svakheter</b>: koeffisientene og grensene er tilpasset amerikanske industriselskaper på 1960-tallet. Bransje, land og regnskapsregler er annerledes i dag. Omsetning / eiendeler varierer mye mellom bransjer, så handel får høy Z og kapitaltunge bedrifter lav.',
               'Modellen bygger på regnskapstall som kan være gamle når de leses, og markedsverdi av egenkapitalen finnes bare for børsnoterte selskaper. Bruk Z som et varselsignal sammen med likviditet, kontantstrøm og bransjetall, ikke som en fasit.'] },
+        ],
+      };
+      return { p: pr, c, task };
+    },
+  });
+  // ==================================================================
+  // 4) Factoring (kap. 7 oppg. 7b og 8, med kortere kredittid som i forelesningens eksempel 7-10)
+  // ==================================================================
+  const pct2 = (x) => { const v = cl(x * 100), d = Number.isInteger(v) ? 0 : Number.isInteger(cl(v * 10)) ? 1 : 2; return n(v, d) + ' %'; };
+  /** Ren beregning, også brukt til kontroll mot kapittel-LF 7.7b og 7.8. */
+  function factCalc({ S, D0, D1, m, lag, i, Y, geb, spart, kk }) {
+    const KF0 = S * D0 / Y, marg = m * S * D1 / Y, rest = (1 - m) * S * lag / Y, KF1 = marg + rest, frig = KF0 - KF1;
+    const fsk = (1 - m) * S * (D1 - lag) / Y, rente = i * fsk, cost = rente + geb - spart, kost = cost / frig;
+    const maxGeb = kk * frig - rente + spart;
+    return { KF0, marg, rest, KF1, frig, fsk, rente, geb, cost, kost, maxGeb };
+  }
+  O._factCalc = factCalc;
+
+  const factFirms = ['Vestlandsprofil AS', 'Nordic Emballasje AS', 'Trøndelag Rør AS', 'Hallingdal Interiør AS', 'Kystnett Elektro AS', 'Oslofjord Grossist AS'];
+
+  O.reg({
+    id: 'k7-factoring', chapter: 7, level: 2, minutes: 15, examLike: 'Kapitteloppgave 7.7b og 7.8 – ikke gitt som egen oppgave 2016–2025',
+    title: 'Factoring: frigjort kapital og kostnad i prosent',
+    topic: 'Kortsiktig finansiering',
+    blurb: 'Kapitalbinding i kundefordringer før og etter factoring, renter på forskuttert beløp, gebyr og sparte kostnader, og om factoring er billigere enn kassekreditt.',
+    gen(R) {
+      let t; for (let k = 0; k < 400; k++) { t = this.build(R); if (t) break; }
+      return t.task;
+    },
+    build(R) {
+      const firm = R.pick(factFirms);
+      const S = R.int(20, 150) * 100000, D0 = R.pick([30, 40, 45, 60]), Y = R.bool(0.8) ? 360 : 365;
+      const D1 = R.bool(0.3) ? D0 - R.pick([10, 15]) : D0, m = R.pick([0.15, 0.2, 0.25]), lag = R.bool(0.5) ? 0 : R.pick([5, 7, 10]);
+      const i = R.pick([0.08, 0.1, 0.12, 0.13, 0.15]);
+      const perInv = R.bool(0.5), q = R.pick([0.002, 0.0025, 0.0035, 0.005]), snitt = R.pick([2000, 2500, 4000, 5000, 10000]), g = R.pick([15, 20, 25, 30, 40]);
+      const nInv = S / snitt, geb = perInv ? nInv * g : q * S;
+      const spart = R.bool(0.3) ? 0 : rnd(S * R.pick([0.002, 0.004, 0.006]), 5000);
+      const c0 = factCalc({ S, D0, D1, m, lag, i, Y, geb, spart, kk: 0 });
+      const kk = U.round(c0.kost + R.pick([-0.04, -0.025, -0.015, 0.015, 0.025, 0.04]), 3);
+      if (!(kk >= 0.06 && kk <= 0.3 && c0.cost > 0 && Math.abs(c0.kost - kk) > 0.005)) return null;
+      const pr = { S, D0, D1, m, lag, i, Y, geb, spart, kk };
+      const c = factCalc(pr);
+      if (!(c.maxGeb > Math.max(0.2 * c.geb, 1000))) return null;
+      const billig = c.kost < kk, kort = D1 < D0;
+      const task = {
+        text: `<p>${firm} har et kredittsalg på <b>${n(S)}</b> per år, og kundene betaler i gjennomsnitt etter <b>${D0} dager</b>. Bedriften vurderer å selge kundefordringene til et factoringselskap. Regn med <b>${Y} dager</b> i året.</p>` +
+          `<p>Factoringselskapet forskutterer <b>${pctS(1 - m)}</b> av fakturabeløpet ${lag ? `<b>${lag} dager</b> etter at fakturaen er sendt` : '<b>straks</b> fakturaen er sendt'}. Resten, marginen på ${pctS(m)}, får bedriften når kunden betaler. ` +
+          (kort ? `Factoringselskapet følger opp kundene tettere, og kredittiden ventes å gå ned til <b>${D1} dager</b>. ` : 'Kredittiden er den samme med factoring. ') +
+          `Renten på forskuttert beløp er <b>${pctS(i)}</b> per år. ` +
+          (perInv ? `Factoringgebyret er <b>${n(g)} kr per faktura</b>, og en gjennomsnittsfaktura er på <b>${n(snitt)}</b>. ` : `Factoringgebyret er <b>${pct2(q)}</b> av kredittsalget. `) +
+          (spart ? `Bedriften sparer <b>${n(spart)}</b> per år i administrasjon av kundefordringene.` : 'Bedriften sparer ingen administrasjonskostnader.') +
+          ` Alternativet er å finansiere kundefordringene med kassekreditt, som har en effektiv rente på <b>${pctS(kk)}</b>.</p>`,
+        parts: [
+          { q: 'Hvor mye kapital er bundet i kundefordringer i dag, uten factoring?', answer: c.KF0, unit: 'kr',
+            hint: `Kundefordringer = kredittsalg · kredittdager / ${Y}.`,
+            sol: f(`${n(S)} · ${frac(D0, Y)} = ${n(c.KF0)}`) },
+          { q: 'Hvor mye kapital må bedriften selv binde i kundefordringer med factoring?', answer: c.KF1, unit: 'kr',
+            hint: 'Marginen er bundet til kunden betaler.' + (lag ? ` Resten er bundet de ${lag} dagene før forskuddet kommer.` : ' Resten kommer straks, så den binder ingen kapital.'),
+            sol: f(`Margin: ${n(m, 2)} · ${n(S)} · ${frac(D1, Y)} = ${n(c.marg)}`) +
+              (lag ? f(`Før forskuddet: ${n(1 - m, 2)} · ${n(S)} · ${frac(lag, Y)} = ${n(c.rest)}`) + f(`Bundet med factoring = ${n(c.marg)} + ${n(c.rest)} = <b>${n(c.KF1)}</b>`) : `<p>Forskuddet kommer straks, så bare marginen er bundet: <b>${n(c.KF1)}</b>.</p>`) },
+          { q: 'Hvor mye kapital frigjøres (reduksjonen i kapitalbindingen)?', answer: c.frig, unit: 'kr',
+            sol: f(`${n(c.KF0)} − ${n(c.KF1)} = <b>${n(c.frig)}</b>`) + (kort ? `<p>En del av dette kommer av den kortere kredittiden, ikke av forskuddet: ${n(S)} · ${frac(D0 - D1, Y)} = ${n(S * (D0 - D1) / Y)}.</p>` : '') },
+          { q: 'Hvor stort er det forskutterte beløpet factoringselskapet i gjennomsnitt har ute?', answer: c.fsk, unit: 'kr',
+            hint: `Forskuddet er ${pctS(1 - m)} av fakturabeløpet, og det løper fra ${lag ? `dag ${lag}` : 'fakturadagen'} til kunden betaler etter ${D1} dager.`,
+            sol: f(`${n(1 - m, 2)} · ${n(S)} · ${frac(D1 - lag, Y)} = <b>${n(c.fsk)}</b>`) +
+              `<p>${kort ? 'Her er forskuddet mindre enn den frigjorte kapitalen, fordi den kortere kredittiden frigjør kapital uten at noen må forskuttere den.' : 'Når kredittiden er den samme, er forskuddet lik den frigjorte kapitalen, som i løsningsforslagene til kapittel 7.'}</p>` },
+          { q: 'Hva betaler bedriften i renter på forskuttert beløp per år?', answer: c.rente, unit: 'kr',
+            sol: f(`${pctS(i)} · ${n(c.fsk)} = ${n(c.rente)}`) },
+          { q: 'Hva er factoringgebyret per år?', answer: c.geb, unit: 'kr',
+            hint: perInv ? 'Antall fakturaer = kredittsalg / gjennomsnittsfaktura.' : 'Gebyret beregnes av hele kredittsalget.',
+            sol: perInv ? f(`${frac(n(S), n(snitt))} = ${n(nInv)} fakturaer · ${n(g)} = ${n(c.geb)}`) : f(`${pct2(q)} · ${n(S)} = ${n(c.geb)}`) },
+          { q: 'Hva er netto kostnad ved factoring per år?', answer: c.cost, unit: 'kr',
+            sol: U.table(['', 'Beløp'], [['Renter på forskuttert beløp', n(c.rente)], ['Factoringgebyr', n(c.geb)]].concat(spart ? [['Sparte administrasjonskostnader', n(-spart)]] : [], [{ cells: ['Netto kostnad', n(c.cost)], cls: 'sum' }])) },
+          { q: 'Hva koster factoring i prosent av frigjort kapital?', answer: c.kost, unit: '%',
+            sol: f(`${frac(n(c.cost), n(c.frig))} = <b>${pct(c.kost, 2)}</b>`) +
+              `<p>Det er ${billig ? '<b>lavere</b>' : '<b>høyere</b>'} enn kassekredittens ${pctS(kk)}, så factoring er ${billig ? 'billigst' : 'dyrest'}.</p>` },
+          { q: 'Hvor høyt kan factoringgebyret være per år før factoring blir like dyrt som kassekreditten?', answer: c.maxGeb, unit: 'kr',
+            hint: 'Factoring er like dyrt når netto kostnad = kassekredittrenten · frigjort kapital.',
+            sol: f(`${pctS(kk)} · ${n(c.frig)} − ${n(c.rente)}${spart ? ` + ${n(spart)}` : ''} = <b>${n(c.maxGeb)}</b>`) +
+              `<p>Gebyret er ${n(c.geb)}, altså ${c.geb < c.maxGeb ? 'under' : 'over'} grensen.</p>` },
+          { kind: 'text', q: 'Bør bedriften velge factoring? Hva bør med i vurderingen utover kostnaden i prosent?',
+            points: [`Factoring koster ${pct(c.kost, 1)} av frigjort kapital mot ${pctS(kk)} for kassekreditten, så factoring er ${billig ? 'billigst' : 'dyrest'} med disse tallene.`,
+              '<b>Riktig sammenligning</b>: kostnaden skal deles på den <i>frigjorte</i> kapitalen, og sammenlignes med den effektive renten på alternativ finansiering. Gebyr og sparte administrasjonskostnader hører med, ikke bare renten.',
+              kort ? `Den kortere kredittiden (${D0} til ${D1} dager) frigjør kapital som ikke koster renter. Er anslaget for optimistisk, blir factoring dyrere.` : 'Marginen må bedriften fortsatt finansiere selv til kunden betaler.',
+              'Andre forhold: factoringselskapet overtar oppfølging og innkreving (mindre administrasjon, ofte færre tap), men kundene merker at fordringen er solgt. Avtalen kan være med eller uten regress, altså om bedriften eller factoringselskapet bærer tapene.'] },
+        ],
+      };
+      return { p: pr, c, task };
+    },
+  });
+
+  // ==================================================================
+  // 5) Nøkkeltall for likviditet mot bransjen (kap. 12 oppg. 3), tall i 1 000 kr
+  // ==================================================================
+  /** Ren beregning, også brukt til kontroll mot kapittel-LF 12.3. */
+  function ratioCalc({ S, AM, VL, KF, KB, LL, KK, KG2, Y, Db }) {
+    const OM = VL + KF + KB, KG = KK + KG2, TA = AM + OM, gjeld = LL + KG, EK = TA - gjeld;
+    const WC = OM - KG, BL = OM / KG, KL = (KF + KB) / KG, GA = gjeld / TA, D = KF / S * Y;
+    const F = KF - S * Db / Y, BL2 = (OM - F) / (KG - F);
+    return { OM, KG, TA, gjeld, EK, WC, BL, KL, GA, D, F, BL2 };
+  }
+  O._ratioCalc = ratioCalc;
+
+  const ratioFirms = [['Fjordhandel AS', 'byggevarehandel'], ['Nordisk Maskin AS', 'maskinforhandler'], ['Innlandet Agentur AS', 'agenturhandel'], ['Polar Sjømat AS', 'sjømateksport'], ['Rogaland Stål AS', 'stålgrossist']];
+
+  O.reg({
+    id: 'k12-nokkeltall-likviditet', chapter: 12, level: 1, minutes: 15, examLike: 'Kapitteloppgave 12.3 – ikke gitt som egen oppgave 2016–2025',
+    title: 'Nøkkeltall: likviditet, gjeldsandel og kredittid mot bransjen',
+    topic: 'Arbeidskapital og kredittpolitikk',
+    blurb: 'Balanselikviditet, kasselikviditet, gjeldsandel og kundekredittid fra regnskapet, sammenlignet med bransjesnitt og utviklingen de siste årene.',
+    gen(R) {
+      let t; for (let k = 0; k < 400; k++) { t = this.build(R); if (t) break; }
+      return t.task;
+    },
+    build(R) {
+      const [firm, bransje] = R.pick(ratioFirms);
+      const S = R.int(300, 2000) * 50, Y = R.bool(0.8) ? 365 : 360, D = R.int(45, 120), KF = Math.round(S * D / Y);
+      const Db = R.pick([30, 45, 60]); if (D - Db < 12) return null;
+      const VL = Math.round(S * R.pick([0.12, 0.18, 0.24, 0.3]) + R.int(-50, 50)), KB = Math.round(S * R.pick([0.002, 0.005, 0.01, 0.02]) + R.int(0, 20));
+      const OM = VL + KF + KB, KG = Math.round(OM / R.pick([0.95, 1.1, 1.25, 1.4, 1.6, 1.8, 2.1]));
+      const KK = Math.round(KG * R.pick([0.35, 0.45, 0.55, 0.65])), KG2 = KG - KK;
+      const AM = Math.round(OM * R.pick([0.6, 0.8, 1, 1.2, 1.4])), TA = AM + OM, gjeld = Math.round(TA * (R.pick([0.5, 0.6, 0.7, 0.8, 0.9]) + R.int(-25, 25) / 1000)), LL = gjeld - KG;
+      if (LL < 0) return null;
+      const pr = { S, AM, VL, KF, KB, LL, KK, KG2, Y, Db };
+      const c = ratioCalc(pr);
+      if (!(c.F > 0 && KK > c.F + 0.05 * KG && c.EK > 0 && Math.abs(c.BL - 1) > 0.03)) return null;
+      // Bransjesnitt og tidligere år (gitt i oppgaven)
+      const BLb = R.pick([1.3, 1.5, 1.8]), KLb = R.pick([0.8, 0.9, 1.0]), GAb = R.pick([0.55, 0.65, 0.75, 0.85]);
+      if (Math.abs(c.BL - BLb) < 0.05 || Math.abs(c.KL - KLb) < 0.03 || Math.abs(c.GA - GAb) < 0.02) return null;
+      const verre = R.bool(0.65), s = verre ? 1 : -1;
+      const sB = R.pick([0.08, 0.1, 0.15]), sK = R.pick([0.04, 0.06, 0.08]), sG = R.pick([0.02, 0.03, 0.05]), sD = R.pick([8, 10, 15]);
+      // Monoton utvikling med ulike sprang fra år til år
+      const acc = { B: [0], K: [0], G: [0], D: [0] }, jit = () => 0.6 + R.int(0, 8) / 10;
+      for (let k = 1; k <= 3; k++) { acc.B.push(acc.B[k - 1] + sB * jit()); acc.K.push(acc.K[k - 1] + sK * jit()); acc.G.push(acc.G[k - 1] + sG * jit()); acc.D.push(acc.D[k - 1] + sD * jit()); }
+      const prev = [3, 2, 1].map((k) => ({ BL: U.round(c.BL + s * acc.B[k], 2), KL: U.round(c.KL + s * acc.K[k], 2), GA: U.round(c.GA - s * acc.G[k], 3), D: Math.round(c.D - s * acc.D[k]) }));
+      if (prev.some((x) => x.BL <= 0.3 || x.KL <= 0.1 || x.GA <= 0.2 || x.GA >= 1 || x.D < 15)) return null;
+      const yrs = [2022, 2023, 2024, 2025];
+      const nkt = U.table(['Nøkkeltall'].concat(yrs.map(String), ['Bransjesnitt']), [
+        ['Balanselikviditet'].concat(prev.map((x) => n(x.BL, 2)), ['?', n(BLb, 2)]),
+        ['Kasselikviditet'].concat(prev.map((x) => n(x.KL, 2)), ['?', n(KLb, 2)]),
+        ['Gjeldsandel'].concat(prev.map((x) => pct(x.GA, 1)), ['?', pctS(GAb)]),
+        ['Kundekredittid, dager'].concat(prev.map((x) => n(x.D)), ['?', String(Db)])], { cls: 'wrapth' });
+      const bal = U.table(['Balanse 31.12.2025', 'Beløp'], [['Anleggsmidler', `<b>${n(AM)}</b>`], ['Varelager', `<b>${n(VL)}</b>`], ['Kundefordringer', `<b>${n(KF)}</b>`], ['Kontanter og bank', `<b>${n(KB)}</b>`], { cells: ['Sum eiendeler', `<b>${n(c.TA)}</b>`], cls: 'sum' },
+        ['Egenkapital', `<b>${n(c.EK)}</b>`], ['Langsiktig lån', `<b>${n(LL)}</b>`], ['Kassekreditt', `<b>${n(KK)}</b>`], ['Leverandørgjeld og annen kortsiktig gjeld', `<b>${n(KG2)}</b>`], { cells: ['Sum egenkapital og gjeld', `<b>${n(c.TA)}</b>`], cls: 'sum' }], { cls: 'wrapth' });
+      const vs = (x, b, hi) => (x > b ? (hi ? 'bedre enn' : 'svakere enn') : (hi ? 'svakere enn' : 'bedre enn'));
+      const task = {
+        text: `<p>${firm} driver ${bransje}. Banken vil vurdere likviditeten før kassekreditten fornyes. Salgsinntektene i 2025 var <b>${n(S)}</b>, alt på kreditt. Alle tall er i 1 000 kr, og det regnes med <b>${Y} dager</b> i året.</p>` +
+          `<p>Nøkkeltallene for de tre foregående årene og bransjesnittet:</p>` + nkt + bal +
+          `<p>Balanselikviditet = omløpsmidler / kortsiktig gjeld. Kasselikviditet = (omløpsmidler − varelager) / kortsiktig gjeld. Gjeldsandel = total gjeld / totalkapital. Kundekredittid = kundefordringer / salgsinntekter · ${Y}.</p>`,
+        parts: [
+          { q: 'Hva er arbeidskapitalen (omløpsmidler − kortsiktig gjeld)?', answer: c.WC, unit: T1000, tol: tolK,
+            hint: 'Kortsiktig gjeld er kassekreditten og leverandørgjelden og annen kortsiktig gjeld.',
+            sol: f(`Omløpsmidler = ${n(VL)} + ${n(KF)} + ${n(KB)} = ${n(c.OM)}`) + f(`Kortsiktig gjeld = ${n(KK)} + ${n(KG2)} = ${n(c.KG)}`) + f(`Arbeidskapital = ${n(c.OM)} − ${n(c.KG)} = <b>${n(c.WC)}</b>`) },
+          { q: 'Hva er balanselikviditeten i 2025?', answer: c.BL, unit: '', dec: 2,
+            sol: f(`${frac(n(c.OM), n(c.KG))} = <b>${n(c.BL, 2)}</b>`) + `<p>Bransjesnittet er ${n(BLb, 2)}. En vanlig tommelfingerregel er at balanselikviditeten bør være over 2, men bransjen er et bedre sammenligningsgrunnlag.</p>` },
+          { q: 'Hva er kasselikviditeten i 2025?', answer: c.KL, unit: '', dec: 2,
+            hint: 'Varelageret holdes utenfor, fordi det tar lengst tid å gjøre om til penger.',
+            sol: f(`${frac(`${n(c.OM)} − ${n(VL)}`, n(c.KG))} = ${frac(n(KF + KB), n(c.KG))} = <b>${n(c.KL, 2)}</b>`) + `<p>Bransjesnittet er ${n(KLb, 2)}. En vanlig tommelfingerregel er minst 1.</p>` },
+          { q: 'Hva er gjeldsandelen i 2025?', answer: c.GA, unit: '%', dec: 1, tol: { abs: 0.0006 },
+            hint: 'Total gjeld er langsiktig og kortsiktig gjeld. Totalkapitalen er sum eiendeler.',
+            sol: f(`Total gjeld = ${n(LL)} + ${n(c.KG)} = ${n(c.gjeld)}`) + f(`${frac(n(c.gjeld), n(c.TA))} = <b>${pct(c.GA, 1)}</b>`) },
+          { q: 'Hva er kundekredittiden i 2025?', answer: c.D, unit: 'dager', dec: 1, tol: { abs: 0.6 },
+            sol: f(`${frac(n(KF), n(S))} · ${Y} = <b>${n(c.D, 1)}</b> dager`) + `<p>Bransjen ligger på ${Db} dager. Kundene bruker altså ${n(c.D - Db)} dager lenger enn snittet.</p>` },
+          { q: `Hvor mye kapital frigjøres hvis kundekredittiden kommer ned til bransjesnittet på ${Db} dager?`, answer: c.F, unit: T1000, tol: tolK,
+            hint: `Nye kundefordringer = salgsinntekter · ${Db} / ${Y}.`,
+            sol: f(`Nye kundefordringer = ${n(S)} · ${frac(Db, Y)} = ${n(S * Db / Y)}`) + f(`Frigjort = ${n(KF)} − ${n(S * Db / Y)} = <b>${n(c.F)}</b>`) },
+          { q: 'Den frigjorte kapitalen brukes til å nedbetale kassekreditten. Hva blir balanselikviditeten da?', answer: c.BL2, unit: '', dec: 2,
+            hint: 'Både omløpsmidlene og den kortsiktige gjelden går ned med det frigjorte beløpet.',
+            sol: f(`${frac(`${n(c.OM)} − ${n(c.F)}`, `${n(c.KG)} − ${n(c.F)}`)} = <b>${n(c.BL2, 2)}</b>`) +
+              `<p>${c.BL > 1 ? 'Når balanselikviditeten er over 1, øker den når like store beløp trekkes fra over og under brøkstreken.' : 'Når balanselikviditeten er under 1, faller den når like store beløp trekkes fra over og under brøkstreken.'} Kasselikviditeten blir ${n((KF + KB - c.F) / (c.KG - c.F), 2)}.</p>` },
+          { kind: 'text', q: 'Hvordan vurderer du likviditeten og soliditeten, sammenlignet med bransjen og utviklingen siden 2022?',
+            points: [`Balanselikviditeten (${n(c.BL, 2)}) er ${vs(c.BL, BLb, true)} bransjen (${n(BLb, 2)}), og kasselikviditeten (${n(c.KL, 2)}) er ${vs(c.KL, KLb, true)} bransjen (${n(KLb, 2)}). Gjeldsandelen (${pct(c.GA, 1)}) er ${vs(c.GA, GAb, false)} bransjen (${pctS(GAb)}).`,
+              `Utviklingen fra 2022 er en <b>${verre ? 'forverring' : 'bedring'}</b> på alle fire nøkkeltallene: balanselikviditet fra ${n(prev[0].BL, 2)} til ${n(c.BL, 2)}, gjeldsandel fra ${pct(prev[0].GA, 1)} til ${pct(c.GA, 1)} og kredittid fra ${prev[0].D} til ${n(c.D)} dager.`,
+              `<b>Kredittiden</b> (${n(c.D)} dager mot ${Db} i bransjen) binder kapital og er finansiert med kassekreditt. Lange kundefordringer gjør også balanselikviditeten bedre enn den er, fordi gamle fordringer kan være vanskelige å kreve inn.`,
+              'Tiltak: strammere kredittpolitikk eller kontantrabatt, factoring, eller å gjøre om kassekreditt til langsiktig lån. Nøkkeltallene er øyeblikksbilder fra balansedagen og bør leses sammen med kontantstrømmen.'] },
         ],
       };
       return { p: pr, c, task };

@@ -1,6 +1,6 @@
 /* Kjør: node tools/verify.js [antall frø]
    Faglig kontroll som ikke bruker generatorenes egen fasit:
-   1) regnefunksjonene for de nye oppgavetypene mot tall i kilder/ (eksamen 2022 og 2023, kapittel-LF 2.1, 6.1, 6.5, 6.9, 8.1, 8.3, 8.8, 8.9, 8.10, 8.12, 11.13, 12.1, 12.2, 12.3 og 12.5),
+   1) regnefunksjonene for de nye oppgavetypene mot tall i kilder/ (eksamen 2022 og 2023, kapittel-LF 2.1, 6.1, 6.5, 6.9, 8.1, 8.3, 8.8, 8.9, 8.10, 8.12, 11.13, 12.1, 12.2, 12.3 og 12.5, 7.7b og 7.8 og forelesningens eksempel 7-10),
    2) uavhengig etterregning av de nye generatorene: tallene leses fra oppgaveteksten og regnes med egne formler,
    3) kontroll av rettingene fra bølge 5 (minimum-varians-vekt, markedsverdier, fortegn nær 0, entydig kombinasjon). */
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -94,6 +94,18 @@ const sd = O._saleCalc({ I: 600000, ks: [250000, 200000, 100000], S: 350000, r: 
 eq('kap8.3a IR f.s. %', sd.irrF * 100, 20.73, 0.005); eq('kap8.3 NV spart skatt', sd.shield, 88000, 0.5); [-512000, 195000, 156000, 351000].forEach((v, t) => eq('kap8.3b grunnlag år ' + t, sd.inn[t], v, 0.5));
 eq('kap8.3b NNV inntektsført', sd.npvInn, 57910, 1); eq('kap8.3c NV økt skatt nedskriving', sd.ned, 38567, 1); [-550567, 195000, 156000, 428000].forEach((v, t) => eq('kap8.3c grunnlag år ' + t, sd.nedF[t], v, 1));
 eq('kap8.3c NNV nedskrevet', sd.npvNed, 77194, 1);
+// Kap. 7 oppg. 7b og 8 (factoring), og forelesningens eksempel 7-10 (løsningen der er rekonstruert, ikke i LF)
+const f7 = O._factCalc({ S: 3600000, D0: 40, D1: 40, m: 0.25, lag: 0, i: 0.2, Y: 360, geb: 0.0035 * 3600000, spart: 0, kk: 0.2 });
+eq('kap7.7b kundefordringer før', f7.KF0, 400000, 0.5); eq('kap7.7b margin', f7.KF1, 100000, 0.5); eq('kap7.7b frigjort', f7.frig, 300000, 0.5); eq('kap7.7b renter', f7.rente, 60000, 0.5);
+eq('kap7.7b gebyr', f7.geb, 12600, 0.5); eq('kap7.7b sum kostnader', f7.cost, 72600, 0.5); eq('kap7.7b kostnad %', f7.kost * 100, 24.2, 0.005);
+const f8 = O._factCalc({ S: 9000000, D0: 60, D1: 60, m: 0.2, lag: 7, i: 0.15, Y: 360, geb: 60000, spart: 50000, kk: 0.2 });
+eq('kap7.8 kundefordringer før', f8.KF0, 1500000, 0.5); eq('kap7.8 margin', f8.marg, 300000, 0.5); eq('kap7.8 rest 7 dager', f8.rest, 140000, 0.5); eq('kap7.8 etter factoring', f8.KF1, 440000, 0.5);
+eq('kap7.8 reduksjon kapitalbinding', f8.frig, 1060000, 0.5); eq('kap7.8 renter', f8.rente, 159000, 0.5); eq('kap7.8 netto kostnad', f8.cost, 169000, 0.5); eq('kap7.8 kostnad %', f8.kost * 100, 15.9, 0.05);
+const fl = O._factCalc({ S: 12000000, D0: 45, D1: 30, m: 0.2, lag: 0, i: 0.13, Y: 360, geb: 2400 * 25, spart: 50000, kk: 0.2 });
+eq('forelesning 7-10 frigjort', fl.frig, 1300000, 0.5); eq('forelesning 7-10 renter (av 800 000)', fl.rente, 104000, 0.5); eq('forelesning 7-10 netto', fl.cost, 114000, 0.5); eq('forelesning 7-10 kostnad %', fl.kost * 100, 8.8, 0.05);
+// Kap. 12 oppg. 3 (nøkkeltall fra balansen 2022). LFs gjeldsandel 97,1 % lar seg ikke gjenskape fra balansen; regnet gjeldsandel er 58,7 %.
+const nk = O._ratioCalc({ S: 72900, AM: 35280, VL: 16450, KF: 21970, KB: 150, LL: 15000, KK: 14600, KG2: 13760, Y: 365, Db: 60 });
+eq('kap12.3 sum eiendeler', nk.TA, 73850, 0.5); eq('kap12.3 balanselikviditet', nk.BL, 1.36, 0.005); eq('kap12.3 kasselikviditet', nk.KL, 0.78, 0.005); eq('kap12.3 kundekredittid', nk.D, 110, 0.05);
   out.forEach((l) => { if (/^AVVIK/.test(l)) problems++; }); console.log(out.filter((l) => /^AVVIK/.test(l)).join('\n') || `kilder: ${out.length} kontrolltall stemmer`);
 }
 // ---------- 2) Nye generatorer, etterregnet fra oppgaveteksten ----------
@@ -292,6 +304,35 @@ for (let s = 1; s <= SEEDS; s++) {
     if (!t.parts[5].sol.includes(zone)) { bad++; fails.push('altman: sone, frø ' + s); }
     const mine = X.concat([Z, Math.abs(goal - Z) * TA / 3.3]);
     t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('altman', s, pp, mine[k]); }); }
+  // ---------- Factoring ----------
+  { const t = O.make('k7-factoring', s), x = t.text;
+    const S = num(m1(x, R('kredittsalg på <b>' + NUM + '</b>'))), D0 = +m1(x, /etter <b>(\d+) dager<\/b>\. Bedriften/), Y = +m1(x, /Regn med <b>(\d+) dager<\/b>/);
+    const adv = +m1(x, /forskutterer <b>(\d+) %<\/b>/) / 100, mg = +m1(x, /marginen på (\d+) %/) / 100;
+    if (Math.abs(adv + mg - 1) > 1e-9) { bad++; fails.push('factoring: forskudd + margin ≠ 100 %, frø ' + s); }
+    const lm = x.match(/<b>(\d+) dager<\/b> etter at fakturaen/), lag = lm ? +lm[1] : 0, dm = x.match(/ned til <b>(\d+) dager<\/b>/), D1 = dm ? +dm[1] : D0;
+    const i = +m1(x, /forskuttert beløp er <b>(\d+) %/) / 100, kk = num(m1(x, /effektiv rente på <b>([\d,]+) %/)) / 100;
+    const gm = x.match(R('Factoringgebyret er <b>' + NUM + ' kr per faktura</b>'));
+    const geb = gm ? S / num(m1(x, R('gjennomsnittsfaktura er på <b>' + NUM + '</b>'))) * num(gm[1]) : num(m1(x, /Factoringgebyret er <b>([\d,]+) %<\/b> av kredittsalget/)) / 100 * S;
+    const sm = x.match(R('sparer <b>' + NUM + '</b> per år')), sp = sm ? num(sm[1]) : 0;
+    const before = S / Y * D0, after = S / Y * (mg * D1 + adv * lag), freed = before - after, advanced = S / Y * adv * (D1 - lag);
+    const net = advanced * i + geb - sp;
+    const mine = [before, after, freed, advanced, advanced * i, geb, net, net / freed, kk * freed - advanced * i + sp];
+    if ((net / freed < kk) !== /<b>lavere<\/b>/.test(t.parts[7].sol)) { bad++; fails.push('factoring: konklusjon, frø ' + s); }
+    t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('factoring', s, pp, mine[k]); }); }
+  // ---------- Nøkkeltall og likviditet ----------
+  { const t = O.make('k12-nokkeltall-likviditet', s), x = t.text;
+    const row = (lbl) => num(m1(x, R(lbl + '</th><td><b>([\\d\\s\\u00a0\\u202f]+)</b>')));
+    const AM = row('Anleggsmidler'), VL = row('Varelager'), KF = row('Kundefordringer'), KB = row('Kontanter og bank'), TA = row('Sum eiendeler');
+    const EK = row('Egenkapital'), LL = row('Langsiktig lån'), KK = row('Kassekreditt'), KG2 = row('Leverandørgjeld og annen kortsiktig gjeld');
+    if (Math.abs(AM + VL + KF + KB - TA) > 0.01 || Math.abs(EK + LL + KK + KG2 - TA) > 0.01) { bad++; fails.push('nøkkeltall: balansen går ikke opp, frø ' + s); }
+    const S = num(m1(x, R('Salgsinntektene i 2025 var <b>' + NUM + '</b>'))), Y = +m1(x, /regnes med <b>(\d+) dager<\/b>/), Db = +m1(t.parts[5].q, /bransjesnittet på (\d+) dager/);
+    const tr = (lbl) => m1(x, R(lbl + '</th>((?:<td>[^<]*</td>)+)</tr>')).match(/<td>([^<]*)<\/td>/g).map((z) => z.replace(/<\/?td>/g, ''));
+    const cur = VL + KF + KB, short = KK + KG2, freed = KF - S * Db / Y;
+    const mine = [cur - short, cur / short, (cur - VL) / short, (LL + short) / TA, KF * Y / S, freed, (cur - freed) / (short - freed)];
+    const blRow = tr('Balanselikviditet'), b0 = num(blRow[0]), bBr = num(blRow[4]);
+    if ((b0 > mine[1]) !== /forverring/.test(t.parts[7].points[1])) { bad++; fails.push('nøkkeltall: utvikling, frø ' + s); }
+    if ((mine[1] > bBr) !== /\(([\d,]+)\) er bedre enn bransjen/.test(t.parts[7].points[0].split(', og')[0])) { bad++; fails.push('nøkkeltall: mot bransjen, frø ' + s); }
+    t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('nøkkeltall', s, pp, mine[k]); }); }
   // ---------- Salg av driftsmiddel ----------
   { const t = O.make('k8-salg-driftsmiddel', s), x = t.text;
     const I = num(m1(x, R('for <b>' + NUM + '</b>\\. Investeringen'))), T = +m1(x, /Etter <b>(\d) år<\/b>/), S = num(m1(x, R('selges driftsmidlet for <b>' + NUM + '</b>'))), r = +m1(x, /etter skatt er <b>(\d+) %/) / 100;

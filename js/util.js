@@ -43,7 +43,7 @@
   /** Tolker brukerinndata: "1 234,5", "12,3%", "1.234,5", "-5" */
   U.parse = (s) => {
     if (typeof s !== 'string') return NaN;
-    let t = s.trim().replace(/[\s  ]/g, '').replace(/%|tusen|kr|år/gi, '').replace(/−/g, '-');
+    let t = s.trim().replace(/[\s  ]/g, '').replace(/%|tusen|kr|år|dager|dag/gi, '').replace(/−/g, '-');
     if (t === '') return NaN;
     if (t.includes(',') && t.includes('.')) t = t.replace(/\./g, '').replace(',', '.');
     else t = t.replace(',', '.');
