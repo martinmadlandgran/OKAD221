@@ -29,6 +29,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 7 | Tre nye generatorer fra kapittel-LF (6.1, 8.10, 8.9 med 8.1d), quiz med repetisjon | Ferdig |
 | 8 | Fire nye generatorer fra kapittel-LF: kapittel 12 (12.1–12.2, 12.3, 12.5) og salg av driftsmiddel (8.3) | Ferdig |
 | 9 | Factoring (7.7b, 7.8) og nøkkeltall for likviditet (12.3), dager i året gjort konsekvent | Ferdig |
+| 10 | 14 nye quizspørsmål (factoring og nøkkeltall for likviditet), åpne punkter gjennomgått, installasjonskostnad lukket | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -166,32 +167,54 @@ Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer), `node tools/
 
 Avgjort av eier etter bølgen: nøkkeltallstabellen snus med årene som rader, så den får plass uten sidelengs rulling på mobil (1a), og gjeldsandelen beholdes som total gjeld / totalkapital (2a). Fulgt opp: tabellen har kolonnene år, balanselikviditet, kasselikviditet, gjeldsandel (%) og kredittid (dager), med 2025 som en rad med spørsmålstegn og bransjesnittet som siste rad. Overskriftene er forkortet og står med vanlige bokstaver i denne tabellen, og teksten under forklarer forkortelsene og enhetene. Den får nå plass i 320 px, og `e2e.js` kontrollerer det (449 bestått).
 
+## Bølge 10: quiz for factoring og nøkkeltall, åpne punkter (ferdig)
+
+Nye quizspørsmål (162 i alt, 148 før). Alle tall er etterregnet for hånd og med et eget skript, og hvert feil alternativ er en bestemt, navngitt feil som forklaringen sier hva er. Rekkefølgen på alternativene stokkes på skjermen som før.
+
+- Kapittel 7, factoring (6 nye, 19 i kapitlet): frigjort kapital når marginen fortsatt er bundet (feil: hele kundefordringene, 365 i stedet for 360 dager), hvorfor marginen ikke er en kostnad, kostnad i prosent (feil: delt på hele kundefordringene, sparte administrasjonskostnader glemt, bare renten), forsinket forskudd (feil: forsinkelsen glemt, marginen glemt, det bundne beløpet), kortere kredittid der rentene bare regnes av forskuddet (feil: renter av frigjort kapital, av fordringene før, med gammel kredittid), og sammenligning med kassekreditt.
+- Kapittel 12, nøkkeltall for likviditet (8 nye, 11 i kapitlet): balanselikviditet, kasselikviditet og gjeldsandel fra samme balanse (feil: varelager med eller uten, brøken snudd, all gjeld i nevneren, gjeldsgrad i stedet for gjeldsandel, egenkapitalandel), hvorfor varelageret holdes utenfor, kundekredittid (feil: hele omsetningen med kontantsalg, 360 i stedet for 365, omløpshastighet), frigjort kapital når kredittiden kommer ned på bransjesnittet, og hva nedbetaling av kassekreditten gjør med balanselikviditeten over og under 1 (det samme poenget som generatoren `k12-nokkeltall-likviditet`).
+- Hvert spørsmål oppgir alle tallene det trenger, siden runden stokker spørsmålene. Gjeldsandelen er total gjeld / totalkapital, som eier avgjorde etter bølge 9. Antall dager i året står i hvert spørsmål som regner med dager.
+- Kapittel 12 har nå 11 spørsmål og gir en full runde på 10. Kapittel 1 (5 spørsmål) er nå det minste kapitlet.
+
+Kontroller:
+
+- `check.js` sjekker nå også at hvert quizspørsmål har fire ulike alternativer, et riktig svar mellom 0 og 3 og en forklaring (alle 162 består), i tillegg til unike id-er.
+- `e2e.js` (13 nye kontroller): minst seks factoringspørsmål og åtte nøkkeltallspørsmål, kapittel 12 gir full runde, alle de nye spørsmålene kommer i repetisjonsrunden når de venter, feil svar gir forklaring på alle, ingen sidelengs rulling i 320 px verken på spørsmålet eller forklaringen, riktig svar står ikke på samme plass i dataene, og feil igjen holder dem i repetisjonen. Kontrollen for «kort runde» bruker nå kapittel 1 (5 spørsmål) i stedet for kapittel 12.
+
+Åpne punkter gjennomgått mot `kilder/` (hva kan lukkes uten læreboka):
+
+- Aktivering av installasjonskostnad: lukket. Kildene sier begge deler, og alltid i oppgaveteksten: eksamen 2018 og 2023 aktiverer installasjonen, kapittel-LF 8.12 kostnadsfører den direkte (skattefradrag 14 080 i år 0). Generatoren `k8-egenproduksjon-kjop` gjør som 8.12 og sier det i oppgaveteksten, og løsningen forklarer alternativet. Teorien for nåverdi etter skatt (kapittel 8) sier nå at man skal følge oppgaveteksten, med begge kildene.
+- Gjeldsandelen i 12.3: lukket som avgjort av eier (total gjeld / totalkapital). Teorien sier fortsatt at LFs tall ikke lar seg gjenskape.
+- 2025 oppg. 4 (variansen for aksje B) og 2025 oppg. 5b: lukket. Siden godtar eller viser begge, og ingen lærebok kan endre hva LF sier.
+- Black–Scholes-toleransen: lukket, avgjort av eier.
+- Står åpne fordi de krever læreboka eller lysbildene som bilder: Altmans grenser (1,81 og 2,99), durasjon og rentenivå, og factoring med kortere kredittid (eksempel 7-10). For 7-10 er metoden for frigjort kapital og renter den samme som i kapittel-LF 7.7b og 7.8 når kredittiden ikke endres, så det eneste som ikke er bekreftet, er at rentene regnes av forskuddet når kredittiden også blir kortere.
+- Står åpent fordi det krever eier: ekte utskrift og flytting mellom fysiske enheter.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 162 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 462 bestått.
+
 ## Åpne punkter
 
-- Aktivering av installasjonskostnad, som før. (360 eller 365 dager er avgjort etter bølge 8 og gjennomført i bølge 9.)
-- Kap. 12 oppg. 3: LFs gjeldsandeler (97,1 % for 2022) lar seg ikke gjenskape fra balansen (58,7 %). Siden bruker gjeld / totalkapital, som eier har avgjort. Står åpent bare til læreboka kan leses.
-- Factoring med kortere kredittid bygger på forelesningens eksempel 7-10, der løsningen er rekonstruert.
-- Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka.
+- Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
 - Durasjon og rentenivå: forlagets lysbilder sier det motsatte av standardteorien og av forlagets egne tall (se bølge 6). Siden følger standardteorien. Læreboka er ikke lest, så det står igjen å se hva den sier.
-- 2025 oppg. 4: LFs varians for aksje B (0,00579) lar seg ikke gjenskape; eksakt er 0,005852. Siden godtar begge.
-- 2025 oppg. 5b: begge versjoner er etterregnet og står.
-- Black–Scholes-toleransen beholdes (Excel-nøyaktighet), avgjort av eier.
+- Factoring med kortere kredittid bygger på forelesningens eksempel 7-10, der løsningen er rekonstruert. Det som ikke er bekreftet, er at rentene bare regnes av forskuddet. Ett nytt quizspørsmål bygger på dette.
 - Ekte utskrift og flytting mellom fysiske enheter er ikke testet (bare i hodeløs Chromium, A4-PDF).
 
-Avgjort av eier etter bølgen: de fire nye typene holdes utenfor prøveeksamenens trekkpott (1a), egenkapitalens internrente godtas innenfor 0,1 prosentpoeng av målsøkingssvaret (2a), og «Vis alle løsninger» før svar legger oppgaven i repetisjonslisten uten å endre treffprosenten (3a). Ingen kodeendring trengtes.
+Lukket i bølge 10: aktivering av installasjonskostnad (følg oppgaveteksten), gjeldsandelen i 12.3 (avgjort), 2025 oppg. 4 og 5b (begge godtas eller vises), Black–Scholes-toleransen (avgjort).
+
+Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamenens trekkpott (1a), egenkapitalens internrente godtas innenfor 0,1 prosentpoeng av målsøkingssvaret (2a), og «Vis alle løsninger» før svar legger oppgaven i repetisjonslisten uten å endre treffprosenten (3a). Ingen kodeendring trengtes.
 
 ## Neste bølge (forslag)
 
-Alle oppgavetypene i kapittel-LF som egner seg for generator, har nå generator (kap. 12 oppg. 6, regresjon, er utelatt med vilje). Forslag til bølge 10: en gjennomgang av quizen for kapittel 7 og 12 (factoring og nøkkeltall har ingen quizspørsmål), og helhetlig brukertest på mobil av de nyeste oppgavetypene.
+Quizen er fortsatt tynn i resten av kapittel 12 (ett spørsmål om Altmans Z, ingen om kontantrabatt eller kredittpolitikk ut over kapitalbinding), i kapittel 9 (8 spørsmål) og i kapittel 1 (5). Forslag til bølge 11: quizspørsmål for kontantrabatt, kredittpolitikk og Altmans Z, og for kapittel 9, med samme krav som i bølge 10. I tillegg det eier finner i brukertesten på mobil.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 10 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 11 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 10:
-1. Nye quizspørsmål for factoring (kap. 7) og nøkkeltall for likviditet (kap. 12), med forklaringer som peker på de typiske feilene. check.js skal fortsatt melde unike id-er.
-2. Gå gjennom de åpne punktene i BOLGER.md og si hva som kan lukkes uten læreboka.
+Innhold i bølge 11:
+1. Nye quizspørsmål for kapittel 12 (kontantrabatt, kredittpolitikk, Altmans Z) og kapittel 9, der hvert feil alternativ er en navngitt typisk feil. check.js skal fortsatt melde gyldige spørsmål med unike id-er.
+2. Rett det jeg fant i brukertesten på mobil: <lim inn funn, eller skriv «ingen funn»>.
 3. Oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit og push til arbeidsgrenen når alt er grønt.

@@ -24,6 +24,7 @@ for (const g of O.gens) {
 console.log(`${O.gens.length} generatorer × ${N} frø`, bad ? `– ${bad} problemer` : '– OK');
 if (O.exams) console.log('eksamener:', O.exams.map((e) => e.id + ':' + e.tasks.length).join(' '));
 if (O.theory) console.log('teori-kapitler:', O.theory.map((c) => c.nr).join(','));
-if (O.quiz) { const ids = O.quiz.map((q) => O.U.hash(q.q)), dup = ids.length - new Set(ids).size; console.log('quiz-spørsmål:', O.quiz.length, dup ? `– ${dup} like id-er` : '(unike id-er)'); if (dup) bad++; }
+if (O.quiz) { const ids = O.quiz.map((q) => O.U.hash(q.q)), dup = ids.length - new Set(ids).size; console.log('quiz-spørsmål:', O.quiz.length, dup ? `– ${dup} like id-er` : '(unike id-er)'); if (dup) bad++;
+  const badq = O.quiz.filter((q) => !Array.isArray(q.options) || q.options.length !== 4 || new Set(q.options).size !== 4 || !(q.correct >= 0 && q.correct <= 3) || !q.why); if (badq.length) { console.log('UGYLDIGE QUIZSPØRSMÅL:', badq.map((q) => q.q.slice(0, 50)).join(' | ')); bad++; } }
 
 process.exit(bad ? 1 : 0);

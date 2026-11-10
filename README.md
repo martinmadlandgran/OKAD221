@@ -13,7 +13,7 @@ Statisk øvingsnettside (ren HTML/CSS/JS, ingen byggesteg) for ØKAD 221 ved NLA
 | Prøveeksamen 2026 | Fem oppgaver satt sammen etter prognosen, med tidtaking og automatisk retting. Kan også skrives ut med fasit bakerst og rettes på skjerm etterpå |
 | Tidligere eksamener | 10 sett, 40 oppgaver, 143 deloppgaver med ordrett tekst, fasit og løsningsmetode |
 | Teori | Kapittel 1–13: begreper, formler, fremgangsmåter, eksempler, typiske feil, Excel-funksjoner |
-| Quiz | 148 flervalgsspørsmål. Spørsmål du svarer feil på, kommer igjen i senere runder (høyst fem per runde) til du svarer riktig, og kan også repeteres for seg |
+| Quiz | 162 flervalgsspørsmål. Spørsmål du svarer feil på, kommer igjen i senere runder (høyst fem per runde) til du svarer riktig, og kan også repeteres for seg |
 | Formler og kalkulatorer | Søkbar formelsamling, og kalkulatorer for NNV/IR, lån, obligasjon og WACC/saldo |
 
 Fremdrift lagres i nettleserens `localStorage`. Den kan flyttes til en annen enhet fra forsiden (Innstillinger): last ned en fil eller kopier som tekst, og hent den inn på den andre enheten. Ved henting kan man slå sammen (beholder det beste fra begge, idempotent) eller erstatte. Repetisjonslisten for oppgaver og quizspørsmålene som venter på repetisjon, følger med.
@@ -46,7 +46,7 @@ Siden er et arbeidsverktøy, ikke en presentasjon. Reglene den følger:
 node tools/check.js 300
 ```
 
-Røyk-tester alle generatorer over 300 frø og skriver ut antall eksamener, teorikapitler og quizspørsmål (og kontrollerer at hvert quizspørsmål får en unik id).
+Røyk-tester alle generatorer over 300 frø og skriver ut antall eksamener, teorikapitler og quizspørsmål (og kontrollerer at hvert quizspørsmål får en unik id, har fire ulike svaralternativer, et gyldig riktig svar og en forklaring).
 
 ```bash
 node tools/verify.js 1000
@@ -62,7 +62,7 @@ python3 -m http.server 8765
 node tools/e2e.js /tmp/skjermbilder
 ```
 
-Nettlesertest (Playwright): alle sider i fire skjermstørrelser, svarsjekk og feiltilstander, prøveeksamen fra start til retting, prøveeksamen på papir (utskrift, fasit på ny side), flytting av fremdrift (eksport, import, sammenslåing, ugyldige filer), repetisjonslisten (fylles, tømmes, prøveeksamen, flytting), quizrepetisjon (fylles, tømmes, høyst fem per runde, flytting, ugyldige data), oppgavetypene fra bølge 7 (fasit, toleranse for målsøking, stjernediagram på mobil, i mørkt tema og på utskrift), bølge 8 (fasit, svar i tusen kroner, fortegn, kapittel 12 i teori og Øv, utenfor prøveeksamenen) og bølge 9 (factoring og nøkkeltall: fasit, svar i dager, typiske forvekslinger, tabeller i 320 px, og at alle oppgaver med dager oppgir antall dager i året), tastaturnavigasjon, kontrast (WCAG AA) i lyst og mørkt tema, trykkflater på mobil og sperret lagring.
+Nettlesertest (Playwright): alle sider i fire skjermstørrelser, svarsjekk og feiltilstander, prøveeksamen fra start til retting, prøveeksamen på papir (utskrift, fasit på ny side), flytting av fremdrift (eksport, import, sammenslåing, ugyldige filer), repetisjonslisten (fylles, tømmes, prøveeksamen, flytting), quizrepetisjon (fylles, tømmes, høyst fem per runde, flytting, ugyldige data), oppgavetypene fra bølge 7 (fasit, toleranse for målsøking, stjernediagram på mobil, i mørkt tema og på utskrift), bølge 8 (fasit, svar i tusen kroner, fortegn, kapittel 12 i teori og Øv, utenfor prøveeksamenen) og bølge 9 (factoring og nøkkeltall: fasit, svar i dager, typiske forvekslinger, tabeller i 320 px, og at alle oppgaver med dager oppgir antall dager i året), bølge 10 (quizspørsmålene om factoring og nøkkeltall: alle kommer i repetisjonsrunden, gir forklaring ved feil svar og får plass i 320 px), tastaturnavigasjon, kontrast (WCAG AA) i lyst og mørkt tema, trykkflater på mobil og sperret lagring.
 
 Struktur: `js/fin.js` (finansfunksjoner), `js/gen/*.js` (oppgavegeneratorer; `ir.js` har følsomhet på internrenten, leasing og internrente etter skatt, `salg.js` salg av driftsmiddel, `kreditt.js` kapittel 12 og factoring), `js/data/*.js`
 (eksamener, teori, quiz, prognose), `js/app.js` (visninger).
