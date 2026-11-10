@@ -141,9 +141,11 @@ Nye generatorer (41 i alt), i `js/gen/kreditt.js` og `js/gen/salg.js`. Regnefunk
 
 Test etter bølgen: `node tools/check.js 3000` OK (41 generatorer), `node tools/verify.js 1000` OK (170 kontrolltall, 102 000 tallsvar), `tools/e2e.js` 406 bestått (41 nye kontroller: alle fasitsvar godtas i 390 px, ingen sidelengs rulling i 320 og 390 px, tusen kroner, fortegn på netto og negativ arbeidskapital, sone i løsningen, inntektsført NNV godtas ikke som nedskrevet, kapittel 12 i teori og Øv, utenfor trekkpotten, Tab til Sjekk, Z-formelen hel i 320 px).
 
+Avgjort av eier etter bølgen: salg av driftsmiddel holdes utenfor prøveeksamenens trekkpott som de andre nye typene (1b). Antall dager i året følger oppgaveteksten, og teorisiden sier det (2a). Altmans grenser 1,81 og 2,99 beholdes i oppgaveteksten (3a). Fulgt opp: alle generatorer som regner med dager, oppgir antallet i teksten (leverandørkreditt 360, kredittpolitikk 360, kontantrabatt 365, opsjoner 365). Teorien for kapittel 7 (leverandørkreditt og factoring) sier nå at man skal følge oppgaveteksten, og bruke 360 og si det i svaret hvis ingenting står. Kapittel 12 sa dette fra før.
+
 ## Åpne punkter
 
-- Leverandørkreditt 360 dager og aktivering av installasjonskostnad, som før. Kontantrabatten i kapittel 12 bruker 365 dager som LF 12.3, og oppgaveteksten sier det. Kapittel 7 i LF bruker 360.
+- Aktivering av installasjonskostnad, som før. (360 eller 365 dager er avgjort etter bølge 8: følg oppgaveteksten.)
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka.
 - Durasjon og rentenivå: forlagets lysbilder sier det motsatte av standardteorien og av forlagets egne tall (se bølge 6). Siden følger standardteorien. Læreboka er ikke lest, så det står igjen å se hva den sier.
 - 2025 oppg. 4: LFs varians for aksje B (0,00579) lar seg ikke gjenskape; eksakt er 0,005852. Siden godtar begge.
@@ -155,7 +157,7 @@ Avgjort av eier etter bølgen: de fire nye typene holdes utenfor prøveeksamenen
 
 ## Neste bølge (forslag)
 
-Alle kapitlene har nå oppgavetyper. Det som står igjen i kapittel-LF uten generator, er factoring (kap. 7 oppg. 7b og 8: kapitalbinding før og etter, margin, renter på forskutt beløp, gebyr og sparte administrasjonskostnader, kostnad i prosent av frigjort kapital) og nøkkeltall for likviditet (kap. 12 oppg. 3: balanselikviditet, kasselikviditet, gjeldsandel og kredittid mot bransjen). I tillegg bør 360 eller 365 dager avgjøres én gang for hele siden, og teksten på teorisiden for kapittel 7 og 12 samkjøres med det.
+Alle kapitlene har nå oppgavetyper. Det som står igjen i kapittel-LF uten generator, er factoring (kap. 7 oppg. 7b og 8: kapitalbinding før og etter, margin, renter på forskutt beløp, gebyr og sparte administrasjonskostnader, kostnad i prosent av frigjort kapital) og nøkkeltall for likviditet (kap. 12 oppg. 3: balanselikviditet, kasselikviditet, gjeldsandel og kredittid mot bransjen).
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
@@ -164,9 +166,8 @@ Kjør bølge 9 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og f
 
 Innhold i bølge 9:
 1. Én generator for factoring fra kapittel-LF i kilder/kapittel_lf.md (kap. 7 oppg. 7b og 8). Regnefunksjonen skal gjenskape LF-tallene, og tools/verify.js skal etterregne den fra oppgaveteksten over 1000 frø. Ikke legg den i prøveeksamenens trekkpott.
-2. Én generator for nøkkeltall og likviditet (kap. 12 oppg. 3: balanselikviditet, kasselikviditet, gjeldsandel, kredittid mot bransjesnitt), med samme krav.
-3. Gå gjennom alle steder der siden regner med 360 eller 365 dager (teori kap. 7 og 12, generatorene, formelsamlingen), og gjør dem konsekvente etter eiers avgjørelse i BOLGER.md.
-4. Oppdater tools/e2e.js med kontroller for det nye, og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
+2. Én generator for nøkkeltall og likviditet (kap. 12 oppg. 3: balanselikviditet, kasselikviditet, gjeldsandel, kredittid mot bransjesnitt), med samme krav. Antall dager i året skal stå i oppgaveteksten (avgjort etter bølge 8).
+3. Oppdater tools/e2e.js med kontroller for det nye, og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit og push til arbeidsgrenen når alt er grønt. Ikke lag PR.
 ```
