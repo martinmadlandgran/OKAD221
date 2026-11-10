@@ -8,14 +8,14 @@ Statisk øvingsnettside (ren HTML/CSS/JS, ingen byggesteg) for ØKAD 221 ved NLA
 | Del | Hva |
 |---|---|
 | Eksamensanalyse | Varmekart tema × år for de ti settene 2016–2025, hyppighet vektet mot de siste årene, og prognose for 2026 |
-| Øvingsoppgaver | 27 generatorer som lager nye tall hver gang, med svarsjekk, hint og løsning steg for steg |
-| Prøveeksamen 2026 | Fem oppgaver satt sammen etter prognosen, med tidtaking og automatisk retting |
+| Øvingsoppgaver | 30 generatorer som lager nye tall hver gang, med svarsjekk, hint og løsning steg for steg |
+| Prøveeksamen 2026 | Fem oppgaver satt sammen etter prognosen, med tidtaking og automatisk retting. Kan også skrives ut med fasit bakerst og rettes på skjerm etterpå |
 | Tidligere eksamener | 10 sett, 40 oppgaver, 143 deloppgaver med ordrett tekst, fasit og løsningsmetode |
 | Teori | Kapittel 1–13: begreper, formler, fremgangsmåter, eksempler, typiske feil, Excel-funksjoner |
 | Quiz | 148 flervalgsspørsmål |
 | Formler og kalkulatorer | Søkbar formelsamling, og kalkulatorer for NNV/IR, lån, obligasjon og WACC/saldo |
 
-Fremdrift lagres i nettleserens `localStorage`.
+Fremdrift lagres i nettleserens `localStorage`. Den kan flyttes til en annen enhet fra forsiden (Innstillinger): last ned en fil eller kopier som tekst, og hent den inn på den andre enheten. Ved henting kan man slå sammen (beholder det beste fra begge, idempotent) eller erstatte.
 
 ## Kilder og forbehold
 
@@ -36,7 +36,7 @@ Siden er et arbeidsverktøy, ikke en presentasjon. Reglene den følger:
 - Størrelse følger viktighet: forsiden er en arbeidsliste der oppgavetypene er rangert etter eksamensvekt.
 - Grønt betyr «kan trykkes». Gul markeringstusj betyr «dette er svaret».
 - Tabeller er satt som en hovedbok: tall i fastbredde, dobbeltstrek under sumrader.
-- Hver handling har et svar når noe går galt: tomt eller ugyldig svar, gjenkjente feiltyper (fortegn, desimal i stedet for prosent, størrelsesorden), søk uten treff, ukjente lenker, sperret lagring, ufullstendig prøveeksamen og ugyldige kalkulatorfelt.
+- Hver handling har et svar når noe går galt: tomt eller ugyldig svar, gjenkjente feiltyper (fortegn, desimal i stedet for prosent, størrelsesorden), søk uten treff, ukjente lenker, sperret lagring, ufullstendig prøveeksamen, ugyldige kalkulatorfelt og fremdriftsfiler som er tomme, ødelagte, fra en nyere versjon eller fra et annet program.
 - Mobil har egen meny nederst og større trykkflater, ikke bare stablet desktop.
 
 ## Utvikling
@@ -48,6 +48,12 @@ node tools/check.js 300
 Røyk-tester alle generatorer over 300 frø og skriver ut antall eksamener, teorikapitler og quizspørsmål.
 
 ```bash
+node tools/verify.js 1000
+```
+
+Faglig kontroll uten generatorenes egen fasit: regnefunksjonene for kapasitetsutvidelse, hotellutvidelse og kontantstrøm til egenkapitalen mot tall i `kilder/`, og uavhengig etterregning fra oppgaveteksten for de nyeste generatorene.
+
+```bash
 python3 -m http.server 8765
 ```
 
@@ -55,7 +61,7 @@ python3 -m http.server 8765
 node tools/e2e.js /tmp/skjermbilder
 ```
 
-Nettlesertest (Playwright): alle sider i fire skjermstørrelser, svarsjekk og feiltilstander, prøveeksamen fra start til retting, tastaturnavigasjon, kontrast (WCAG AA) i lyst og mørkt tema, trykkflater på mobil og sperret lagring.
+Nettlesertest (Playwright): alle sider i fire skjermstørrelser, svarsjekk og feiltilstander, prøveeksamen fra start til retting, prøveeksamen på papir (utskrift, fasit på ny side), flytting av fremdrift (eksport, import, sammenslåing, ugyldige filer), tastaturnavigasjon, kontrast (WCAG AA) i lyst og mørkt tema, trykkflater på mobil og sperret lagring.
 
 Struktur: `js/fin.js` (finansfunksjoner), `js/gen/*.js` (oppgavegeneratorer), `js/data/*.js`
 (eksamener, teori, quiz, prognose), `js/app.js` (visninger).

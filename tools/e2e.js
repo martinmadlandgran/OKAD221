@@ -4,12 +4,12 @@ const fails = [], pass = [];
 const ok = (c, msg) => (c ? pass : fails).push(msg);
 (async () => {
   const b = await chromium.launch();
-  const mk = async (o = {}) => { const ctx = await b.newContext({ viewport: { width: o.w || 1200, height: o.h || 900 }, colorScheme: o.dark ? 'dark' : 'light', deviceScaleFactor: 1 }); if (o.init) await ctx.addInitScript(o.init); const p = await ctx.newPage(); p.on('pageerror', (e) => fails.push('JS-feil: ' + e.message)); p.on('console', (m) => { if (m.type() === 'error') fails.push('konsoll: ' + m.text()); }); p.on('dialog', (d) => d.accept()); return p; };
+  const mk = async (o = {}) => { const ctx = await b.newContext({ viewport: { width: o.w || 1200, height: o.h || 900 }, colorScheme: o.dark ? 'dark' : 'light', deviceScaleFactor: 1, acceptDownloads: true }); if (o.init) await ctx.addInitScript(o.init); const p = await ctx.newPage(); p.on('pageerror', (e) => fails.push('JS-feil: ' + e.message)); p.on('console', (m) => { if (m.type() === 'error') fails.push('konsoll: ' + m.text()); }); p.on('dialog', (d) => d.accept()); return p; };
   const go = async (p, h) => { await p.goto(B + h); await p.waitForTimeout(250); };
   const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
 
   // 1) Alle ruter, desktop + mobil, lyst + mørkt: ingen feil, ingen sidelengs rulling
-  const routes = ['', 'analyse', 'oving', 'prove', 'eksamener', 'eksamen/2025', 'eksamen/2016', 'tema', 'tema/8', 'tema/4', 'tema/12', 'formler', 'quiz', 'quiz/alle', 'verktoy'];
+  const routes = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'eksamen/2025', 'eksamen/2016', 'tema', 'tema/8', 'tema/4', 'tema/12', 'formler', 'quiz', 'quiz/alle', 'verktoy'];
   for (const o of [{ w: 1200 }, { w: 390, h: 800 }, { w: 390, h: 800, dark: true }, { w: 320, h: 640 }]) {
     const p = await mk(o);
     for (const r of routes) { await go(p, r); ok(!(await overflow(p)), `ingen sidelengs rulling ${o.w}px ${r || 'hjem'}`); }
@@ -18,7 +18,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   // 2) Alle 27 generatorer åpner, viser løsninger, ingen overflow på mobil
   { const p = await mk({ w: 390, h: 800 }); const ids = await (async () => { await go(p, 'oving'); return p.evaluate(() => OKAD.gens.map((g) => g.id)); })();
     for (const id of ids) { await go(p, 'oving/' + id + '/11'); await p.click('#all'); ok(!(await overflow(p)), 'mobil gen ' + id); ok((await p.locator('.solution').count()) > 0, 'løsning vises ' + id); }
-    ok(ids.length === 27, '27 generatorer'); await p.context().close(); }
+    ok(ids.length === 30, '30 generatorer'); await p.context().close(); }
 
   const p = await mk();
   // 3) Svarsjekk: tomt, ugyldig, feil fortegn, desimal i stedet for prosent, riktig, Enter
@@ -83,6 +83,59 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await go(q, ''); await q.screenshot({ path: out + '/m-hjem.png' }); await go(q, 'prove'); await q.click('#start'); await q.waitForTimeout(200); await q.screenshot({ path: out + '/m-prove.png' }); await q.context().close(); }
   // 13) Sperret lagring
   { const q = await mk({ init: () => { Object.defineProperty(window, 'localStorage', { get() { throw new Error('sperret'); } }); } }); await go(q, ''); ok(await q.locator('#notice').isVisible(), 'sperret lagring: varsel vises'); await go(q, 'oving/k3-effektiv-rente-grunn/2'); await q.fill('#p0-in', '1'); await q.press('#p0-in', 'Enter'); ok(/Ikke riktig|Nær/.test(await q.textContent('#p0-fb')), 'sperret lagring: oppgaver virker'); await q.context().close(); }
+  // 14) Prøveeksamen på papir: fasit bakerst, utskrift, samme sett på skjerm
+  { const q = await mk(); await go(q, 'prove'); await q.click('a[href="#/prove/utskrift"]'); await q.waitForTimeout(250);
+    ok(/^#\/prove\/utskrift\/\d+$/.test(await q.evaluate(() => location.hash)), 'papir: nytt sett får nummer i adressen');
+    await go(q, 'prove/utskrift/4242'); ok((await q.locator('section.pq').count()) === 5, 'papir: fem oppgaver');
+    ok(!(await q.locator('#keybody').isVisible()), 'papir: fasiten er skjult på skjermen'); await q.click('#keyopen'); ok(await q.locator('#keybody').isVisible(), 'papir: fasiten kan vises');
+    ok(await q.evaluate(() => document.activeElement.id === 'keyopen'), 'papir: fokus blir på knappen'); await q.click('#keyopen'); ok(!(await q.locator('#keybody').isVisible()), 'papir: fasiten kan skjules igjen');
+    const want = await q.evaluate(() => { const R = OKAD.U.rng(4242); const s = OKAD.mockSlots[0]; const tot = s.pool.reduce((a, x) => a + x[1], 0); let r = R.next() * tot, pick = s.pool[0][0]; for (const [g, w] of s.pool) { if ((r -= w) <= 0) { pick = g; break; } } return OKAD.make(pick, (4242 * 31) % 2147483647 + 1).parts.map((x) => x.kind === 'num' ? OKAD.fmtAnswer(x) : null).filter(Boolean)[0]; });
+    ok((await q.textContent('#keybody')).includes(want), 'papir: fasiten stemmer med oppgave 1');
+    await q.emulateMedia({ media: 'print' }); ok(await q.locator('#keybody').isVisible() && !(await q.locator('.topbar').isVisible()) && !(await q.locator('#pp').isVisible()), 'papir: utskrift viser fasit, skjuler meny og knapper');
+    ok(await q.evaluate(() => getComputedStyle(document.querySelector('.pagebreak')).breakBefore === 'page'), 'papir: fasiten begynner på ny side');
+    ok(await q.evaluate(() => getComputedStyle(document.body).backgroundColor === 'rgb(255, 255, 255)'), 'papir: hvit bakgrunn ved utskrift');
+    await q.emulateMedia({ media: 'screen' });
+    await q.selectOption('#pk', 'ans'); ok((await q.locator('#keybody table').count()) === 0 && (await q.locator('#keybody .svar').count()) > 15, 'papir: «bare svar» fjerner fremgangsmåten');
+    await q.selectOption('#pk', 'none'); ok((await q.locator('#keybody').count()) === 0, 'papir: fasiten kan slås av');
+    await q.click('#pr'); await q.waitForTimeout(250); ok(/#\/prove$/.test(await q.evaluate(() => location.hash)) && (await q.textContent('#timer')) === 'Svar fra papir', 'papir: samme sett kan rettes på skjerm');
+    ok(await q.evaluate(() => JSON.parse(localStorage.getItem('okad221:v1')).mock.seed === 4242), 'papir: samme settnummer');
+    await go(q, 'prove/utskrift/4242'); await q.click('#pr'); ok(/påbegynt/.test(await q.textContent('#prmsg')), 'papir: varsler om påbegynt prøve');
+    await go(q, 'prove'); await q.click('#submit'); await q.waitForTimeout(200); ok(/fra papiret/.test(await q.textContent('#result')), 'papir: resultat sier fra papir');
+    await q.click('#again'); ok(/løst på papir/.test(await q.textContent('#view')), 'papir: loggen viser løst på papir');
+    for (const bad of ['abc', '0', '99999999999']) { await go(q, 'prove/utskrift/' + bad); ok((await q.locator('.empty').count()) === 1, 'papir: ugyldig settnummer ' + bad); }
+    await go(q, 'prove/tull'); ok((await q.locator('.empty').count()) === 1, 'prøve: ukjent underside');
+    await go(q, 'prove/utskrift/4242'); await q.screenshot({ path: out + '/papir.png' }); await q.context().close(); }
+  // 15) Flytte fremdrift: eksport, import, sammenslåing, feiltilstander
+  { const A = await mk(), Bp = await mk();
+    await go(A, ''); await A.click('#exp'); ok(/ingen fremdrift å flytte/.test(await A.textContent('#expmsg')), 'eksport: tom fremdrift gir beskjed');
+    await go(A, 'oving/k3-effektiv-rente-grunn/2'); await A.fill('#p0-in', '1'); await A.press('#p0-in', 'Enter'); await go(A, 'eksamen/2025'); await A.check('input[data-k="2025-2a"]'); await go(A, '');
+    const [dl] = await Promise.all([A.waitForEvent('download'), A.click('#exp')]); const txt = require('fs').readFileSync(await dl.path(), 'utf8');
+    ok(/^okad221-fremdrift-\d{4}-\d{2}-\d{2}\.json$/.test(dl.suggestedFilename()) && JSON.parse(txt).app === 'okad221', 'eksport: fil med riktig navn og innhold');
+    const file = (name, body) => ({ name, mimeType: 'application/json', buffer: Buffer.from(body) });
+    await go(Bp, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await Bp.fill('#p0-in', '5'); await Bp.press('#p0-in', 'Enter'); await go(Bp, '');
+    for (const [nm, body, re] of [['tom.json', '', /tomt/], ['tull.json', '{ikke json', /kunne ikke leses/], ['annen.json', '{"app":"noe"}', /annet program/], ['ny.json', '{"app":"okad221","format":9,"data":{}}', /nyere versjon/], ['liste.json', '[1,2]', /ikke en fremdriftsfil/], ['uten.json', '{"app":"okad221","format":1,"data":{"x":1}}', /ingen fremdrift/]]) {
+      await Bp.setInputFiles('#impf', file(nm, body)); await Bp.waitForTimeout(150); ok(re.test(await Bp.textContent('#impbox')) && /Ingenting er endret/.test(await Bp.textContent('#impbox')), 'import: ' + nm); }
+    const before = await Bp.evaluate(() => localStorage.getItem('okad221:v1'));
+    await Bp.setInputFiles('#impf', file('f.json', txt)); await Bp.waitForTimeout(150); ok(await Bp.evaluate(() => document.activeElement.id === 'impmerge'), 'import: fokus på Slå sammen');
+    await Bp.click('#impcancel'); ok((await Bp.evaluate(() => localStorage.getItem('okad221:v1'))) === before, 'import: avbryt endrer ingenting');
+    await Bp.setInputFiles('#impf', file('f.json', txt)); await Bp.waitForTimeout(150); await Bp.click('#impmerge'); await Bp.waitForTimeout(150);
+    const m1 = await Bp.evaluate(() => JSON.parse(localStorage.getItem('okad221:v1'))); ok(m1.gen['k3-effektiv-rente-grunn'].tried === 1 && m1.gen['k4-obligasjon-kurs-ytm-durasjon'].tried === 1 && m1.exam['2025-2a'], 'import: sammenslåing beholder begge');
+    ok(/slått sammen/.test(await Bp.textContent('#impbox')), 'import: bekreftelse etter sammenslåing');
+    await Bp.setInputFiles('#impf', file('f.json', txt)); await Bp.waitForTimeout(150); await Bp.click('#impmerge'); await Bp.waitForTimeout(150);
+    ok(JSON.stringify(await Bp.evaluate(() => JSON.parse(localStorage.getItem('okad221:v1')))) === JSON.stringify(m1), 'import: samme fil to ganger endrer ingenting');
+    await Bp.click('#pastebox summary'); await Bp.fill('#impt', txt); await Bp.click('#impgo'); await Bp.click('#impreplace'); await Bp.waitForTimeout(150);
+    ok(!(await Bp.evaluate(() => JSON.parse(localStorage.getItem('okad221:v1')).gen['k4-obligasjon-kurs-ytm-durasjon'])), 'import: erstatt via innlimt tekst');
+    const evil = JSON.stringify({ app: 'okad221', format: 1, data: { gen: { 'finnes-ikke': { tried: 3, ok: 1 }, 'k3-effektiv-rente-grunn': { tried: -4, ok: 1 } }, exam: { '<b>': true }, mockLog: [{ date: '<img src=x onerror=alert(1)>', score: 50, min: 3 }, { date: '1.1.2026', score: 70, min: 20 }] } });
+    await Bp.click('#pastebox summary'); await Bp.fill('#impt', evil); await Bp.click('#impgo'); await Bp.waitForTimeout(100);
+    ok(/finnes ikke på denne versjonen/.test(await Bp.textContent('#impbox')), 'import: ukjente oppgavetyper varsles'); await Bp.click('#impreplace'); await Bp.waitForTimeout(150);
+    const ev = await Bp.evaluate(() => JSON.parse(localStorage.getItem('okad221:v1'))); ok(ev.mockLog.length === 1 && !Object.keys(ev.exam).length && !ev.gen['k3-effektiv-rente-grunn'] && !ev.gen['finnes-ikke'], 'import: ugyldige verdier filtreres bort');
+    ok((await Bp.locator('img[src=x]').count()) === 0, 'import: ingen HTML fra filen');
+    const M = await mk({ w: 320, h: 640 }); await go(M, ''); await M.setInputFiles('#impf', file('f.json', txt)); await M.waitForTimeout(150); ok(!(await overflow(M)), 'import: forhåndsvisning uten sidelengs rulling på mobil');
+    ok(await M.evaluate(() => { const t = document.querySelector('#impbox table'); return t.scrollWidth <= t.parentElement.clientWidth + 1; }), 'import: sammenligningstabellen får plass i 320 px'); await M.screenshot({ path: out + '/m-flytt.png', fullPage: true });
+    await A.context().close(); await Bp.context().close(); await M.context().close(); }
+  { const q = await mk({ init: () => { Object.defineProperty(window, 'localStorage', { get() { throw new Error('sperret'); } }); } }); await go(q, '');
+    await q.setInputFiles('#impf', { name: 'f.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ app: 'okad221', format: 1, data: { gen: { 'k3-effektiv-rente-grunn': { tried: 2, ok: 1, tasks: 1 } } } })) }); await q.waitForTimeout(150); await q.click('#impmerge'); await q.waitForTimeout(150);
+    ok(/tillater ikke lagring/.test(await q.textContent('#impbox')) && /2 deloppgaver besvart/.test(await q.textContent('.statline')), 'sperret lagring: import virker for økten og sier fra'); await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });
