@@ -1,6 +1,6 @@
 /* Kjør: node tools/verify.js [antall frø]
    Faglig kontroll som ikke bruker generatorenes egen fasit:
-   1) regnefunksjonene for de nye oppgavetypene mot tall i kilder/ (eksamen 2022 og 2023, kapittel-LF 2.1 og 11.13),
+   1) regnefunksjonene for de nye oppgavetypene mot tall i kilder/ (eksamen 2022 og 2023, kapittel-LF 2.1, 6.5, 6.9, 8.8, 8.12 og 11.13),
    2) uavhengig etterregning av de nye generatorene: tallene leses fra oppgaveteksten og regnes med egne formler,
    3) kontroll av rettingene fra bølge 5 (minimum-varians-vekt, markedsverdier, fortegn nær 0, entydig kombinasjon). */
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -32,6 +32,27 @@ const e = O._ekCalc({ price: 700, vc: 100, qty: [1000, 1200, 1000, 800], fkTotal
 [-1140000, 322000, 498000, 378000, 342000].forEach((v, t) => eq('kap2.1 prosjekt år ' + t, e.proj[t], v, 0.5));
 [-540000, 142000, 325500, 213000, 184500].forEach((v, t) => eq('kap2.1 til EK år ' + t, e.ek[t], v, 0.5));
 eq('kap2.1 sum EK = sum resultat', e.sumEk, e.sumResult, 0.01);
+// Kap. 6 oppg. 5 (lite/stort anlegg)
+const pl = O._plantCalc({ Is: 800000, cs: 6000, fs: 100000, ds: 55, Il: 1150000, cl: 12000, fl: 150000, dl: 60, T: 20, r: 0.15 });
+eq('kap6.5 kritisk netto lite', pl.critCfS, 127809, 1); eq('kap6.5 kritisk volum lite', pl.qS, 4142, 0.5); eq('kap6.5 kritisk netto stort', pl.critCfL, 183726, 1); eq('kap6.5 kritisk volum stort', pl.qL, 5562, 0.5);
+eq('kap6.5 maks NV lite', pl.npvMaxS, 639646, 1); eq('kap6.5 kritisk DB stort slår lite', pl.critDbX, 435917, 1); eq('kap6.5 stort slår lite fra', pl.qX, 7265, 0.5);
+// Kap. 6 oppg. 9 (fortsette/avslutte)
+const co = O._contCalc({ I: 5000000, S: 1600000, C: 1800000, r: 0.10, T: 3, lostQ: 2000, lostP: 300, lostV: 150, V1: 3000000 });
+eq('kap6.9a NNV', co.npv, 678437, 1); eq('kap6.9a IR %', co.irr * 100, 16.74, 0.005); eq('kap6.9b laveste salgsverdi', co.minS, 697000, 1); eq('kap6.9c laveste innbetaling', co.minC, 1527190, 1);
+eq('kap6.9d NNV kannibalisering', co.npv2, -67618, 1); eq('kap6.9e fortsette', co.npvC, 925620, 1);
+// Kap. 8 oppg. 12 (egenproduksjon/kjøp)
+const mk = O._makeCalc({ b: 25, v: 14.5, Q: 10000, AM: 250000, K: 64000, r: 0.12, T: 5, a: 0.2, P: 27, P2: 30, dg2: 0.55 });
+eq('kap8.12a IR f.s. %', mk.irrFs * 100, 20.0, 0.05); eq('kap8.12b skatteeffekt installasjon', mk.kTax, 14080, 0.5); eq('kap8.12b NV spart skatt', mk.shield, 34375, 0.5); eq('kap8.12b år 0', mk.y0, -265545, 0.5);
+eq('kap8.12b NV egenproduksjon', mk.nvMake, -673245, 1); eq('kap8.12b NV kjøp', mk.nvBuy, -702931, 1); eq('kap8.12b forskjell', mk.diff, 29686, 1);
+eq('kap8.12c kapitalkostnad', mk.capCost, 73665, 1); eq('kap8.12c kritisk volum', mk.critQ, 8994, 0.5); eq('kap8.12d NV salg', mk.pvRev, 759166, 1); eq('kap8.12d NNV', mk.npvNew, 85921, 1);
+eq('kap8.12d annuitet', mk.annNew, 23835, 1); eq('kap8.12d tåler tapt salg', mk.maxLost, 1852, 0.5);
+// Kap. 8 oppg. 8 (egenkapitalmetoden). LF oppgir regnearket ved 0 % før målsøking; selve internrenten står ikke i kilden.
+const em = O._ekmCalc({ Q: 2400, price: 512.5, mat: 100, lonn: 300, FK: 120000, AM: 250000, S: 102000, wc: 0.2, T: 4, rF: 0.20, rE: 0.14, L: 200000, i: 0.06, a: 0.2 });
+eq('kap8.8a IR f.s. %', em.irrF * 100, 25.07, 0.005); eq('kap8.8a NNV f.s.', em.npvF, 60134, 1); eq('kap8.8b NV spart skatt', em.shieldE, 32353, 1); eq('kap8.8b NV nedskriving', em.nedE, 7815, 1);
+eq('kap8.8b år 0', em.esE[0], -471463, 1); eq('kap8.8b NNV e.s.', em.npvE, 75486, 1); eq('kap8.8c terminbeløp', em.payment, 57718, 0.5);
+[12000, 9257, 6349, 3267].forEach((v, t) => eq('kap8.8c renter år ' + (t + 1), em.intr[t], v, 0.5));
+[-263440, 61922, 61318, 60679, 408000].forEach((v, t) => eq('kap8.8c til EK ved 0 % år ' + t, em.ek(0)[t], v, 1));
+eq('kap8.8c NV ved 0 %', F.npv(0, em.ek(0)), 328479, 1);
   out.forEach((l) => { if (/^AVVIK/.test(l)) problems++; }); console.log(out.filter((l) => /^AVVIK/.test(l)).join('\n') || `kilder: ${out.length} kontrolltall stemmer`);
 }
 // ---------- 2) Nye generatorer, etterregnet fra oppgaveteksten ----------
@@ -104,6 +125,56 @@ for (let s = 1; s <= SEEDS; s++) {
     if (!t.parts[8].q.includes(O.U.n(proj.reduce((z, v) => z + v, 0)))) { bad++; fails.push('EK: sum prosjekt i teksten, frø ' + s); }
     const mine = [proj[0], proj[1], proj[Nn], intr[1], ekf[0], ekf[1], ekf[Nn], sumEk];
     t.parts.forEach((p, k) => { if (p.kind === 'num') cmp('egenkapital', s, p, mine[k]); }); }
+  // ---------- Lite eller stort anlegg ----------
+  { const t = O.make('k6-lite-stort-anlegg', s), x = t.text;
+    const row = (lbl) => { const m = x.match(R(lbl + '[^<]*</th><td><b>' + NUM + '</b></td><td><b>' + NUM + '</b>')); if (!m) throw new Error('rad ' + lbl); return [num(m[1]), num(m[2])]; };
+    const [Is, Il] = row('Investering'), [cs, cl] = row('Maksimal kapasitet'), [fs, fl] = row('Betalbare faste'), [ds, dl] = row('Dekningsbidrag per enhet');
+    const T = +m1(x, /levetid på <b>(\d+) år/), r = +m1(x, /Avkastningskravet er <b>(\d+) %/) / 100, D = num(m1(t.parts[4].q, R('selge <b>' + NUM + '</b>')));
+    let A = 0; for (let k = 1; k <= T; k++) A += pv(1, r, k);
+    const maxS = (cs * ds - fs) * A - Is;
+    const nS = (Math.min(D, cs) * ds - fs) * A - Is, nL = (Math.min(D, cl) * dl - fl) * A - Il;
+    const mine = [(Is / A + fs) / ds, (Il / A + fl) / dl, maxS, ((Il + maxS) / A + fl) / dl, Math.max(nS, nL)];
+    // Stort skal ikke være bedre allerede under lite anleggs kapasitet (ellers er «fra hvilket salg» tvetydig).
+    for (let q = 0; q <= cs; q += cs / 50) if ((q * dl - fl) * A - Il > (q * ds - fs) * A - Is) { bad++; fails.push('anlegg: stort bedre under kapasiteten, frø ' + s); break; }
+    t.parts.forEach((p, i) => { if (p.kind === 'num') cmp('anlegg', s, p, mine[i]); }); }
+  // ---------- Fortsette eller avslutte ----------
+  { const t = O.make('k6-fortsette-avslutte', s), x = t.text;
+    const I = num(m1(x, R('anlegget koster <b>' + NUM + '</b>'))), S = num(m1(x, R('selges for <b>' + NUM + '</b> etter'))), T = +m1(x, /etter <b>(\d) år/);
+    const C = num(m1(x, R('innbetalingsoverskudd på <b>' + NUM + '</b>'))), r = +m1(x, /Avkastningskravet er <b>(\d+) %/) / 100;
+    const q4 = t.parts[4].q, lq = num(m1(q4, R('med <b>' + NUM + '</b> enheter'))), lp = num(m1(q4, R('selges for <b>' + NUM + '</b>'))), lv = num(m1(q4, R('kostnader på <b>' + NUM + '</b>')));
+    const V1 = num(m1(t.parts[5].q, R('selges for <b>' + NUM + '</b>')));
+    const fl = [-I]; for (let k = 1; k <= T; k++) fl.push(C + (k === T ? S : 0));
+    const npv = fl.reduce((z, c, k) => z + pv(c, r, k), 0); let A = 0; for (let k = 1; k <= T; k++) A += pv(1, r, k);
+    const L = lq * (lp - lv); let cont = -V1; for (let k = 1; k <= T - 1; k++) cont += pv(C - L + (k === T - 1 ? S : 0), r, k);
+    const mine = [npv, irr(fl), S - npv * Math.pow(1 + r, T), C - npv / A, npv - L * A, cont];
+    t.parts.forEach((p, i) => { if (p.kind === 'num') cmp('fortsette', s, p, mine[i]); }); }
+  // ---------- Egenproduksjon eller kjøp ----------
+  { const t = O.make('k8-egenproduksjon-kjop', s), x = t.text;
+    const Q = num(m1(x, R('bruker <b>' + NUM + '</b>'))), b = num(m1(x, R('inn for <b>' + NUM + '</b> per stykk'))), AM = num(m1(x, R('maskin til <b>' + NUM + '</b>'))), K = num(m1(x, R('installasjon for <b>' + NUM + '</b>')));
+    const T = +m1(x, /brukes i <b>(\d) år/), v = num(m1(x, R('egenproduksjon er <b>' + NUM + '</b>'))), r = +m1(x, /etter skatt er <b>(\d+) %/) / 100;
+    const P = num(m1(t.parts[5].q, R('til <b>' + NUM + '</b> per stykk'))), P2 = num(m1(t.parts[6].q, R('selges for <b>' + NUM + '</b>'))), dg = +m1(t.parts[6].q, /dekningsgrad på <b>(\d+) %/) / 100;
+    let A = 0; for (let k = 1; k <= T; k++) A += pv(1, r, k);
+    const y0 = -AM - K + 0.22 * K + AM * 0.2 * 0.22 / (r + 0.2), make = y0 - v * Q * 0.78 * A, buy = -b * Q * 0.78 * A;
+    const nnv = P * Q * 0.78 * A + Math.max(make, buy);
+    const mine = [irr([-(AM + K)].concat(Array(T).fill((b - v) * Q))), make, buy, Math.abs(make - buy), -y0 / A / ((b - v) * 0.78), nnv, nnv / A / (P2 * dg * 0.78)];
+    t.parts.forEach((p, i) => { if (p.kind === 'num') cmp('egenproduksjon', s, p, mine[i]); }); }
+  // ---------- Egenkapitalmetoden ----------
+  { const t = O.make('k8-egenkapitalmetoden', s), x = t.text;
+    const Q = num(m1(x, R('selge <b>' + NUM + '</b> enheter'))), price = num(m1(x, R('pris på <b>' + NUM + '</b>'))), mat = num(m1(x, R('Materialkostnadene er <b>' + NUM + '</b>'))), lonn = num(m1(x, R('lønnskostnadene <b>' + NUM + '</b>')));
+    const FK = num(m1(x, R('kostnader er <b>' + NUM + '</b> per år'))), T = +m1(x, /varer i <b>(\d) år/), AM = num(m1(x, R('utstyret koster <b>' + NUM + '</b>'))), S = num(m1(x, R('selges for <b>' + NUM + '</b>')));
+    const wc = +m1(x, /utgjør <b>(\d+) %/) / 100, rF = +m1(x, /<b>(\d+) %<\/b> før skatt/) / 100, rE = +m1(x, /<b>(\d+) %<\/b> etter skatt/) / 100;
+    const L = num(m1(t.parts[3].q, R('lån på <b>' + NUM + '</b>'))), i = +m1(t.parts[3].q, /med (\d+) % rente/) / 100;
+    const op = Q * (price - mat - lonn) - FK, AK = wc * Q * price;
+    const npvAt = (fl, rr) => fl.reduce((z, c, k) => z + pv(c, rr, k), 0);
+    const ff = [-AM - AK]; for (let k = 1; k <= T; k++) ff.push(op + (k === T ? S + AK : 0));
+    const sh = (rr) => AM * 0.044 / (rr + 0.2) - S * 0.044 / (rr + 0.2) / Math.pow(1 + rr, T);
+    const fe = (rr) => [-AM - AK + sh(rr)].concat(ff.slice(1).map((c, k) => c - 0.22 * op));
+    const pay = L * i / (1 - Math.pow(1 + i, -T)); let bal = L; const it = [], ek1 = [];
+    for (let k = 1; k <= T; k++) { const ii = bal * i, rp = pay - ii; it.push(ii); ek1.push(op - ii - 0.22 * (op - ii) - rp + (k === T ? S + AK : 0)); bal -= rp; }
+    const ek = (rr) => [-AM - AK + L + sh(rr)].concat(ek1);
+    let lo = -0.4, hi = 2.5; const g = (rr) => npvAt(ek(rr), rr); for (let k = 0; k < 300; k++) { const m = (lo + hi) / 2; if (g(lo) * g(m) <= 0) hi = m; else lo = m; }
+    const mine = [npvAt(ff, rF), irr(ff), npvAt(fe(rE), rE), pay, it[1], ek1[0], (lo + hi) / 2];
+    t.parts.forEach((p, k) => { if (p.kind === 'num') cmp('egenkapitalmetoden', s, p, mine[k]); }); }
 }
   problems += bad; console.log(`nye generatorer: ${checked} tallsvar over ${SEEDS} frø, ${bad} avvik`); fails.forEach((z) => console.log('  ', z));
 }

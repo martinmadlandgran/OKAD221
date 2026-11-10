@@ -24,6 +24,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 3 | Ny utforming, feiltilstander, mobil, tilgjengelighet, nettlesertest (213 kontroller) | Ferdig |
 | 4 | Faglig kvalitetssikring: teori, 148 quizspørsmål, 27 generatorer og 10 eksamenssett etterregnet mot `kilder/` | Ferdig |
 | 5 | Fire generatorpunkter ryddet, tre nye generatorer, prøveeksamen på papir med fasit bakerst, flytting av fremdrift mellom enheter | Ferdig |
+| 6 | Fire nye generatorer fra kapittel-LF (6.5, 6.9, 8.8, 8.12), repetisjonsliste, durasjonspunktet sjekket mot forlagets lysbilder | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -74,15 +75,50 @@ Nytt verktøy: `node tools/verify.js 1000` kjører kontrollen mot kildene og ett
 
 Test etter bølgen: `node tools/check.js 300` OK, `node tools/verify.js 1000` OK, `tools/e2e.js` 264 bestått (51 nye kontroller for papir og flytting).
 
+## Bølge 6: valg mellom alternativer, repetisjon og durasjon (ferdig)
+
+Nye generatorer (34 i alt), i `js/gen/valg.js`. Regnefunksjonene gjenskaper alle tall i kapittel-LF (43 nye kontrolltall). Hver generator er etterregnet over 1000 frø fra oppgaveteksten, med egne formler: 25 000 nye tallsvar, 0 avvik. Fire innsatte feil (én i hver regnefunksjon) ble alle fanget.
+
+- `k6-lite-stort-anlegg` (kap. 6 oppg. 5): kritisk volum for hvert anlegg, største NNV med lite anlegg, volumet der stort slår lite, og NNV for det beste anlegget ved et oppgitt salg. Tallene trekkes slik at stort aldri er bedre allerede under lite anleggs kapasitet, så «fra hvilket salg» har ett svar. Gjenskaper 4 142, 5 562, 639 646 og 7 265.
+- `k6-fortsette-avslutte` (kap. 6 oppg. 9): NNV, IR, laveste salgsverdi, laveste årlige innbetaling, kannibalisering som tapt dekningsbidrag, og fortsette eller selge etter ett år (investeringen er sunk, salgsverdien i dag er alternativverdien). Begge utfallene forekommer: omtrent 1 av 4 frø gir «selg nå», og i ca. 6 av 10 frø gir kannibaliseringen negativ NNV, men det lønner seg likevel å fortsette. Gjenskaper 678 437, 16,74 %, 697 000, 1 527 190, −67 618 og 925 620.
+- `k8-egenproduksjon-kjop` (kap. 8 oppg. 12): IR før skatt på differansen, kostnadsnåverdi etter skatt for begge, forskjellen, kritisk volum, NNV av et nytt produkt og hvor mye kannibalisering det tåler. Halvparten av frøene gir kjøp som billigst. Installasjonen kostnadsføres direkte, som i LF, og det står i oppgaveteksten. Gjenskaper −673 245, −702 931, 8 994, 85 921 og 1 852.
+- `k8-egenkapitalmetoden` (kap. 8 oppg. 8): NNV og IR før skatt, NNV etter skatt med totalkapitalmetoden, annuitetslån, renter, kontantstrøm til egenkapitalen og egenkapitalens internrente. Gjenskaper 60 134, 25,07 %, 75 486, terminbeløp 57 718 og hele regnearket ved 0 % (−263 440 … 408 000, sum 328 479). LF oppgir ikke selve internrenten, siden den krever målsøking. Siden regner den med skattefordelen ved samme rente (26,57 % i LF-tallene) og viser også svaret med skattefordelen regnet ved kravet.
+- Koblet inn under temaene «Kritiske verdier og følsomhet» og «Nåverdi etter skatt». De er ikke lagt i prøveeksamenens trekkpott og ikke i prognoseluken på forsiden, fordi ingen av dem er gitt som egen oppgave 2016–2025 (se spørsmål 1).
+- Rettet: forslaget etter bølge 5 sa «kap. 11 oppg. 12» om egenproduksjon eller kjøp. Riktig er kap. 8 oppg. 12.
+
+Repetisjonsliste (`#/repeter`, lenket fra forsiden og Øv-siden når den ikke er tom):
+
+- En oppgave havner i listen når et tallsvar er feil på første forsøk, når løsningen åpnes før man har svart (også «Vis alle løsninger»), eller når et tallsvar er feil eller blankt på en levert prøveeksamen. Listen viser hvilke deloppgaver som var feil, datoen og om feilen kom på en prøveeksamen.
+- Rekkefølgen er eksamensvekt (sannsynlighet × vekt fra prognosen) × antall oppgaver med feil. Den store skatteoppgaven står derfor foran renteregning.
+- «Samme oppgave igjen» åpner nøyaktig de samme tallene, med beskjed om hva som var feil. Er alle tallsvarene riktige på første forsøk, forsvinner oppgaven fra listen. En ny oppgave av samme type uten feil fjerner den eldste. Listen holder høyst 6 oppgaver per type.
+- Treffprosenten endres ikke, og prøveeksamenen teller fortsatt ikke i den.
+- Flyttes med fremdriften. Sammenslåing er idempotent, og forhåndsvisningen viser «Oppgaver å repetere». Ugyldige oppføringer (negativt nummer, HTML i deloppgavefeltet) filtreres bort. Tom liste har to tilstander: «ennå» (ingenting prøvd) og «alt er løst».
+
+Durasjon og rentenivå: setningen «Durasjonen reduseres hvis diskonteringssatsen reduseres …» står ordrett i forlagets lysbilder til kap. 4 (`Kapittel 4-7utg.pptx` i Drive, lysbildet «Hva påvirker durasjonen?»), så den er ikke foreleserens egen. Forlagets egne tall går mot den. Den samme 7 %-obligasjonen har durasjon 2,80 ved yield 7,91 % (lysbildet) og 2,81 ved yield 4,72 % (LF 2024 oppg. 2). Obligasjon A fra eksamen 2025 gir 2,90 ved 10 % og ca. 2,91 ved 4 %. Teorisiden sier nå dette og ber om svar etter standardteorien. Selve læreboka finnes ikke i Drive og er ikke lest.
+
+Test etter bølgen: `node tools/check.js 3000` OK (34 generatorer), `node tools/verify.js 1000` OK (71 kontrolltall, 46 000 tallsvar), `tools/e2e.js` 300 bestått (36 nye kontroller, blant annet for repetisjonslisten).
+
 ## Åpne punkter
 
 - Leverandørkreditt 360 dager og aktivering av installasjonskostnad, som før.
-- Durasjon og rentenivå: siden sier at durasjonen synker når renten øker (standard teori, stemmer med tallene). Lysbildet sier det motsatte. Bør sjekkes mot Bredesen kap. 4.
+- Durasjon og rentenivå: forlagets lysbilder sier det motsatte av standardteorien og av forlagets egne tall (se bølge 6). Siden følger standardteorien. Læreboka er ikke lest, så det står igjen å se hva den sier.
 - 2025 oppg. 4: LFs varians for aksje B (0,00579) lar seg ikke gjenskape; eksakt er 0,005852. Siden godtar begge.
 - 2025 oppg. 5b: begge versjoner er etterregnet og står.
 - Black–Scholes-toleransen beholdes (Excel-nøyaktighet), avgjort av eier.
 - Ekte utskrift og flytting mellom fysiske enheter er ikke testet (bare i hodeløs Chromium, A4-PDF).
 
+## Spørsmål til eier etter bølge 6
+
+1. Skal de fire nye oppgavetypene med i prøveeksamenens trekkpott?
+   - a) Nei. Prøveeksamenen følger eksamensmønsteret, og ingen av dem er gitt 2016–2025. De finnes under Øv. **(Anbefalt)**
+   - b) Ja, med lav vekt: fortsette/avslutte 0,5 i oppgave 1, egenkapitalmetoden og egenproduksjon/kjøp 0,5 hver i oppgave 5.
+2. Egenkapitalens internrente godtas innenfor 0,1 prosentpoeng av målsøkingssvaret. Svaret med skattefordelen regnet ved kravet ligger som regel innenfor, men ikke alltid.
+   - a) Behold. Målsøking er riktig metode, og hintet sier det. **(Anbefalt)**
+   - b) Godta begge svarene uansett avstand.
+3. «Vis alle løsninger» før man har svart legger oppgaven i repetisjonslisten, men endrer ikke treffprosenten.
+   - a) Behold. Man har ikke vist at man kan oppgaven. **(Anbefalt)**
+   - b) Bare feil svar skal telle.
+
 ## Neste bølge (forslag)
 
-Flere oppgavetyper fra kapittel-LF som ennå mangler: egenproduksjon eller kjøp (kostnadsnåverdi, kap. 11 oppg. 12), lite eller stort anlegg (kap. 6 oppg. 5), fortsette eller avslutte med sunk cost (kap. 6 oppg. 9) og egenkapitalmetoden etter skatt (kap. 8 oppg. 8). Deretter en repetisjonsliste som tar frem oppgavetypene man har bommet på, og en sjekk av durasjonspunktet mot læreboka.
+Siste oppgavetyper fra kapittel-LF som mangler: leasing eller kjøp etter skatt (kap. 8 oppg. 10), følsomhetstabell og stjernediagram på internrenten (kap. 6 oppg. 1) og IR etter skatt med effektiv skattesats (kap. 8 oppg. 9c). Deretter en tidsbasert repetisjon også i quizen (spørsmål man har svart feil på kommer igjen), og en gjennomgang av de nye oppgavetypene på papir i prøveeksamensformat hvis eier svarer b på spørsmål 1.

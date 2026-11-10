@@ -414,7 +414,7 @@
       `<strong>Obligasjoner: diskonterer alle betalinger med samme spotrente.</strong> Hver betaling skal ha spotrenten for sin løpetid; én felles rente er YTM.`,
       `<strong>Obligasjoner: glemmer pålydende i siste betaling</strong>, eller regner kupongen av kursen i stedet for av pålydende.`,
       `<strong>Tror at kursen stiger når renten stiger.</strong> Kurs og rente går motsatt vei.`,
-      `<strong>Feil om durasjon og rentenivå.</strong> Durasjonen <em>synker</em> når renten (yielden) øker, fordi de sene betalingene får lavere vekt. Den øker med løpetiden og synker med høyere kupong.`,
+      `<strong>Feil om durasjon og rentenivå.</strong> Durasjonen <em>synker</em> når renten (yielden) øker, fordi de sene betalingene får lavere vekt. Den øker med løpetiden og synker med høyere kupong. Forlagets lysbilder til kap. 4 (7. utg.) sier det motsatte («Durasjonen reduseres hvis diskonteringssatsen reduseres»), men forlagets egne tall viser at durasjonen synker når renten stiger: den samme 7 %-obligasjonen har durasjon 2,81 ved yield 4,72 % (eksamen 2024) og 2,80 ved yield 7,91 % (lysbildet). Svar etter standardteorien, og forklar gjerne hvorfor.`,
       `<strong>Forveksler durasjon og modifisert durasjon.</strong> Kursendringen anslås med modifisert durasjon = durasjon/(1 + y).`
     ],
     excel: [
