@@ -56,7 +56,7 @@
       if (hit(v)) return 'Du har skrevet desimaltall. Svaret skal oppgis i prosent – gang med 100.';
       if (hit(user / 100)) return 'Det ser ut som svaret er ganget med 100 én gang for mye.';
     } else {
-      for (const k of [1000, 1e6, 100]) if (hit(user * k) || hit(user / k)) return `Sifrene stemmer, men størrelsesordenen er feil (faktor ${O.U.n(k)}). Svar i hele kroner/enheter.`;
+      for (const k of [1000, 1e6, 100]) if (hit(user * k) || hit(user / k)) return `Sifrene stemmer, men størrelsesordenen er feil (faktor ${O.U.n(k)}). ${part.unit === 'tusen kr' ? 'Svaret skal oppgis i tusen kroner, som tallene i oppgaven.' : 'Svar i hele kroner/enheter.'}`;
     }
     return '';
   };

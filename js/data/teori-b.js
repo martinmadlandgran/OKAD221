@@ -559,7 +559,7 @@
     formulas: [
       { name: 'Kapital bundet i kundefordringer', html: `Kundefordringer = Kredittsalg · <span class="frac"><span>kredittdager</span><span>360</span></span>`, note: `Lærebokens løsninger bruker både 360 og 365 dager – følg oppgaveteksten.` },
       { name: 'Gevinst ved redusert kapitalbinding', html: `Spart rentekostnad = Frigjort kapital · rente`, note: `Sammenholdes med reduserte tap på krav, tapt dekningsbidrag, rabattkostnad og administrasjonskostnader.` },
-      { name: 'Altmans Z-score', html: `Z = 1,2 · X<sub>1</sub> + 1,4 · X<sub>2</sub> + 3,3 · X<sub>3</sub> + 0,6 · X<sub>4</sub> + 0,999 · X<sub>5</sub>`, note: `X<sub>1</sub> = arbeidskapital / totale eiendeler, X<sub>2</sub> = opptjent egenkapital / totale eiendeler, X<sub>3</sub> = driftsresultat / totale eiendeler, X<sub>4</sub> = markedsverdi egenkapital / total gjeld, X<sub>5</sub> = omsetning / totale eiendeler.` }
+      { name: 'Altmans Z-score', html: `Z = 1,2 · X<sub>1</sub> + 1,4 · X<sub>2</sub> + 3,3 · X<sub>3</sub> + 0,6 · X<sub>4</sub> + 0,999 · X<sub>5</sub>`, note: `X<sub>1</sub> = arbeidskapital / totale eiendeler, X<sub>2</sub> = opptjent egenkapital / totale eiendeler, X<sub>3</sub> = driftsresultat / totale eiendeler, X<sub>4</sub> = markedsverdi egenkapital / total gjeld, X<sub>5</sub> = omsetning / totale eiendeler. Altman (1968) brukte grensene 1,81 og 2,99: under 1,81 høy konkursrisiko, over 2,99 lav, imellom gråsone. Grensene står ikke i løsningsforslaget og er tatt fra standardteorien.` }
     ],
     methods: [
       { title: 'Lønnsomhet av endret kredittpolitikk', steps: [
@@ -568,6 +568,11 @@
         `Legg til reduserte tap på krav.`,
         `Trekk fra tapt dekningsbidrag, kontantrabatt og økte administrasjonskostnader.`,
         `Positiv nettoeffekt → endringen er lønnsom.`
+      ] },
+      { title: 'Altmans Z-score', steps: [
+        `Arbeidskapital = omløpsmidler − kortsiktig gjeld (kan være negativ). Total gjeld = kortsiktig + langsiktig gjeld.`,
+        `Regn de fem forholdstallene. X<sub>2</sub> bruker bare opptjent egenkapital, X<sub>4</sub> markedsverdien av egenkapitalen.`,
+        `Gang med vektene og summer. Sammenlign med grensene 1,81 og 2,99.`
       ] }
     ],
     examples: [

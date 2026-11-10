@@ -1,6 +1,6 @@
 /* Kjør: node tools/verify.js [antall frø]
    Faglig kontroll som ikke bruker generatorenes egen fasit:
-   1) regnefunksjonene for de nye oppgavetypene mot tall i kilder/ (eksamen 2022 og 2023, kapittel-LF 2.1, 6.1, 6.5, 6.9, 8.1, 8.8, 8.9, 8.10, 8.12 og 11.13),
+   1) regnefunksjonene for de nye oppgavetypene mot tall i kilder/ (eksamen 2022 og 2023, kapittel-LF 2.1, 6.1, 6.5, 6.9, 8.1, 8.3, 8.8, 8.9, 8.10, 8.12, 11.13, 12.1, 12.2, 12.3 og 12.5),
    2) uavhengig etterregning av de nye generatorene: tallene leses fra oppgaveteksten og regnes med egne formler,
    3) kontroll av rettingene fra bølge 5 (minimum-varians-vekt, markedsverdier, fortegn nær 0, entydig kombinasjon). */
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -72,6 +72,28 @@ eq('kap8.9c spart skatt ved IR', it.shield(it.irrE), 124282, 1); eq('kap8.9c ned
 // Kap. 8 oppg. 1 (effektiv skattesats)
 const e1 = O._irTaxCalc({ AM: 250000, S: 0, wc: 0, Q: 1, price: 87500, mat: 0, lonn: 0, ovr: 0, FK: 0, T: 4, rF: 0.15, rE: 0.08, a: 0.2 });
 eq('kap8.1a IR f.s. %', e1.irrF * 100, 14.96, 0.005); eq('kap8.1b NNV e.s.', e1.npvE, 15338, 1); eq('kap8.1c IR e.s. %', e1.irrE * 100, 10.52, 0.005); eq('kap8.1d effektiv skattesats %', e1.eff * 100, 29.72, 0.005);
+// Kap. 12 oppg. 1 og 2 (kundefordringer i investeringen, strammere kredittpolitikk)
+const kr = O._creditCalc({ O1: 1800000, d0: 30, dg: 0.4, AM: 750000, RV: 100000, OM: 150000, FK: 378000, r: 0.2, T: 5, d1: 45,
+  S: 36000000, svk: 28440000, K: 5250000, V: 4500000, L: 7000000, tap0: 1355000, p: 0.1, X: 30, t1: 0.02, E: 60000, nE: 3, A: 250000, i: 0.15 });
+eq('kap12.1 kundefordringer', kr.KF, 150000, 0.5); [-1050000, 342000, 342000, 342000, 342000, 742000].forEach((v, t) => eq('kap12.1 KS år ' + t, kr.flows[t], v, 0.5));
+eq('kap12.1 IR %', kr.irr * 100, 25.0, 0.05); eq('kap12.1 NNV', kr.npv, 133540, 1);
+eq('kap12.2 endring kunder', kr.dK, 2550000, 0.5); eq('kap12.2 endring varelager', kr.dV, 450000, 0.5); eq('kap12.2 endring kreditorer', kr.dL, 700000, 0.5); eq('kap12.2 redusert kapitalbehov', kr.cap, 2240000, 0.5);
+eq('kap12.2 redusert rentekostnad', kr.rente, 336000, 0.5); eq('kap12.2 redusert tap', kr.dTap, 707000, 0.5); eq('kap12.2 sum besparelser', kr.gain, 1043000, 0.5);
+eq('kap12.2 tapt DB', kr.lostDB, 756000, 0.5); eq('kap12.2 avskrivning', kr.dep, 20000, 0.5); eq('kap12.2 sum kostnader', kr.cost, 1026000, 0.5); eq('kap12.2 netto besparelse', kr.net, 17000, 0.5);
+// Kap. 12 oppg. 3 (kontantrabatt, tall i 1 000)
+const kd = O._discCalc({ S: 72900, K: 21970, q: 0.03, d1: 14, a: 0.5, D2: 110, i: 0.14, A: 500, t0: 0.018, t1: 0.009 });
+eq('kap12.3 kunder 14 dager', kd.kRab, 1398, 0.5); eq('kap12.3 kunder 110 dager', kd.kRest, 10985, 0.5); eq('kap12.3 sum kunder', kd.K1, 12383, 0.5); eq('kap12.3 endring', -kd.dK, -9587, 0.5);
+eq('kap12.3 kontantrabatt', kd.rab, 1094, 0.5); eq('kap12.3 sum kostnadsøkning', kd.cost, 1594, 0.5); eq('kap12.3 sparte renter', kd.rente, 1342, 0.5); eq('kap12.3 reduserte tap', kd.dTap, 656, 0.5);
+eq('kap12.3 sum gevinster', kd.gain, 1998, 0.5); eq('kap12.3 netto resultatøkning', kd.net, 405, 0.5);
+// Kap. 12 oppg. 5 (Altmans Z)
+const kz = O._zCalc({ EBIT: 109969, TA: 693536, Sales: 1384151, MVE: 182468, TL: 511068, WC: -59427, RE: 112971 });
+[-0.0857, 0.1629, 0.1586, 0.3570, 1.9958].forEach((v, k) => eq('kap12.5 X' + (k + 1), kz.X[k], v, 0.00005)); [-0.1028, 0.2280, 0.5233, 0.2142, 1.9938].forEach((v, k) => eq('kap12.5 bidrag X' + (k + 1), kz.parts[k], v, 0.00005));
+eq('kap12.5 Z', kz.Z, 2.8565, 0.00005);
+// Kap. 8 oppg. 3 (salg av driftsmiddel)
+const sd = O._saleCalc({ I: 600000, ks: [250000, 200000, 100000], S: 350000, r: 0.1, a: 0.2 });
+eq('kap8.3a IR f.s. %', sd.irrF * 100, 20.73, 0.005); eq('kap8.3 NV spart skatt', sd.shield, 88000, 0.5); [-512000, 195000, 156000, 351000].forEach((v, t) => eq('kap8.3b grunnlag år ' + t, sd.inn[t], v, 0.5));
+eq('kap8.3b NNV inntektsført', sd.npvInn, 57910, 1); eq('kap8.3c NV økt skatt nedskriving', sd.ned, 38567, 1); [-550567, 195000, 156000, 428000].forEach((v, t) => eq('kap8.3c grunnlag år ' + t, sd.nedF[t], v, 1));
+eq('kap8.3c NNV nedskrevet', sd.npvNed, 77194, 1);
   out.forEach((l) => { if (/^AVVIK/.test(l)) problems++; }); console.log(out.filter((l) => /^AVVIK/.test(l)).join('\n') || `kilder: ${out.length} kontrolltall stemmer`);
 }
 // ---------- 2) Nye generatorer, etterregnet fra oppgaveteksten ----------
@@ -231,6 +253,56 @@ for (let s = 1; s <= SEEDS; s++) {
     const ie = (lo + hi) / 2, ifs = irr(ff);
     const mine = [op, ifs, npvAt(ff, rF), npvAt(fe(rE), rE), ie, 1 - ie / ifs];
     t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('ir etter skatt', s, pp, mine[k]); }); }
+  // ---------- Kundefordringer og kredittpolitikk ----------
+  { const t = O.make('k12-kredittpolitikk', s), x = t.text;
+    const O1 = num(m1(x, R('Driftsinntektene er beregnet til <b>' + NUM + '</b>'))), T = +m1(x, /per år i <b>(\d) år<\/b>/), d0 = +m1(x, /får <b>(\d+) dagers<\/b> kreditt/);
+    const dg = num(m1(x, /Dekningsgraden er <b>([\d,]+) %/)) / 100, FK = num(m1(x, R('faste kostnadene er <b>' + NUM + '</b> per år'))), AM = num(m1(x, R('Anlegget koster <b>' + NUM + '</b>')));
+    const rm = x.match(R('restverdi på <b>' + NUM + '</b>')), RV = rm ? num(rm[1]) : 0, OM = num(m1(x, R('binder prosjektet <b>' + NUM + '</b> i andre'))), r = +m1(x, /Avkastningskravet er <b>(\d+) %/) / 100;
+    const d1 = +m1(t.parts[6].q, /<b>(\d+) dagers<\/b> kreditt i stedet/);
+    const S = num(m1(x, R('omsetning <b>' + NUM + '</b> og solgte'))), svk = num(m1(x, R('varers kostnad <b>' + NUM + '</b>'))), tap0 = num(m1(x, R('tap på krav <b>' + NUM + '</b>')));
+    const V = num(m1(x, R('varelager <b>' + NUM + '</b>'))), K = num(m1(x, R('kundefordringer <b>' + NUM + '</b>'))), L = num(m1(x, R('leverandørgjeld\\) <b>' + NUM + '</b>')));
+    const i = +m1(x, /Pantegjelden har <b>(\d+) %/) / 100, X = +m1(x, /kredittid til <b>(\d+) dager/), p = +m1(x, /omsetningen med <b>(\d+) %/) / 100;
+    const t1 = num(m1(x, /blir <b>([\d,]+) %<\/b> av den nye/)) / 100, A = num(m1(x, R('administrasjonskostnader på <b>' + NUM + '</b>')));
+    const em = x.match(R('utstyr for <b>' + NUM + '</b>, som avskrives lineært over <b>(\\d) år')), E = em ? num(em[1]) : 0, nE = em ? +em[2] : 1;
+    const KF = O1 * d0 / 360, fl = [-(AM + KF + OM)]; for (let k = 1; k <= T; k++) fl.push(O1 * dg - FK + (k === T ? RV + KF + OM : 0));
+    const dKF = O1 * (d1 - d0) / 360, K1 = S * (1 - p) * X / 360, cap = K - K1 + p * V - p * L - E;
+    const gain = i * cap + tap0 - t1 * S * (1 - p), cost = p * (S - svk) + A + E / nE;
+    const mine = [KF, fl[0], fl[1], fl[T], fl.reduce((z, c, k) => z + pv(c, r, k), 0), irr(fl), pv(dKF, r, T) - dKF, K1, cap, gain, cost, gain - cost];
+    if ((gain - cost > 0) !== /<b>lønner seg<\/b>/.test(t.parts[11].sol)) { bad++; fails.push('kredittpolitikk: konklusjon, frø ' + s); }
+    t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('kredittpolitikk', s, pp, mine[k]); }); }
+  // ---------- Kontantrabatt ----------
+  { const t = O.make('k12-kontantrabatt', s), x = t.text;
+    const S = num(m1(x, R('Omsetningen er <b>' + NUM + '</b>'))), K = num(m1(x, R('kundefordringene er <b>' + NUM + '</b>'))), t0 = num(m1(x, /tap på krav er <b>([\d,]+) %/)) / 100;
+    const q = num(m1(x, /gi <b>([\d,]+) %<\/b> kontantrabatt/)) / 100, d1 = +m1(x, /innen <b>(\d+) dager/), a = +m1(x, /regner med at <b>(\d+) %/) / 100, D2 = +m1(x, /resten betaler etter <b>(\d+) dager/);
+    const t1 = num(m1(x, /falle til <b>([\d,]+) %/)) / 100, A = num(m1(x, R('øker med <b>' + NUM + '</b>'))), i = +m1(x, /<b>(\d+) %<\/b> rente/) / 100;
+    const k1 = S * a * d1 / 365, K1 = k1 + S * (1 - a) * D2 / 365, dK = K - K1, rab = q * a * S, sr = i * dK, st = (t0 - t1) * S;
+    const mine = [k1, K1, dK, rab, sr, st, sr + st - rab - A, (sr + st - A) / (a * S), Math.pow(1 / (1 - q), 365 / (D2 - d1)) - 1];
+    if ((sr + st - rab - A > 0) !== /<b>lønner seg<\/b>/.test(t.parts[6].sol)) { bad++; fails.push('kontantrabatt: konklusjon, frø ' + s); }
+    t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('kontantrabatt', s, pp, mine[k]); }); }
+  // ---------- Altmans Z ----------
+  { const t = O.make('k12-altman-z', s), x = t.text;
+    const row = (lbl) => num(m1(x, R(lbl + '</th><td><b>(−?[\\d\\s\\u00a0\\u202f]+)</b>')));
+    const Sales = row('Omsetning'), EBIT = row('Driftsresultat'), OMM = row('Omløpsmidler'), TA = row('Sum eiendeler'), RE = row('Opptjent egenkapital'), LG = row('Langsiktig gjeld'), KG = row('Kortsiktig gjeld');
+    const MVE = num(m1(x, R('egenkapitalen \\(aksjene\\) er <b>' + NUM + '</b>')));
+    if (Math.abs(row('Anleggsmidler') + OMM - TA) > 0.01 || Math.abs(row('Innskutt egenkapital') + RE + LG + KG - TA) > 0.01) { bad++; fails.push('altman: balansen går ikke opp, frø ' + s); }
+    const X = [(OMM - KG) / TA, RE / TA, EBIT / TA, MVE / (LG + KG), Sales / TA], Z = 1.2 * X[0] + 1.4 * X[1] + 3.3 * X[2] + 0.6 * X[3] + 0.999 * X[4];
+    const goal = Z < 1.81 ? 1.81 : 2.99;
+    if (/øke/.test(t.parts[6].q) !== (Z < 2.99)) { bad++; fails.push('altman: retning i siste deloppgave, frø ' + s); }
+    const zone = Z < 1.81 ? 'høy konkursrisiko' : Z > 2.99 ? 'lav konkursrisiko' : 'gråsone';
+    if (!t.parts[5].sol.includes(zone)) { bad++; fails.push('altman: sone, frø ' + s); }
+    const mine = X.concat([Z, Math.abs(goal - Z) * TA / 3.3]);
+    t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('altman', s, pp, mine[k]); }); }
+  // ---------- Salg av driftsmiddel ----------
+  { const t = O.make('k8-salg-driftsmiddel', s), x = t.text;
+    const I = num(m1(x, R('for <b>' + NUM + '</b>\\. Investeringen'))), T = +m1(x, /Etter <b>(\d) år<\/b>/), S = num(m1(x, R('selges driftsmidlet for <b>' + NUM + '</b>'))), r = +m1(x, /etter skatt er <b>(\d+) %/) / 100;
+    const same = x.match(R('før skatt på <b>' + NUM + '</b> per år'));
+    const ks = same ? Array(T).fill(num(same[1])) : [...x.matchAll(new RegExp('<b>' + NUM + '</b> i år (\\d)', 'g'))].map((z) => num(z[1]));
+    if (ks.length !== T) { bad++; fails.push('salg: antall år, frø ' + s); }
+    const fs = [-I].concat(ks.map((c, k) => c + (k === T - 1 ? S : 0))), sh = I * 0.2 * 0.22 / (r + 0.2), nd3 = pv(S * 0.2 * 0.22 / (r + 0.2), r, T);
+    let inn = -I + sh, ned = -I + sh - nd3; ks.forEach((c, k) => { inn += pv(0.78 * c, r, k + 1); ned += pv(0.78 * c, r, k + 1); }); inn += pv(0.78 * S, r, T); ned += pv(S, r, T);
+    const mine = [irr(fs), sh, inn, nd3, ned, ned - inn];
+    if (!(ned > inn)) { bad++; fails.push('salg: nedskriving ikke best, frø ' + s); }
+    t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('salg av driftsmiddel', s, pp, mine[k]); }); }
 }
   problems += bad; console.log(`nye generatorer: ${checked} tallsvar over ${SEEDS} frø, ${bad} avvik`); fails.forEach((z) => console.log('  ', z));
 }
