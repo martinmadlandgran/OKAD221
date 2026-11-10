@@ -17,7 +17,7 @@
     const task = g.gen(O.U.rng(seed));
     task.id = id; task.seed = seed; task.gen = g;
     task.parts.forEach((p, i) => {
-      p.label = p.label || 'abcdefghij'[i];
+      p.label = p.label || 'abcdefghijklmnop'[i];
       p.kind = p.kind || (p.answer === undefined || p.answer === null ? 'text' : 'num');
       if (p.kind === 'num' && p.dec === undefined) p.dec = p.unit === '%' ? 2 : (p.unit === 'år' ? 2 : 0);
     });

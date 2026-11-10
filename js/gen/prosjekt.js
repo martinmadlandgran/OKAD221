@@ -124,7 +124,7 @@
             sol: cfTable([['B − A', diff, 'sum']], N) + `<p><code>=IR(differanse)</code> = <b>${pct(fisher, 2)}</b> (Fisher-skjæringspunktet). ${fisher > r ? `Ved avkastningskrav under ${pct(fisher, 2)} er B best; over er A best.` : `Ved avkastningskrav under ${pct(fisher, 2)} er B best; over er A best – og kravet på ${pct(r, 0)} ligger over.`}</p>` },
           { q: 'Anta at kontantstrømmen fra driften i prosjekt A (eksklusiv vedlikehold) i stedet er en annuitet. Hvor høyt må det årlige beløpet være for å gi samme nåverdi som i a)?', answer: annD, unit: 'kr', tol: { abs: IA * 0.0005 },
             sol: f(`NV drift = ${n(pvD)}`) + f(`Årlig beløp = ${frac(n(pvD), `A(${n(r * 100)} %, ${N})`)} = ${frac(n(pvD), n(F.annuityFactor(r, N), 4))} = ${n(annD)}`) +
-              `<p>Excel: <code>=AVDRAG(${n(r * 100)}%;${N};-${n(pvD)})</code></p>` },
+              `<p>Excel: <code>=AVDRAG(${n(r * 100)}%;${N};-${n(pvD).replace(/\s/g, '')})</code></p>` },
         ],
       };
     },
