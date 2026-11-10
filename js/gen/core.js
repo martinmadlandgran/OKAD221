@@ -43,6 +43,24 @@
     return 'no';
   };
 
+  /**
+   * Gjenkjenner vanlige feiltyper i et galt svar og gir en konkret tilbakemelding.
+   * Returnerer '' når ingen kjent feiltype passer.
+   */
+  O.diagnose = (part, input) => {
+    const v = O.U.parse(input); if (Number.isNaN(v)) return '';
+    const ans = part.answer, user = part.unit === '%' ? v / 100 : v;
+    const hit = (x) => O.check(part, O.U.n(part.unit === '%' ? x * 100 : x, 8)) === 'ok';
+    if (ans !== 0 && hit(-user)) return 'Tallet er riktig, men fortegnet er feil.';
+    if (part.unit === '%') {
+      if (hit(v)) return 'Du har skrevet desimaltall. Svaret skal oppgis i prosent – gang med 100.';
+      if (hit(user / 100)) return 'Det ser ut som svaret er ganget med 100 én gang for mye.';
+    } else {
+      for (const k of [1000, 1e6, 100]) if (hit(user * k) || hit(user / k)) return `Sifrene stemmer, men størrelsesordenen er feil (faktor ${O.U.n(k)}). Svar i hele kroner/enheter.`;
+    }
+    return '';
+  };
+
   O.fmtAnswer = (part) => {
     const U = O.U;
     if (part.unit === '%') return U.pct(part.answer, part.dec);

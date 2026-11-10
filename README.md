@@ -28,6 +28,17 @@ løsningsforslagene til kapitteloppgavene i Bredesen, *Investering og finansieri
 - Varighet og hjelpemidler sto ikke i eksamensfilene.
 - Prognosen for 2026 er et anslag ut fra mønstre, ikke en fasit.
 
+## Utforming
+
+Siden er et arbeidsverktøy, ikke en presentasjon. Reglene den følger:
+
+- Ingen kort, skygger eller gradienter. Struktur lages med linjer og typografi.
+- Størrelse følger viktighet: forsiden er en arbeidsliste der oppgavetypene er rangert etter eksamensvekt.
+- Grønt betyr «kan trykkes». Gul markeringstusj betyr «dette er svaret».
+- Tabeller er satt som en hovedbok: tall i fastbredde, dobbeltstrek under sumrader.
+- Hver handling har et svar når noe går galt: tomt eller ugyldig svar, gjenkjente feiltyper (fortegn, desimal i stedet for prosent, størrelsesorden), søk uten treff, ukjente lenker, sperret lagring, ufullstendig prøveeksamen og ugyldige kalkulatorfelt.
+- Mobil har egen meny nederst og større trykkflater, ikke bare stablet desktop.
+
 ## Utvikling
 
 ```bash
@@ -35,6 +46,16 @@ node tools/check.js 300
 ```
 
 Røyk-tester alle generatorer over 300 frø og skriver ut antall eksamener, teorikapitler og quizspørsmål.
+
+```bash
+python3 -m http.server 8765
+```
+
+```bash
+node tools/e2e.js /tmp/skjermbilder
+```
+
+Nettlesertest (Playwright): alle sider i fire skjermstørrelser, svarsjekk og feiltilstander, prøveeksamen fra start til retting, tastaturnavigasjon, kontrast (WCAG AA) i lyst og mørkt tema, trykkflater på mobil og sperret lagring.
 
 Struktur: `js/fin.js` (finansfunksjoner), `js/gen/*.js` (oppgavegeneratorer), `js/data/*.js`
 (eksamener, teori, quiz, prognose), `js/app.js` (visninger).
