@@ -3,6 +3,8 @@
   'use strict';
   const O = root.OKAD, F = O.F, U = O.U;
   const { n, pct, f, frac, steps, table, cfTable } = U;
+  // Tall i Excel-formler: uten tusenskille (mellomrom gir feil i Excel).
+  const xl = (v, d = 0) => n(v, d).replace(/\s/g, '');
 
   const stores = ['Power', 'Elkjøp', 'Komplett', 'NetOnNet', 'Eplehuset'];
   const products = [['en MacBook Air', 15490], ['en ny TV', 12990], ['en gaming-PC', 21990], ['en vaskemaskin', 8990], ['et kamera', 17490], ['en elsykkel', 24990], ['en mobiltelefon', 11490]];
@@ -116,10 +118,10 @@
             hint: `Trekk ut gebyret: selve annuiteten er ${n(pmt, 2)} − ${fee} = ${n(pmtEx, 2)}. Finn månedsrenten som gjør nåverdien av ${m} slike beløp lik kontantprisen.`,
             sol: `<p>Terminbeløp uten gebyr: ${n(pmt, 2)} − ${fee} = <b>${n(pmtEx, 2)}</b>.</p>` +
               f(`${n(P)} = ${n(pmtEx, 2)} · ${frac(`1 − (1 + r)<sup>−${m}</sup>`, 'r')}`) +
-              `<p>Excel: <code>=RENTE(${m};-${n(pmtEx, 2)};${P})</code> gir månedsrente ${pct(rm, 4)}.</p>` +
+              `<p>Excel: <code>=RENTE(${m};-${xl(pmtEx, 2)};${P})</code> gir månedsrente ${pct(rm, 4)}.</p>` +
               f(`Nominell årsrente = 12 · ${pct(rm, 4)} = ${pct(nom, 2)}`) },
           { q: 'Hva er <b>effektiv årsrente</b> når termingebyret regnes med? Angi svaret med 2 desimaler.', answer: eff1, unit: '%',
-            sol: `<p>Nå brukes hele betalingen på ${n(pmt, 2)}: <code>=RENTE(${m};-${n(pmt, 2)};${P})</code> gir månedsrente ${pct(r1, 4)}.</p>` +
+            sol: `<p>Nå brukes hele betalingen på ${n(pmt, 2)}: <code>=RENTE(${m};-${xl(pmt, 2)};${P})</code> gir månedsrente ${pct(r1, 4)}.</p>` +
               f(`r<sub>eff</sub> = (1 + ${n(r1, 6)})<sup>12</sup> − 1 = ${pct(eff1, 2)}`) },
           { q: `Det påløper i tillegg et etableringsgebyr på <b>${E}</b> som betales sammen med første terminbeløp. Hvilken effektiv årsrente innebærer avtalen nå?`, answer: eff2, unit: '%',
             hint: 'Kontantstrømmen er ikke lenger en ren annuitet – bruk IR på hele kontantstrømmen.',
@@ -171,7 +173,7 @@
               `<p>Differanse: <b>${n(totA - totS)}</b>. Annuitetslånet betales ned saktere i starten og gir derfor mer renter totalt.</p>` },
           { q: `Banken krever et etableringsgebyr på ${n(E)} som trekkes fra ved utbetaling. Hva blir <b>effektiv rente</b> på annuitetslånet?`, answer: eff, unit: '%',
             sol: `<p>Du får utbetalt ${n(L)} − ${n(E)} = ${n(L - E)}, men betaler terminbeløp ${n(ann.payment)} i ${N} år.</p>` +
-              `<p>Excel: <code>=RENTE(${N};-${n(ann.payment)};${L - E})</code> = <b>${pct(eff, 2)}</b>.</p>` },
+              `<p>Excel: <code>=RENTE(${N};-${xl(ann.payment)};${L - E})</code> = <b>${pct(eff, 2)}</b>.</p>` },
         ],
       };
     },
@@ -202,7 +204,9 @@
             sol: f(`Uttak = ${frac(n(fvS), `A(${n(r * 100)} %, ${M})`)} = ${frac(n(fvS), n(F.annuityFactor(r, M), 4))} = ${n(out)} kr`) },
           { q: `Anta i stedet at sparebeløpet øker med ${pct(g, 1)} hvert år (første beløp fortsatt ${n(S)}). Hva blir saldoen om ${N} år?`, answer: fvG, unit: 'kr',
             hint: 'Finn først nåverdien av en voksende annuitet, og regn den frem til sluttidspunktet.',
-            sol: f(`NV = ${frac(n(S), `${n(r, 2)} − ${n(g, 3)}`)} · [1 − (${frac(n(1 + g, 3), n(1 + r, 2))})<sup>${N}</sup>] = ${n(F.pvGrowingAnnuity(S, r, g, N))}`) +
+            sol: (Math.abs(r - g) < 1e-9
+              ? `<p>Her er veksten lik renten (g = r = ${pct(r, 0)}), så formelen for voksende annuitet kan ikke brukes (nevneren r − g blir 0). Da har hvert innskudd samme nåverdi, ${n(S)} / ${n(1 + r, 2)}:</p>` + f(`NV = ${N} · ${frac(n(S), n(1 + r, 2))} = ${n(F.pvGrowingAnnuity(S, r, g, N))}`)
+              : f(`NV = ${frac(n(S), `${n(r, 2)} − ${n(g, 3)}`)} · [1 − (${frac(n(1 + g, 3), n(1 + r, 2))})<sup>${N}</sup>] = ${n(F.pvGrowingAnnuity(S, r, g, N))}`)) +
               f(`SV = NV · (1 + ${n(r, 2)})<sup>${N}</sup> = ${n(fvG)} kr`) },
           { q: `Hvor mye må du spare årlig (konstant beløp) for å kunne ta ut ${n(W)} per år i ${M} år?`, answer: save, unit: 'kr',
             sol: steps([`Nødvendig saldo om ${N} år: ${n(W)} · A(${n(r * 100)} %, ${M}) = ${n(need)}`,

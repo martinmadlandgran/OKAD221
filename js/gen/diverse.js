@@ -3,6 +3,8 @@
   'use strict';
   const O = root.OKAD, F = O.F, U = O.U;
   const { n, pct, f, frac, steps, table, cfTable } = U;
+  // Tall i Excel-formler: uten tusenskille (mellomrom gir feil i Excel).
+  const xl = (v, d = 0) => n(v, d).replace(/\s/g, '');
 
   // ------------------------------------------------------------------
   O.reg({
@@ -31,16 +33,16 @@
           { q: 'Hvor mye skal du betale i renter og avdrag per måned (uten termingebyr)?', answer: pmt, unit: 'kr', dec: 2, tol: { abs: 0.6, rel: 0 },
             hint: 'Månedsrente = nominell årsrente / 12. Antall terminer = år · 12.',
             sol: f(`Månedsrente = ${frac(pct(nom, 2), '12')} = ${pct(rm, 4)}, antall terminer = ${N}`) + `<p><code>=AVDRAG(${n(nom * 100, 2)}%/12;${N};-${L})</code> = <b>${n(pmt, 2)}</b>. Med termingebyr betaler du ${n(pmt + g, 2)} per måned.</p>` },
-          { q: 'Hvor mye er <b>renter</b> i den første måneden?', answer: int1, unit: 'kr', dec: 2, tol: { abs: 0.6, rel: 0 }, sol: f(`${n(L)} · ${n(rm, 6)} = ${n(int1, 2)}`) },
+          { q: 'Hvor mye er <b>renter</b> i den første måneden?', answer: int1, unit: 'kr', dec: 2, tol: { abs: 0.6, rel: 0 }, sol: f(`${n(L)} · ${frac(n(nom, 4), '12')} = ${n(int1, 2)}`) },
           { q: 'Hvor mye er <b>avdrag</b> i den tredje måneden?', answer: av3, unit: 'kr', dec: 2, tol: { abs: 0.6, rel: 0 },
             sol: table(['Måned', 'Rente', 'Avdrag', 'Gebyr', 'Sum', 'Restgjeld'], first, { allNum: true }) + '<p>Rente = restgjeld · månedsrente; avdrag = terminbeløp − rente. Excel: <code>=RAVDRAG()</code> og <code>=AMORT()</code>.</p>' },
           { q: 'Hva er lånets <b>effektive årsrente</b>? Angi svaret med 2 desimaler.', answer: eff, unit: '%',
             hint: 'Netto utbetalt = lån − etableringsgebyr. Månedlig betaling = terminbeløp + termingebyr. Finn internrenten per måned og annualiser.',
             sol: steps([`Netto utbetalt: ${n(L)} − ${n(E)} = ${n(L - E)}`, `Månedlig betaling inkl. gebyr: ${n(pmt, 2)} + ${g} = ${n(pmt + g, 2)}`,
-              `<code>=RENTE(${N};-${n(pmt + g, 2)};${L - E})</code> = ${pct(q, 4)} per måned`, `Effektiv årsrente = (1 + ${n(q, 6)})<sup>12</sup> − 1 = <b>${pct(eff, 2)}</b>`]) },
+              `<code>=RENTE(${N};-${xl(pmt + g, 2)};${L - E})</code> = ${pct(q, 4)} per måned`, `Effektiv årsrente = (1 + ${n(q, 6)})<sup>12</sup> − 1 = <b>${pct(eff, 2)}</b>`]) },
           { q: `Hva er restgjelden når det gjenstår ${kLeft} år av tilbakebetalingstiden?`, answer: rest, unit: 'kr', tol: { abs: 2, rel: 0.0003 },
             hint: 'Restgjeld = nåverdien av de gjenstående terminbeløpene (uten gebyr), diskontert med lånerenten.',
-            sol: `<p>${nLeft} terminer gjenstår: <code>=NÅVERDI(${n(nom * 100, 2)}%/12;${nLeft};-${n(pmt, 2)})</code> = <b>${n(rest)}</b>.</p>` },
+            sol: `<p>${nLeft} terminer gjenstår: <code>=NÅVERDI(${n(nom * 100, 2)}%/12;${nLeft};-${xl(pmt, 2)})</code> = <b>${n(rest)}</b>.</p>` },
           { q: `Anta at lånet er et fastrentelån. Når det gjenstår ${kLeft} år, er renten på tilsvarende lån ${pct(nom2, 2)}, og du ønsker å innfri lånet. Hvor stor blir overkursen (positivt tall) eller underkursen (negativt tall)?`, answer: over, unit: 'kr', tol: { abs: 3, rel: 0.003 },
             hint: 'Verdien av lånet for banken = nåverdien av gjenstående terminbeløp til <i>ny</i> markedsrente. Sammenlign med restgjelden.',
             sol: f(`NV ved ${pct(nom2, 2)} = ${n(pmt, 2)} · A(${pct(nom2 / 12, 4)}, ${nLeft}) = ${n(rest + over)}`) + f(`${n(rest + over)} − ${n(rest)} = ${n(over)}`) +
@@ -75,15 +77,15 @@
       const pmtA = F.annuityPayment(L, r, N); const effA = F.solve((x) => (pmtA + g) * F.annuityFactor(x, N) - (L - E), 1e-7, 1);
       const pad = (a) => [null].concat(a);
       return {
-        text: `<p>Et lån på <b>${n(L)}</b> tas opp som et <b>serielån</b> med årlige betalinger. Nominell årsrente er <b>${pct(r, 1)}</b>, etableringsgebyret er <b>${n(E)}</b> og termingebyret <b>${g}</b>. Løpetiden er <b>${N} år</b>, men de første <b>${free}</b> ${free === 1 ? 'året er avdragsfritt' : 'årene er avdragsfrie'}.</p>`,
+        text: `<p>Et lån på <b>${n(L)}</b> tas opp som et <b>serielån</b> med årlige betalinger. Nominell årsrente er <b>${pct(r, 1)}</b>, etableringsgebyret er <b>${n(E)}</b> og termingebyret <b>${g}</b>. Løpetiden er <b>${N} år</b>, men ${free === 1 ? 'det <b>første året</b> er avdragsfritt' : `de første <b>${free}</b> årene er avdragsfrie`}.</p>`,
         parts: [
           { q: 'Hvor stort er det årlige avdraget når avdragene starter?', answer: av, unit: 'kr', sol: f(`${frac(n(L), `${N} − ${free}`)} = ${n(av)}`) },
           { q: `Hva er samlet betaling (renter + avdrag + gebyr) i år ${free + 1}?`, answer: -cf[free + 1], unit: 'kr', sol: f(`${n(L)} · ${n(r, 3)} + ${n(av)} + ${g} = ${n(-cf[free + 1])}`) },
           { q: 'Hva er lånets effektive årsrente? Angi svaret med 2 desimaler.', answer: eff, unit: '%',
             sol: cfTable([['Lån', [L]], ['Renter', pad(rent)], ['Avdrag', pad(avd)], ['Gebyrer', [-E].concat(Array(N).fill(-g))], ['Kontantstrøm', cf, 'sum']], N) + `<p><code>=IR(kontantstrøm)</code> = <b>${pct(eff, 2)}</b>.</p>` },
           { q: 'Hva ville effektiv rente vært for et annuitetslån med samme rente, løpetid og gebyrer (uten avdragsfrihet)?', answer: effA, unit: '%',
-            sol: `<p>Terminbeløp: <code>=AVDRAG(${n(r * 100, 1)}%;${N};-${L})</code> = ${n(pmtA)}. Med gebyr: ${n(pmtA + g)}.</p><p><code>=RENTE(${N};-${n(pmtA + g)};${L - E})</code> = <b>${pct(effA, 2)}</b>.</p>` +
-              `<p>${eff < effA ? 'Serielånet med avdragsfrihet har lavest effektiv rente: gjelden er høy lenge, så gebyrene utgjør en mindre andel.' : 'Annuitetslånet har lavest effektiv rente her: gjennomsnittlig gjeld er høyere, så gebyrene utgjør en mindre andel.'}</p>` },
+            sol: `<p>Terminbeløp: <code>=AVDRAG(${n(r * 100, 1)}%;${N};-${L})</code> = ${n(pmtA)}. Med gebyr: ${n(pmtA + g)}.</p><p><code>=RENTE(${N};-${xl(pmtA + g)};${L - E})</code> = <b>${pct(effA, 2)}</b>.</p>` +
+              `<p>${pct(eff, 2) === pct(effA, 2) ? `Med to desimaler er rentene like; med flere desimaler: ${pct(eff, 4)} mot ${pct(effA, 4)}. ` : ''}${eff < effA ? 'Serielånet med avdragsfrihet har lavest effektiv rente: gjelden er høy lenge, så gebyrene utgjør en mindre andel.' : 'Annuitetslånet har lavest effektiv rente her: gjennomsnittlig gjeld er høyere, så gebyrene utgjør en mindre andel.'}</p>` },
         ],
       };
     },
@@ -225,7 +227,7 @@
           { q: `Du har ${n(budget)} å investere. Hva blir avkastningen i prosent dersom du kjøper <b>kjøpsopsjoner</b> for hele beløpet og kursen blir ${n(PT)}?`, answer: retO, unit: '%', tol: { abs: 0.002 },
             hint: 'Antall opsjoner = beløp / premie.',
             sol: f(`Antall opsjoner = ${frac(n(budget), n(prem))} = ${n(nOpt, 2)}`) + f(`Gevinst = ${n(nOpt, 2)} · ${n(Math.max(0, PT - I))} − ${n(budget)} = ${n(nOpt * Math.max(0, PT - I) - budget)} → ${pct(retO, 1)}`) +
-              `<p>Til sammenligning gir 100 aksjer ${pct(retS, 1)}. Opsjoner gir <b>giring</b>: mye større utslag begge veier – faller kursen under ${n(I)}, er hele beløpet tapt (−100 %).</p>` },
+              `<p>Til sammenligning gir 100 aksjer ${pct(retS, 1)}. ${retO > retS ? 'Opsjoner gir <b>giring</b>: mye større utslag begge veier –' : `Her ender kursen så nær nullpunktet (${n(I + prem)}) at opsjonene gir lavere avkastning enn aksjene. Opsjoner gir likevel <b>giring</b> (større utslag begge veier):`} faller kursen under ${n(I)}, er hele beløpet tapt (−100 %).</p>` },
           { q: `Bruk Black–Scholes: aksjekurs ${n(P)}, innløsningskurs ${n(I)}, risikofri rente ${pct(rf, 2)}, standardavvik ${pct(sigma, 0)} og ${days} dager til bortfall. Hva er verdien av kjøpsopsjonen?`, answer: BS.call, unit: 'kr', dec: 2, tol: { abs: 0.03 },
             hint: 'T = dager / 365. d₁ = [ln(P₀/I) + (r<sub>f</sub> + σ²/2)·T] / (σ√T), d₂ = d₁ − σ√T. Kjøpsopsjon = P₀·N(d₁) − I·e<sup>−r·T</sup>·N(d₂).',
             sol: table(['Størrelse', 'Verdi'], [['T', n(days / 365, 4)], ['d<sub>1</sub>', n(BS.d1, 4)], ['d<sub>2</sub>', n(BS.d2, 4)], ['N(d<sub>1</sub>)', n(BS.Nd1, 4)], ['N(d<sub>2</sub>)', n(BS.Nd2, 4)]]) +

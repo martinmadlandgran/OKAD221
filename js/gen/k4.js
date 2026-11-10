@@ -3,6 +3,8 @@
   'use strict';
   const O = root.OKAD, F = O.F, U = O.U;
   const { n, pct, f, frac, steps, table } = U;
+  // Tall i Excel-formler: uten tusenskille (mellomrom gir feil i Excel).
+  const xl = (v, d = 0) => n(v, d).replace(/\s/g, '');
   const issuers = ['NordEnergi ASA', 'Vestkraft AS', 'Fjordbygg ASA', 'Havbruk Nord ASA', 'Sørlandsbanken ASA', 'Grønn Transport AS'];
 
   const bondTable = (face, c, y, N) => {
@@ -96,7 +98,7 @@
             hint: 'Hver kontantstrøm diskonteres med spotrenten for sin egen løpetid.',
             sol: f(`Kurs = ${frac(n(face * c), n(1 + s[0], 3))} + ${frac(n(face * c), `${n(1 + s[1], 3)}<sup>2</sup>`)} + ${frac(n(face * c + face), `${n(1 + s[2], 3)}<sup>3</sup>`)} = ${n(price, 2)}`) },
           { q: 'Hva er obligasjonens avkastning til forfall (YTM)?', answer: ytm, unit: '%',
-            sol: `<p>YTM er den <i>ene</i> renten som gir samme kurs: <code>=RENTE(3;${face * c};-${n(price, 2)};${face})</code> = <b>${pct(ytm, 2)}</b>.</p><p>YTM er et veid snitt av spotrentene og ligger nærmest 3-årsrenten fordi det meste av kontantstrømmen kommer i år 3.</p>` },
+            sol: `<p>YTM er den <i>ene</i> renten som gir samme kurs: <code>=RENTE(3;${face * c};-${xl(price, 2)};${face})</code> = <b>${pct(ytm, 2)}</b>.</p><p>YTM er et veid snitt av spotrentene og ligger nærmest 3-årsrenten fordi det meste av kontantstrømmen kommer i år 3.</p>` },
           { q: 'Hva er den implisitte terminrenten for år 2 (fra tidspunkt 1 til 2)?', answer: f12, unit: '%',
             hint: '(1 + s₂)² = (1 + s₁)(1 + f₁,₂).',
             sol: f(`<sub>1</sub>f<sub>2</sub> = ${frac(`(1 + ${n(s[1], 3)})<sup>2</sup>`, `1 + ${n(s[0], 3)}`)} − 1 = ${pct(f12, 2)}`) },
