@@ -6,6 +6,20 @@
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   const view = $('#view');
+  // ---------- Tusenskille som hardt mellomrom, så «183 028» ikke brytes over to linjer på mobil ----------
+  // Gjelder bare det som vises: tekstnoder i siden byttes etter hver oppdatering. Data, id-er og lagret fremdrift er urørt.
+  const NBHIT = /\d \d{3}(?!\d)/;
+  const nb = (t) => t.replace(/(\d) (?=\d{3}(?!\d))/g, '$1\u00a0');
+  const NBSKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1 };
+  const nbNode = (t) => { if (NBHIT.test(t.data) && !(t.parentNode && NBSKIP[t.parentNode.nodeName])) t.data = nb(t.data); };
+  const nbText = (node) => {
+    if (node.nodeType === 3) return nbNode(node);
+    if (node.nodeType !== 1 || NBSKIP[node.nodeName]) return;
+    const w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) nbNode(t);
+  };
+  nbText(document.body);
+  new MutationObserver((ms) => { ms.forEach((m) => m.addedNodes.forEach(nbText)); }).observe(document.body, { childList: true, subtree: true });
   O.exams.sort((a, b) => b.year - a.year);
   O.theory.sort((a, b) => a.nr - b.nr);
   const chTitle = (nr) => { const c = O.theory.find((x) => x.nr === nr); return c ? c.title : ''; };
@@ -56,8 +70,7 @@
   // S.qmiss[id] = { t: sist feil (ms), n: antall feil }. id er en hash av spørsmålsteksten, så den tåler at spørsmål legges til eller flyttes.
   const QREP = 5, QMISSMAX = 1000;
   O.quiz.forEach((q) => { q.id = U.hash(q.q); });
-  // Tusenskille som hardt mellomrom, så «183 028» ikke brytes over to linjer på mobil. Etter id-en, så repetisjonen ikke flyttes.
-  const nb = (t) => t.replace(/(\d) (?=\d{3}(?!\d))/g, '$1\u00a0');
+  // Tusenskille som hardt mellomrom (se nb øverst). Etter id-en, så repetisjonen ikke flyttes.
   O.quiz.forEach((q) => { q.q = nb(q.q); q.options = q.options.map(nb); q.why = nb(q.why); });
   const quizById = {}; O.quiz.forEach((q) => { quizById[q.id] = q; });
   if (!S.qmiss || typeof S.qmiss !== 'object' || Array.isArray(S.qmiss)) S.qmiss = {};
