@@ -255,7 +255,11 @@ Funn fra eiers brukertest av bølge 12 (rettet i samme bølge):
 - PC og mobil: «ØKAD 221» på forsiden, «Øv» på Øv-siden og «Eksamensanalyse» på analysen gjorde ingenting. En lenke til siden man står på, endrer ikke adressen, så siden ble ikke tegnet på nytt og man ble stående der man var. Nå vises siden på nytt fra toppen. Lenker til andre sider virket hele tiden, og de virker som før.
 - Kontroller i `e2e.js` (22 nye etter rapporten): raden vises på Teori, Formler og Quiz i 320 px med riktig side markert, ikke på andre sider eller på desktop, uten sidelengs rulling og med trykkflater på minst 44 px. Ett trykk tar deg fra Teori til Quiz. Lenken til siden man står på, viser siden på nytt fra toppen (fire sider), og vanlige lenker virker som før.
 
-Test etter rettingene: `node tools/check.js 3000` OK, `node tools/verify.js 1000` OK (193 kontrolltall), `tools/e2e.js` 534 bestått.
+- Safari på PC, etter at rettingene over var publisert: «ØKAD 221», «Øv», «Prøveeksamen» og «Eksamensanalyse» markerte riktig fane, men innholdet ble stående på «Tidligere eksamener». Årsaken var at GitHub Pages lar nettleseren mellomlagre filene i 10 minutter (`max-age=600`), og Safari brukte en gammel `index.html` (uten den nye raden) sammen med ny `app.js`. Menykoden krasjet da etter at fanen var markert og før siden ble tegnet. Rettet på tre måter: menykoden lager raden selv hvis den mangler, alle skript og stilarket har nå et versjonsnummer i adressen (`?v=13`), så en ny `index.html` aldri blandes med gamle filer, og en side som krasjer, viser en feilmelding med knapp for å laste på nytt i stedet for innholdet fra forrige side. Kontroller i `e2e.js` (8 nye): navigasjon uten raden i `index.html`, samme versjonsnummer på alle filer, og feilmelding med vei videre når en side krasjer.
+
+Test etter rettingene: `node tools/check.js 3000` OK, `node tools/verify.js 1000` OK (193 kontrolltall), `tools/e2e.js` 542 bestått.
+
+Regel fra nå: øk versjonsnummeret (`?v=`) på alle filene i `index.html` i hver bølge som endrer JS eller CSS. `e2e.js` sjekker at alle har samme nummer.
 
 ## Åpne punkter
 
@@ -280,7 +284,7 @@ Kjør bølge 13 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og 
 Innhold i bølge 13:
 1. Hardt mellomrom mellom tall og «%» og mellom tall og «kr» i det som vises, på samme måte som tusenskillet i bølge 12. Data, id-er og lagret fremdrift skal ikke endres.
 2. Rett det jeg fant i brukertesten av bølge 12 (raden Teori · Formler · Quiz på mobil, og lenken til siden man står på): <lim inn funn, eller skriv «ingen funn»>.
-3. Oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
+3. Øk versjonsnummeret (?v=) i index.html, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit og push til arbeidsgrenen når alt er grønt.
 ```

@@ -7,7 +7,7 @@ const fs = require('fs'), path = require('path'), vm = require('vm');
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const ctx = { console, Intl, Math, Number, String, Array, Object, JSON, Date, parseFloat, isFinite, isNaN }; ctx.globalThis = ctx; vm.createContext(ctx);
-for (const s of [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]).filter((s) => !/app\.js$/.test(s))) vm.runInContext(fs.readFileSync(path.join(root, s), 'utf8'), ctx, { filename: s });
+for (const s of [...html.matchAll(/<script src="([^"?]+)/g)].map((m) => m[1]).filter((s) => !/app\.js$/.test(s))) vm.runInContext(fs.readFileSync(path.join(root, s), 'utf8'), ctx, { filename: s });
 const O = ctx.OKAD, U = O.U, F = O.F; let problems = 0;
 const SEEDS = +process.argv[2] || 500;
 // ---------- 1) Mot kildene ----------
