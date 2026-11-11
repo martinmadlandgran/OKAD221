@@ -32,6 +32,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 10 | 14 nye quizspørsmål (factoring og nøkkeltall for likviditet), åpne punkter gjennomgått, installasjonskostnad lukket | Ferdig |
 | 11 | 21 nye quizspørsmål (kontantrabatt, kredittpolitikk, Altmans Z, prisstigning), forklaringer i eldre spørsmål fullført, tall brytes ikke i quizen på mobil | Ferdig |
 | 12 | 7 nye quizspørsmål i kapittel 1 (12 i alt), hardt mellomrom i tusenskillet på hele siden | Ferdig |
+| 13 | Hardt mellomrom mellom tall og «%» og mellom tall og «kr» på hele siden | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -266,6 +267,29 @@ Test etter rettingene: `node tools/check.js 3000` OK, `node tools/verify.js 1000
 
 Regler fra nå: ingen filnavn som ligner sporing eller reklame (analyse, analytics, track, stats, ads, banner). Og øk versjonsnummeret (`?v=`) på alle filene i `index.html` i hver bølge som endrer JS eller CSS. `e2e.js` sjekker at alle har samme nummer.
 
+## Bølge 13: hardt mellomrom før «%» og «kr» (ferdig)
+
+Tall og enhet skilles ikke lenger over to linjer på mobil (som «12,5» på én linje og «%» på neste, eller «1 425 050» og «kr»).
+
+- Samme vei som tusenskillet i bølge 12: hver gang siden viser noe, byttes mellomrommet med et hardt mellomrom rett før skjermen tegnes. Det gjelder mellom et tall og «%», mellom et tall og «kr», og mellom «kr» og et tall etter («kr 500», «kr −3»). Teori, eksamener, formler, kalkulatorer, prøveeksamen (også levert og på papir), quiz, oppgavetekster og løsninger.
+- «kr» må stå som eget ord. «5 kroner», «10 kreditt» og «3 krav» er urørt.
+- Står tallet og enheten i hver sin tekstnode (som `<b>7,5</b> %`), får også det hardt mellomrom.
+- Bare det som vises, endres. Dataene, quiz-id-ene, lagret fremdrift og tallformatet i koden (`U.pct`, `U.kr`) er de samme. Tekstfelt (fremdriftsteksten) holdes utenfor.
+- Svarfeltene godtok allerede hardt mellomrom, så et svar som kopieres fra siden («12,5 %»), blir forstått.
+- Endringen ligger i `js/app.js` (`nb` og `nbJoin`). Versjonsnummeret er økt til `?v=15`.
+- Brukertesten av bølge 12: meldingen for bølge 13 hadde ingen funn. Funnene fra brukertesten (raden Teori · Formler · Quiz, lenken til siden man står på, blank forside i Chrome og Safari) ble rettet etter bølge 12 og er merget. Ingen nye funn er rettet (se spørsmål 1 i rapporten).
+
+Kontroller i `e2e.js` (11 nye, 5 endret):
+
+- Ingen løs «%» eller «kr» etter et tall på noen av 77 sider (alle teorikapitler, alle eksamenssett, alle 43 generatorer med løsningene åpne, formler, kalkulatorer, utskrift, quiz og forside). Kontrollen leser teksten også på tvers av tekstnoder, og den fant 152 løse tilfeller på fire sider med koden fra bølge 12.
+- Levert prøveeksamen og ti quizspørsmål med forklaring.
+- Kanttilfeller: «kroner», «kreditt», «krav», «kr 500», «kr −3», «12 kr.» og tall i egen node.
+- Teori- og eksamensdataene og tallformatet i koden er uendret. Quiz-id-ene sammenlignes nå med id-er regnet fra de rå datafilene utenfor nettleseren (den gamle kontrollen gjettet de rå tekstene ved å bytte tilbake alle harde mellomrom, og det gikk ikke når dataene selv har hardt mellomrom før «%»).
+- Svar med hardt mellomrom før «%» godtas, og teori og oppgave med løsninger gir ingen sidelengs rulling i 320 px.
+- Endret: tre kontroller som lette etter «15,9 %», «58,7 %» og «100 %» med vanlig mellomrom, papirfasiten, som sammenlignet med vanlig mellomrom, og id-kontrollen fra bølge 12, som nå bruker den samme sammenligningen.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 190 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 564 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -279,16 +303,16 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Alle kapitler gir nå en full quizrunde (minst 12 spørsmål hver). Tusenskillet brytes ikke lenger noe sted. Forslag til bølge 13: at prosenttegnet og «kr» ikke skilles fra tallet på mobil (som «12,5» på én linje og «%» på neste), og at funnene fra eiers brukertest på mobil rettes. Hvis det ikke er funn, kan bølgen heller gjelde åpne punkter som kan lukkes uten læreboka.
+Tall, tusenskille, «%» og «kr» brytes ikke lenger noe sted. Forslag til bølge 14: det samme for de andre enhetene som står etter tall («dager», «år», «tusen», «prosentpoeng»), og funn fra eiers brukertest på mobil. Hvis det ikke er funn, kan bølgen også gjelde åpne punkter som kan lukkes uten læreboka.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 13 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 14 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 13:
-1. Hardt mellomrom mellom tall og «%» og mellom tall og «kr» i det som vises, på samme måte som tusenskillet i bølge 12. Data, id-er og lagret fremdrift skal ikke endres.
-2. Rett det jeg fant i brukertesten av bølge 12 (raden Teori · Formler · Quiz på mobil, og lenken til siden man står på): <lim inn funn, eller skriv «ingen funn»>.
+Innhold i bølge 14:
+1. Hardt mellomrom mellom tall og «dager», «år», «tusen» og «prosentpoeng» i det som vises, på samme måte som «%» og «kr» i bølge 13. Data, id-er og lagret fremdrift skal ikke endres.
+2. Rett det jeg fant i brukertesten av bølge 13 (tall med «%» og «kr» på mobil): <lim inn funn, eller skriv «ingen funn»>.
 3. Øk versjonsnummeret (?v=) i index.html, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit og push til arbeidsgrenen når alt er grønt.

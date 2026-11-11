@@ -8,6 +8,11 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   const go = async (p, h) => { await p.goto(B + h); await p.waitForTimeout(250); };
   const OKAD_FMT = (x) => x.toFixed(4).replace('.', ',');
   const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+  // Quiz-id-ene regnet fra de rå dataene utenfor nettleseren (som check.js), for å se at visningen ikke flytter repetisjonen
+  const rawIds = (() => { const fs = require('fs'), path = require('path'), vm = require('vm'), root = path.join(__dirname, '..'); const ctx = { console, Intl, Math, Number, String, Array, Object, JSON, Date, parseFloat, isFinite, isNaN }; ctx.globalThis = ctx; vm.createContext(ctx);
+    for (const m of fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/<script src="([^"?]+)/g)) if (!/app\.js$/.test(m[1])) vm.runInContext(fs.readFileSync(path.join(root, m[1]), 'utf8'), ctx);
+    return ctx.OKAD.quiz.map((x) => ctx.OKAD.U.hash(x.q)).sort().join(','); })();
+  const sameIds = async (p) => (await p.evaluate(() => OKAD.quiz.map((x) => x.id).sort().join(','))) === rawIds;
 
   // 1) Alle ruter, desktop + mobil, lyst + mørkt: ingen feil, ingen sidelengs rulling
   const routes = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'eksamen/2025', 'eksamen/2016', 'tema', 'tema/8', 'tema/4', 'tema/12', 'formler', 'quiz', 'quiz/alle', 'quiz/repeter', 'verktoy', 'repeter', 'oving/k6-folsomhet-internrente/11', 'oving/k12-altman-z/7', 'oving/k12-kredittpolitikk/7', 'oving/k7-factoring/7', 'oving/k12-nokkeltall-likviditet/7'];
@@ -62,7 +67,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   // Riktig utfylt prøve gir 100 %
   await p.click('#start'); await p.waitForTimeout(200);
   await p.evaluate(() => { const S = JSON.parse(localStorage.getItem('okad221:v1')); const seed = S.mock.seed; const R = OKAD.U.rng(seed); OKAD.mockSlots.forEach((s, i) => { const tot = s.pool.reduce((a, x) => a + x[1], 0); let r = R.next() * tot, pick = s.pool[0][0]; for (const [g, w] of s.pool) { if ((r -= w) <= 0) { pick = g; break; } } const t = OKAD.make(pick, (seed * 31 + i * 977) % 2147483647 + 1); t.parts.forEach((x, j) => { if (x.kind === 'num') { const el = document.getElementById(`m${i}_${j}-in`); el.value = OKAD.fmtAnswer(x); el.dispatchEvent(new Event('input', { bubbles: true })); } }); }); });
-  await p.click('#submit'); await p.waitForTimeout(200); ok(/^100 %/.test(await p.textContent('#result h1')), 'prøve: fasitsvar gir 100 % (' + (await p.textContent('#result h1')) + ')');
+  await p.click('#submit'); await p.waitForTimeout(200); ok(/^100\s%/.test(await p.textContent('#result h1')), 'prøve: fasitsvar gir 100 % (' + (await p.textContent('#result h1')) + ')');
   // 8) Eksamen: avkryssing lagres
   await go(p, 'eksamen/2025'); await p.check('input[data-k="2025-1a"]'); await p.reload(); await p.waitForTimeout(200); ok(await p.isChecked('input[data-k="2025-1a"]'), 'eksamen: avkryssing lagres');
   // 9) Quiz hel runde
@@ -91,7 +96,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     ok(!(await q.locator('#keybody').isVisible()), 'papir: fasiten er skjult på skjermen'); await q.click('#keyopen'); ok(await q.locator('#keybody').isVisible(), 'papir: fasiten kan vises');
     ok(await q.evaluate(() => document.activeElement.id === 'keyopen'), 'papir: fokus blir på knappen'); await q.click('#keyopen'); ok(!(await q.locator('#keybody').isVisible()), 'papir: fasiten kan skjules igjen');
     const want = await q.evaluate(() => { const R = OKAD.U.rng(4242); const s = OKAD.mockSlots[0]; const tot = s.pool.reduce((a, x) => a + x[1], 0); let r = R.next() * tot, pick = s.pool[0][0]; for (const [g, w] of s.pool) { if ((r -= w) <= 0) { pick = g; break; } } return OKAD.make(pick, (4242 * 31) % 2147483647 + 1).parts.map((x) => x.kind === 'num' ? OKAD.fmtAnswer(x) : null).filter(Boolean)[0]; });
-    ok((await q.textContent('#keybody')).includes(want), 'papir: fasiten stemmer med oppgave 1');
+    ok((await q.textContent('#keybody')).replace(/\u00a0/g, ' ').includes(want.replace(/\u00a0/g, ' ')), 'papir: fasiten stemmer med oppgave 1');
     await q.emulateMedia({ media: 'print' }); ok(await q.locator('#keybody').isVisible() && !(await q.locator('.topbar').isVisible()) && !(await q.locator('#pp').isVisible()), 'papir: utskrift viser fasit, skjuler meny og knapper');
     ok(await q.evaluate(() => getComputedStyle(document.querySelector('.pagebreak')).breakBefore === 'page'), 'papir: fasiten begynner på ny side');
     ok(await q.evaluate(() => getComputedStyle(document.body).backgroundColor === 'rgb(255, 255, 255)'), 'papir: hvit bakgrunn ved utskrift');
@@ -328,8 +333,8 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await q.focus('#p6-in'); await q.keyboard.press('Tab'); ok(await q.evaluate(() => document.activeElement.dataset.act === 'check'), 'nøkkeltall: Tab fra siste tallfelt går til Sjekk');
     ok(/\?/.test(await q.textContent('.task-text table')), 'nøkkeltall: året som skal regnes, står med spørsmålstegn i tabellen');
     // Teori, Øv, formler, trekkpott
-    await go(q, 'tema/7'); ok((await q.locator('a[href="#/oving/k7-factoring"]').count()) > 0, 'tema 7: factoring under «Øv på kapitlet»'); ok(/Factoring: frigjort kapital og kostnad i prosent/.test(await q.textContent('#view')) && /15,9 %/.test(await q.textContent('#view')), 'tema 7: fremgangsmåte og eksempel 7.8 for factoring');
-    await go(q, 'tema/12'); ok(/Nøkkeltall for likviditet mot bransjen/.test(await q.textContent('#view')) && /58,7 %/.test(await q.textContent('#view')), 'tema 12: fremgangsmåte og eksempel for nøkkeltall, med merknad om gjeldsandelen');
+    await go(q, 'tema/7'); ok((await q.locator('a[href="#/oving/k7-factoring"]').count()) > 0, 'tema 7: factoring under «Øv på kapitlet»'); ok(/Factoring: frigjort kapital og kostnad i prosent/.test(await q.textContent('#view')) && /15,9\s%/.test(await q.textContent('#view')), 'tema 7: fremgangsmåte og eksempel 7.8 for factoring');
+    await go(q, 'tema/12'); ok(/Nøkkeltall for likviditet mot bransjen/.test(await q.textContent('#view')) && /58,7\s%/.test(await q.textContent('#view')), 'tema 12: fremgangsmåte og eksempel for nøkkeltall, med merknad om gjeldsandelen');
     await go(q, 'formler'); await q.fill('#fs', 'kasselikviditet'); ok((await q.locator('.fitem').count()) > 0, 'formelsøk: kasselikviditet gir treff');
     await q.fill('#fs', 'oppgaveteksten sier'); ok((await q.locator('.fitem').count()) >= 4, 'formelsøk: regelen om dager i året står i formlene');
     ok(await q.evaluate(() => !OKAD.mockSlots.some((m) => m.pool.some(([g]) => g === 'k7-factoring' || g === 'k12-nokkeltall-likviditet'))), 'bølge 9: de nye typene er ikke i prøveeksamenens trekkpott');
@@ -415,7 +420,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await go(q, 'tema/12'); ok(!(await overflow(q)), 'bølge 12: teori i 320 px uten sidelengs rulling');
     // Data og id-er er urørt: bare visningen er endret
     ok(await q.evaluate(() => OKAD.theory.some((c) => /\d \d{3}/.test(JSON.stringify(c))) && OKAD.exams.some((e) => /\d \d{3}/.test(JSON.stringify(e)))), 'bølge 12: teori- og eksamensdataene er uendret (byttet bare i visningen)');
-    ok(await q.evaluate(() => OKAD.quiz.every((x) => x.id === OKAD.U.hash(x.q.replace(/\u00a0/g, ' ')) || x.id === OKAD.U.hash(x.q))), 'bølge 12: quiz-id-ene er de samme som før');
+    ok(await sameIds(q), 'bølge 12: quiz-id-ene er de samme som før');
     // Svar med hardt mellomrom (kopiert fra siden) og med vanlig mellomrom godtas begge
     await go(q, 'verktoy'); await q.fill('#c1', '-1\u00a0000; 600; 600'); ok(!/ikke et tall/.test(await q.textContent('#o1')), 'bølge 12: kalkulatoren godtar beløp med hardt mellomrom');
     // Funn fra brukertesten: Formler og Quiz er synlige på mobil fra Teori, Formler og Quiz, med ett trykk
@@ -462,6 +467,43 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
       ok(kap.length === 14 && kap.every(([k]) => /^\d+(, \d+)*$/.test(k)) && kap.some(([k, n]) => k === '8' && /etter skatt/.test(n)) && kap.some(([k, n]) => k === '2, 4' && /før skatt/.test(n)), 'varmekartet viser kapittel i første kolonne for alle temaer');
       await d.click('table.heat td.kap a[href="#/tema/13"]'); await d.waitForTimeout(150); ok(/Kapittel 13/.test(await d.textContent('#view h1')), 'kapittellenken i varmekartet går til teorien');
       await go(d, 'quiz'); ok(await d.evaluate(() => getComputedStyle(document.querySelector('#subnav')).display === 'none'), 'bølge 12: raden vises ikke på desktop (toppmenyen har Formler og Quiz)'); await d.context().close(); } }
+  // 23) Bølge 13: hardt mellomrom mellom tall og «%» og mellom tall og «kr» på hele siden
+  { const q = await mk({ w: 320, h: 640 });
+    // Søker i hver tekstnode og i teksten satt sammen på tvers av noder (som «<b>12,5</b> %»). Tekstfelt holdes utenfor.
+    const loose = () => q.evaluate(() => { const re = /\d (?:%|kr(?![\p{L}\d]))|(?:^|[^\p{L}\d])kr [−-]?\d/u, w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), hit = []; let all = '';
+      for (let t = w.nextNode(); t; t = w.nextNode()) { if (['TEXTAREA', 'SCRIPT', 'STYLE'].includes(t.parentNode.nodeName)) { all += '\n'; continue; } all += t.data; }
+      const g = new RegExp(re.source, 'gu'); let m; while ((m = g.exec(all))) hit.push(all.slice(Math.max(0, m.index - 12), m.index + m[0].length + 3).replace(/\n/g, '⏎'));
+      return hit; });
+    await go(q, 'oving');
+    const pages = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'tema', 'formler', 'verktoy', 'repeter', 'quiz/alle'].concat(await q.evaluate(() => OKAD.theory.map((c) => 'tema/' + c.nr).concat(OKAD.exams.map((e) => 'eksamen/' + e.id), OKAD.gens.map((g) => 'oving/' + g.id + '/11'))));
+    const bad = []; let seen = 0;
+    for (const h of pages) { await go(q, h); if (await q.locator('#all').count()) await q.click('#all');
+      seen += await q.evaluate(() => (document.body.textContent.match(/\d (?:%|kr)/g) || []).length);
+      const hit = await loose(); if (hit.length) bad.push(h + ': ' + hit.slice(0, 2).join(' / ')); }
+    ok(bad.length === 0, `bølge 13: «%» og «kr» står med hardt mellomrom etter tallet på alle ${pages.length} sider` + (bad.length ? ' – ' + bad.slice(0, 5).join(' | ') : ''));
+    ok(seen > 500, 'bølge 13: kontrollen fant tall med «%» eller «kr» å se på (' + seen + ')');
+    // Prøveeksamen levert: resultat og løsninger i prosent og kroner
+    await go(q, 'prove'); await q.click('#start'); await q.waitForTimeout(200); await q.click('#submit'); await q.waitForTimeout(200);
+    const pr = await loose(); ok(pr.length === 0, 'bølge 13: levert prøveeksamen uten løst «%» eller «kr»' + (pr.length ? ' – ' + pr.slice(0, 3).join(' | ') : ''));
+    // Quiz: spørsmål, alternativer og forklaring
+    await go(q, 'quiz/alle'); let qb = 0; for (let k = 0; k < 10; k++) { await q.click('.choice >> nth=0'); qb += (await loose()).length; await q.click('#nx'); }
+    ok(qb === 0, 'bølge 13: quizen (spørsmål, alternativer og forklaringer) uten løst «%» eller «kr»');
+    // Kanttilfeller: «kr» som del av et ord endres ikke, «kr 500» og tall i egen node får hardt mellomrom
+    await go(q, 'formler');
+    const edge = await q.evaluate(async () => { const d = document.createElement('p'); d.id = 'nb13'; d.textContent = 'x'; document.querySelector('#view').appendChild(d);
+      d.innerHTML = '5 kroner, 10 kreditt, 3 krav, Okr 5, 12,5 % og 1 425 050 kr, kr 500, kr −3, 12 kr. <b>7,5</b> % og <span class="num">400</span> kr';
+      await new Promise((r) => setTimeout(r, 30)); return d.textContent.replace(/ /g, '_'); });
+    ok(edge === '5 kroner, 10 kreditt, 3 krav, Okr 5, 12,5_% og 1_425_050_kr, kr_500, kr_−3, 12_kr. 7,5_% og 400_kr', 'bølge 13: kanttilfeller («kroner», «kreditt», «kr 500», tall i egen node) – ' + edge);
+    // Data, id-er og lagret fremdrift er urørt: bare visningen er endret
+    ok(await q.evaluate(() => OKAD.theory.some((c) => /\d %/.test(JSON.stringify(c))) && OKAD.exams.some((e) => /\d %/.test(JSON.stringify(e))) && OKAD.exams.some((e) => /\d kr\b/.test(JSON.stringify(e)))), 'bølge 13: teori- og eksamensdataene er uendret (byttet bare i visningen)');
+    ok(await sameIds(q), 'bølge 13: quiz-id-ene er de samme som før (hash av de rå dataene, regnet utenfor nettleseren)');
+    ok(await q.evaluate(() => OKAD.U.pct(0.125, 1) === '12,5 %' && OKAD.U.kr(500) === '500 kr'), 'bølge 13: tallformatet i koden er uendret (hardt mellomrom bare i visningen)');
+    // Fremdriftsteksten (tekstfelt) kopieres ut uendret, og svar som limes inn fra siden forstås
+    await go(q, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); const a1 = await q.evaluate(() => OKAD.fmtAnswer(OKAD.make('k4-obligasjon-kurs-ytm-durasjon', 3).parts[1]));
+    await q.fill('#p1-in', a1.replace(/ /g, ' ')); await q.press('#p1-in', 'Enter'); ok(/Riktig/.test(await q.textContent('#p1-fb')), 'bølge 13: svar med hardt mellomrom før «%» godtas (' + a1 + ')');
+    await go(q, 'tema/8'); ok(!(await overflow(q)), 'bølge 13: teori i 320 px uten sidelengs rulling');
+    await go(q, 'oving/k12-kontantrabatt/7'); await q.click('#all'); ok(!(await overflow(q)), 'bølge 13: oppgave med løsninger i 320 px uten sidelengs rulling'); await q.screenshot({ path: out + '/m-bolge13.png', fullPage: true });
+    await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });
