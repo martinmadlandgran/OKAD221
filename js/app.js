@@ -2,6 +2,14 @@
 (function () {
   'use strict';
   const O = window.OKAD, U = O.U, F = O.F;
+  // Innholdsblokkere (reklame- og sporingsblokkere) kan stoppe enkeltfiler. Da skal siden si det, ikke bli blank.
+  const missing = [['prognosen og temaene', O.prediction && O.topics], ['eksamenssettene', O.exams && O.exams.length], ['teorien', O.theory && O.theory.length], ['quizen', O.quiz && O.quiz.length], ['oppgavegeneratorene', O.gens && O.gens.length]].filter((x) => !x[1]).map((x) => x[0]);
+  const failed = (window.OKAD_FAILED || []).map((f) => f.replace(/^.*\//, ''));
+  if (missing.length || failed.length) {
+    const nb0 = document.getElementById('notice'), msg = `Nettleseren stoppet en del av siden (${missing.concat(failed).join(', ')}). Det skyldes trolig en reklame- eller sporingsblokker. Slå den av for ${location.hostname || 'denne siden'} og last siden på nytt.`;
+    if (nb0) { nb0.hidden = false; nb0.textContent = msg; }
+    O.prediction = O.prediction || { slots: [], jokers: [] }; O.topics = O.topics || {}; O.exams = O.exams || []; O.theory = O.theory || []; O.quiz = O.quiz || []; O.gens = O.gens || []; O.genById = O.genById || {};
+  }
   const { n, pct, esc, table } = U;
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
