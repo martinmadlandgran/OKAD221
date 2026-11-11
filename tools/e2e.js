@@ -418,7 +418,22 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     ok(await q.evaluate(() => OKAD.quiz.every((x) => x.id === OKAD.U.hash(x.q.replace(/\u00a0/g, ' ')) || x.id === OKAD.U.hash(x.q))), 'bølge 12: quiz-id-ene er de samme som før');
     // Svar med hardt mellomrom (kopiert fra siden) og med vanlig mellomrom godtas begge
     await go(q, 'verktoy'); await q.fill('#c1', '-1\u00a0000; 600; 600'); ok(!/ikke et tall/.test(await q.textContent('#o1')), 'bølge 12: kalkulatoren godtar beløp med hardt mellomrom');
-    await q.context().close(); }
+    // Funn fra brukertesten: Formler og Quiz er synlige på mobil fra Teori, Formler og Quiz, med ett trykk
+    for (const h of ['tema', 'tema/4', 'formler', 'quiz', 'quiz/1']) { await go(q, h); const sub = await q.evaluate(() => { const n = document.querySelector('#subnav'); return n && getComputedStyle(n).display !== 'none' ? [...n.querySelectorAll('a')].map((a) => a.textContent + (a.getAttribute('aria-current') ? '*' : '')) : null; });
+      const want = h.startsWith('tema') ? 'Teori*' : h.startsWith('formler') ? 'Formler*' : 'Quiz*';
+      ok(!!sub && sub.length === 3 && sub.includes(want), `bølge 12: raden Teori · Formler · Quiz vises i 320 px på ${h} (${sub})`); ok(!(await overflow(q)), `bølge 12: raden gir ingen sidelengs rulling på ${h}`); }
+    for (const h of ['', 'oving', 'eksamener', 'prove']) { await go(q, h); ok(await q.evaluate(() => getComputedStyle(document.querySelector('#subnav')).display === 'none'), `bølge 12: raden vises ikke på ${h || 'hjem'}`); }
+    await go(q, 'tema'); await q.click('#subnav a[href="#/quiz"]'); await q.waitForTimeout(150); ok(/#\/quiz$/.test(q.url()) && (await q.locator('#subnav a[aria-current="page"]').textContent()) === 'Quiz', 'bølge 12: ett trykk fra Teori til Quiz');
+    ok(await q.evaluate(() => { const r = document.querySelector('#subnav a').getBoundingClientRect(); return r.height >= 44; }), 'bølge 12: trykkflaten i raden er minst 44 px høy');
+    await go(q, 'formler'); await q.screenshot({ path: out + '/m-subnav.png' });
+    await q.context().close();
+    { const d = await mk();
+      // Funn fra eier: lenken til siden man står på (ØKAD 221 på forsiden, Øv på Øv, Eksamensanalyse på analysen) gjorde ingenting
+      for (const [h, sel] of [['', '.brand'], ['oving', '#nav a[href="#/oving"]'], ['analyse', '#nav a[href="#/analyse"]'], ['quiz', '#nav a[href="#/quiz"]']]) {
+        await go(d, h); await d.evaluate(() => { scrollTo(0, 600); document.querySelector('#view').insertAdjacentHTML('beforeend', '<p id="stale">x</p>'); }); await d.click(sel); await d.waitForTimeout(150);
+        ok(await d.evaluate(() => scrollY === 0 && !document.querySelector('#stale')), `lenken til siden man står på, viser den på nytt fra toppen (${h || 'hjem'})`); }
+      await go(d, 'oving'); await d.click('#nav a[href="#/analyse"]'); await d.waitForTimeout(150); ok(/#\/analyse$/.test(d.url()), 'vanlige lenker virker som før');
+      await go(d, 'quiz'); ok(await d.evaluate(() => getComputedStyle(document.querySelector('#subnav')).display === 'none'), 'bølge 12: raden vises ikke på desktop (toppmenyen har Formler og Quiz)'); await d.context().close(); } }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });

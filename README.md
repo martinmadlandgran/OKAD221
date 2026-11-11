@@ -38,7 +38,8 @@ Siden er et arbeidsverktøy, ikke en presentasjon. Reglene den følger:
 - Grønt betyr «kan trykkes». Gul markeringstusj betyr «dette er svaret».
 - Tabeller er satt som en hovedbok: tall i fastbredde, dobbeltstrek under sumrader.
 - Hver handling har et svar når noe går galt: tomt eller ugyldig svar, gjenkjente feiltyper (fortegn, desimal i stedet for prosent, størrelsesorden), søk uten treff, ukjente lenker, sperret lagring, ufullstendig prøveeksamen, ugyldige kalkulatorfelt og fremdriftsfiler som er tomme, ødelagte, fra en nyere versjon eller fra et annet program.
-- Mobil har egen meny nederst og større trykkflater, ikke bare stablet desktop.
+- Mobil har egen meny nederst og større trykkflater, ikke bare stablet desktop. Formler og Quiz ligger under Teori og vises som en rad øverst på disse tre sidene.
+- En lenke til siden du står på, viser siden på nytt fra toppen i stedet for å gjøre ingenting.
 
 ## Utvikling
 
