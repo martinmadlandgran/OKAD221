@@ -336,6 +336,8 @@ Kontroller i `e2e.js` (7 nye): ingen løs enhet etter et tall på 77 sider med a
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 190 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 581 bestått.
 
+Avgjort av eier etter bølgen: brukertesten på mobil er gjort, uten funn (1a). Durasjonspunktet er lukket (2a). De seks nye enhetene er riktig valgt, og ord som teller ting holdes utenfor (3a). Ingen kodeendring trengtes.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -349,7 +351,7 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-To åpne punkter står igjen, og ingen av dem kan lukkes uten læreboka eller eier. Brukertesten på mobil er ikke meldt for bølge 12–15. Forslag til bølge 16: flere quizspørsmål til kapitlene med færrest. Kapittel 1, 2, 3, 5 og 6 har 12 hver, mot 26 i kapittel 12. Kapittel 1 fikk sine i bølge 12, så bølgen tar kapittel 2, 3, 5 og 6, fire nye i hvert (16 hver), etter samme regler som før: hvert feil alternativ er en navngitt feil, riktig svar på alle fire plassene, tall regnet med eget skript.
+To åpne punkter står igjen, og ingen av dem kan lukkes uten læreboka eller eier. Brukertesten på mobil etter bølge 15 ga ingen funn. Forslag til bølge 16: flere quizspørsmål til kapitlene med færrest. Kapittel 1, 2, 3, 5 og 6 har 12 hver, mot 26 i kapittel 12. Kapittel 1 fikk sine i bølge 12, så bølgen tar kapittel 2, 3, 5 og 6, fire nye i hvert (16 hver), etter samme regler som før: hvert feil alternativ er en navngitt feil, riktig svar på alle fire plassene, tall regnet med eget skript.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
