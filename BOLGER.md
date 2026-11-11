@@ -31,6 +31,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 9 | Factoring (7.7b, 7.8) og nøkkeltall for likviditet (12.3), dager i året gjort konsekvent | Ferdig |
 | 10 | 14 nye quizspørsmål (factoring og nøkkeltall for likviditet), åpne punkter gjennomgått, installasjonskostnad lukket | Ferdig |
 | 11 | 21 nye quizspørsmål (kontantrabatt, kredittpolitikk, Altmans Z, prisstigning), forklaringer i eldre spørsmål fullført, tall brytes ikke i quizen på mobil | Ferdig |
+| 12 | 7 nye quizspørsmål i kapittel 1 (12 i alt), hardt mellomrom i tusenskillet på hele siden | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -217,6 +218,35 @@ Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 183 gyldige q
 
 Avgjort av eier etter bølgen: ingen funn fra brukertesten på mobil (1a). Tusenskillet skal også være hardt mellomrom i teori, eksamener og resten av siden, og det tas i bølge 12 (2a).
 
+## Bølge 12: quiz for kapittel 1 og hardt mellomrom på hele siden (ferdig)
+
+Nye quizspørsmål (190 i alt, 183 før). Kapittel 1 har nå 12 spørsmål og gir en full runde på 10. Hvert feil alternativ er en navngitt feil som forklaringen sier hva er, og riktig svar står på alle fire plassene i dataene. Tallene er regnet på nytt for hånd.
+
+- Netto arbeidskapital fra en balanse (feil: bare omløpsmidlene, varelageret også trukket fra, all gjeld trukket fra).
+- Egenkapital fra balanseligningen (feil: bare langsiktig gjeld trukket fra, bare anleggsmidlene som eiendeler, gjelden lagt til).
+- Hva positiv netto arbeidskapital betyr (feil: like mye i kontanter, overskudd, fortegnet snudd).
+- Kapitalstruktur mot investerings- og arbeidskapitalbeslutninger, og hvilken post som er et omløpsmiddel.
+- «Tid er penger» med 100 000 nå eller om ett år, og effisiente markeder med et resultat som legges fram før børsen åpner.
+- Alt bygger på kapittel 1 i forelesningene (`kilder/forelesninger_kap1_6.md`). Kapitlet har ingen regneeksempler, så tallene er egne.
+
+Hardt mellomrom i tusenskillet på hele siden:
+
+- Hver gang siden viser noe, byttes mellomrommet i tall som «1 425 050» med et hardt mellomrom, rett før skjermen tegnes. Det gjelder teori, eksamener, formler, kalkulatorer, prøveeksamen, oppgavetekster og løsninger. Generatorene brukte allerede hardt mellomrom gjennom `Intl.NumberFormat`. Det var de håndskrevne tekstene i `js/data/` som hadde vanlig mellomrom.
+- Bare det som vises, endres. Dataene, quiz-id-ene og lagret fremdrift er de samme. Tekstfelt (som fremdriftsteksten) holdes utenfor, så det som kopieres ut, er uendret.
+- Svarfeltene og kalkulatorene godtok allerede begge typer mellomrom, så et tall som kopieres fra siden og limes inn, blir forstått.
+- Brukertesten på mobil: meldingen for bølge 12 hadde ikke punkt 3 med, så ingen funn fra eier er rettet (se spørsmål 1 i rapporten).
+
+Kontroller i `e2e.js` (17 nye):
+
+- Kapittel 1 har minst ti spørsmål, hvert feil tallalternativ er forklart, riktig svar står på alle fire plassene, og kapitlet gir full runde.
+- Alle spørsmålene kommer i repetisjonsrunden, og feil svar gir forklaring.
+- Ingen sidelengs rulling i 320 px, og feil svar holder spørsmålet i repetisjonen.
+- Ingen tusenskille med vanlig mellomrom på noen av 76 sider: alle teorikapitler, alle eksamenssett med lukkede fasiter, alle 43 generatorer med løsningene åpne, formler, kalkulatorer, utskrift og forside.
+- Dataene og quiz-id-ene er uendret, og kalkulatoren godtar beløp med hardt mellomrom.
+- Kontrollen for «kort runde» kunne ikke lenger bruke kapittel 1. Den korter nå ned kapittel 1 til fem spørsmål inne i siden.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 190 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 512 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -230,18 +260,17 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Quizen dekker nå alle temaene i kapittel 12 og har 14 spørsmål i kapittel 9. Kapittel 1 har bare 5 og gir en kort runde. Forslag til bølge 12: quizspørsmål for kapittel 1 (opp til minst 10), hardt mellomrom i tusenskillet på resten av siden (avgjort etter bølge 11), og det eier finner i brukertesten på mobil.
+Alle kapitler gir nå en full quizrunde (minst 12 spørsmål hver). Tusenskillet brytes ikke lenger noe sted. Forslag til bølge 13: at prosenttegnet og «kr» ikke skilles fra tallet på mobil (som «12,5» på én linje og «%» på neste), og at funnene fra eiers brukertest på mobil rettes. Hvis det ikke er funn, kan bølgen heller gjelde åpne punkter som kan lukkes uten læreboka.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 12 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 13 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 12:
-1. Nye quizspørsmål for kapittel 1, så kapitlet gir en full runde på 10, der hvert feil alternativ er en navngitt typisk feil. check.js skal fortsatt melde gyldige spørsmål med unike id-er.
-2. Hardt mellomrom i tusenskillet i teori, eksamener, formler og resten av siden, slik at tall ikke brytes over to linjer på mobil (som i quizen fra bølge 11). Id-er og lagret fremdrift skal ikke endres.
-3. Rett det jeg fant i brukertesten på mobil: <lim inn funn, eller skriv «ingen funn»>.
-4. Oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
+Innhold i bølge 13:
+1. Hardt mellomrom mellom tall og «%» og mellom tall og «kr» i det som vises, på samme måte som tusenskillet i bølge 12. Data, id-er og lagret fremdrift skal ikke endres.
+2. Rett det jeg fant i brukertesten på mobil: <lim inn funn, eller skriv «ingen funn»>.
+3. Oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit og push til arbeidsgrenen når alt er grønt.
 ```
