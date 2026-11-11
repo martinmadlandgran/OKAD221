@@ -327,7 +327,7 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Tall brytes ikke lenger fra enheten sin noe sted. Brukertesten på mobil er ikke meldt for bølge 12, 13 eller 14. Forslag til bølge 15: funn fra eiers brukertest på mobil, og åpne punkter som kan lukkes uten læreboka. Ellers er det mest verdifulle som står igjen faglig: flere oppgavetyper i prøveeksamenens trekkpott eller nye quizspørsmål der kapitlene har færrest (kapittel 1, 9 og 12 har fått mest de siste bølgene).
+Tall brytes ikke lenger fra enheten sin noe sted. Brukertesten på mobil er ikke meldt for bølge 12, 13 eller 14. Forslag til bølge 15: funn fra eiers brukertest på mobil, og åpne punkter som kan lukkes uten læreboka. Hvis det ikke er funn, kan bølgen gi flere quizspørsmål til kapitlene med færrest: kapittel 1, 2, 3, 5 og 6 har 12 hver, mot 26 i kapittel 12.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
