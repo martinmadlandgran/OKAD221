@@ -52,7 +52,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   await go(p, 'verktoy'); ok(/972[\s ]333/.test(await p.textContent('#o1')), 'NNV-kalkulator gir 972 333 (2025 oppg. 1)');
   await p.fill('#c1', '-100; abc; 50'); ok(/ikke et tall/.test(await p.textContent('#o1')), 'kalkulator: ugyldig beløp'); await p.fill('#c1', '-100'); ok(/minst to/.test(await p.textContent('#o1')), 'kalkulator: for få beløp');
   await p.fill('#c1', '100; 50; 20'); ok(/finnes ikke/.test(await p.textContent('#o1')), 'kalkulator: ingen internrente');
-  await p.fill('#c2n', '0'); ok(/større enn 0 år/.test(await p.textContent('#o2')), 'lån: 0 år'); await p.fill('#c2n', '5'); await p.fill('#c2r', ''); ok(/Renten/.test(await p.textContent('#o2')), 'lån: tom rente'); await p.fill('#c2r', '0'); ok(/20[\s ]000,00/.test(await p.textContent('#o2')), 'lån: 0 % rente virker');
+  await p.fill('#c2n', '0'); ok(/større enn 0\sår/.test(await p.textContent('#o2')), 'lån: 0 år'); await p.fill('#c2n', '5'); await p.fill('#c2r', ''); ok(/Renten/.test(await p.textContent('#o2')), 'lån: tom rente'); await p.fill('#c2r', '0'); ok(/20[\s ]000,00/.test(await p.textContent('#o2')), 'lån: 0 % rente virker');
   ok(/825,92/.test(await p.textContent('#o3')) && /8,92/.test(await p.textContent('#o3')), 'obligasjon 825,92 / 8,92 %'); await p.fill('#c3n', '2,5'); ok(/helt antall/.test(await p.textContent('#o3')), 'obligasjon: ikke heltall');
   ok(/8,000/.test(await p.textContent('#o4')), 'WACC 8,000 % (2025 oppg. 5)'); await p.fill('#c4w', '150'); ok(/mellom 0 og 100/.test(await p.textContent('#o4')), 'WACC: gjeldsandel > 100');
   ok(!/NaN|Infinity|∞|undefined/.test(await p.textContent('#view')), 'ingen NaN/∞ i kalkulatorene');
@@ -503,6 +503,40 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await q.fill('#p1-in', a1.replace(/ /g, ' ')); await q.press('#p1-in', 'Enter'); ok(/Riktig/.test(await q.textContent('#p1-fb')), 'bølge 13: svar med hardt mellomrom før «%» godtas (' + a1 + ')');
     await go(q, 'tema/8'); ok(!(await overflow(q)), 'bølge 13: teori i 320 px uten sidelengs rulling');
     await go(q, 'oving/k12-kontantrabatt/7'); await q.click('#all'); ok(!(await overflow(q)), 'bølge 13: oppgave med løsninger i 320 px uten sidelengs rulling'); await q.screenshot({ path: out + '/m-bolge13.png', fullPage: true });
+    await q.context().close(); }
+  // 24) Bølge 14: hardt mellomrom mellom tall og «dager», «år», «tusen» og «prosentpoeng» på hele siden
+  { const q = await mk({ w: 320, h: 640 });
+    const RE = '\\d (?:%|(?:kr|dager|år|tusen|prosentpoeng)s?(?![\\p{L}\\d]))|\\d\u00a0tusen kr(?![\\p{L}\\d])|(?:^|[^\\p{L}\\d])kr [−-]?\\d';
+    const loose = () => q.evaluate((src) => { const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), hit = []; let all = '';
+      for (let t = w.nextNode(); t; t = w.nextNode()) { if (['TEXTAREA', 'SCRIPT', 'STYLE'].includes(t.parentNode.nodeName)) { all += '\n'; continue; } all += t.data; }
+      const g = new RegExp(src, 'gu'); let m; while ((m = g.exec(all))) hit.push(all.slice(Math.max(0, m.index - 12), m.index + m[0].length + 3).replace(/\n/g, '⏎'));
+      return hit; }, RE);
+    await go(q, 'oving');
+    const pages = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'tema', 'formler', 'verktoy', 'repeter', 'quiz/alle'].concat(await q.evaluate(() => OKAD.theory.map((c) => 'tema/' + c.nr).concat(OKAD.exams.map((e) => 'eksamen/' + e.id), OKAD.gens.map((g) => 'oving/' + g.id + '/11'))));
+    const bad = [], seen = { dager: 0, år: 0, tusen: 0, prosentpoeng: 0 };
+    for (const h of pages) { await go(q, h); if (await q.locator('#all').count()) await q.click('#all');
+      const c = await q.evaluate(() => { const t = document.body.textContent, r = {}; for (const u of ['dager', 'år', 'tusen', 'prosentpoeng']) r[u] = (t.match(new RegExp('\\d\u00a0' + u + 's?(?![\\p{L}\\d])', 'gu')) || []).length; return r; });
+      for (const u in c) seen[u] += c[u];
+      const hit = await loose(); if (hit.length) bad.push(h + ': ' + hit.slice(0, 2).join(' / ')); }
+    ok(bad.length === 0, `bølge 14: «dager», «år», «tusen» og «prosentpoeng» (og «%», «kr») står med hardt mellomrom etter tallet på alle ${pages.length} sider` + (bad.length ? ' – ' + bad.slice(0, 5).join(' | ') : ''));
+    ok(Object.values(seen).every((x) => x > 0), 'bølge 14: kontrollen fant alle fire enhetene å se på (' + JSON.stringify(seen) + ')');
+    await go(q, 'prove'); await q.click('#start'); await q.waitForTimeout(200); await q.click('#submit'); await q.waitForTimeout(200);
+    const pr = await loose(); ok(pr.length === 0, 'bølge 14: levert prøveeksamen uten løse enheter' + (pr.length ? ' – ' + pr.slice(0, 3).join(' | ') : ''));
+    await go(q, 'quiz/alle'); let qb = 0; for (let k = 0; k < 10; k++) { await q.click('.choice >> nth=0'); qb += (await loose()).length; await q.click('#nx'); }
+    ok(qb === 0, 'bølge 14: quizen (spørsmål, alternativer og forklaringer) uten løse enheter');
+    // Kanttilfeller: enheten må være eget ord, bøyningen med -s tas med, og tall og enhet i hver sin node
+    await go(q, 'formler');
+    const edge = await q.evaluate(async () => { const d = document.createElement('p'); document.querySelector('#view').appendChild(d);
+      d.innerHTML = '30 dager, 30 dagers kreditt, 3 år, 3 års levetid, 5 årlig, i år 1, 4 dagen, 2 tusenlapper, 1 398 tusen kr, 0,4 prosentpoeng, <b>45</b> dager og <span>1 398</span> tusen kr';
+      await new Promise((r) => setTimeout(r, 30)); return d.textContent.replace(/\u00a0/g, '_'); });
+    ok(edge === '30_dager, 30_dagers kreditt, 3_år, 3_års levetid, 5 årlig, i år 1, 4 dagen, 2 tusenlapper, 1_398_tusen_kr, 0,4_prosentpoeng, 45_dager og 1_398_tusen_kr', 'bølge 14: kanttilfeller («årlig», «i år 1», «tusenlapper», «dagers», «tusen kr», tall i egen node) – ' + edge);
+    // Data, id-er og svarfelt er urørt
+    ok(await q.evaluate(() => OKAD.theory.some((c) => /\d (?:dager|år)/.test(JSON.stringify(c))) && OKAD.exams.some((e) => /\d år/.test(JSON.stringify(e)))), 'bølge 14: teori- og eksamensdataene er uendret (byttet bare i visningen)');
+    ok(await sameIds(q), 'bølge 14: quiz-id-ene er de samme som før (hash av de rå dataene)');
+    await go(q, 'oving/k12-nokkeltall-likviditet/7'); const a4 = await q.evaluate(() => OKAD.fmtAnswer(OKAD.make('k12-nokkeltall-likviditet', 7).parts[4]));
+    await q.fill('#p4-in', a4.replace(/ /g, '\u00a0') + '\u00a0dager'); await q.press('#p4-in', 'Enter'); ok(/Riktig/.test(await q.textContent('#p4-fb')), 'bølge 14: svar med hardt mellomrom før «dager» godtas (' + a4 + ')');
+    await go(q, 'oving/k12-kontantrabatt/7'); await q.fill('#p0-in', (await q.evaluate(() => OKAD.fmtAnswer(OKAD.make('k12-kontantrabatt', 7).parts[0]))).replace(/ /g, '\u00a0') + '\u00a0tusen'); await q.press('#p0-in', 'Enter'); ok(/Riktig/.test(await q.textContent('#p0-fb')), 'bølge 14: svar med hardt mellomrom før «tusen» godtas');
+    await q.click('#all'); ok(!(await overflow(q)), 'bølge 14: oppgave med løsninger i 320 px uten sidelengs rulling'); await q.screenshot({ path: out + '/m-bolge14.png', fullPage: true });
     await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }

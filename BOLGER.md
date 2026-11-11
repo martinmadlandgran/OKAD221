@@ -33,6 +33,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 11 | 21 nye quizspørsmål (kontantrabatt, kredittpolitikk, Altmans Z, prisstigning), forklaringer i eldre spørsmål fullført, tall brytes ikke i quizen på mobil | Ferdig |
 | 12 | 7 nye quizspørsmål i kapittel 1 (12 i alt), hardt mellomrom i tusenskillet på hele siden | Ferdig |
 | 13 | Hardt mellomrom mellom tall og «%» og mellom tall og «kr» på hele siden | Ferdig |
+| 14 | Hardt mellomrom mellom tall og «dager», «år», «tusen» og «prosentpoeng» på hele siden | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -290,6 +291,29 @@ Kontroller i `e2e.js` (11 nye, 5 endret):
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 190 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 564 bestått.
 
+## Bølge 14: hardt mellomrom før «dager», «år», «tusen» og «prosentpoeng» (ferdig)
+
+Utvidelse av bølge 13. Tall og enhet skilles ikke over to linjer på mobil for noen av enhetene som står etter tall på siden.
+
+- Hardt mellomrom mellom et tall og «dager», «år», «tusen» og «prosentpoeng». Formen med -s tas med («30 dagers kreditt», «3 års levetid»), fordi den også hører til tallet.
+- «1 398 tusen kr» holdes samlet i sin helhet: det er også hardt mellomrom mellom «tusen» og «kr» når «tusen» står etter et tall.
+- Enheten må stå som eget ord. «årlig», «tusenlapper» og «dagen» er urørt. «i år 1» er urørt, fordi tallet står etter («år 1» er et årsnummer i en tabell, ikke en enhet).
+- Tall og enhet i hver sin tekstnode (som `<b>45</b> dager`) får også hardt mellomrom, som i bølge 13.
+- Bare visningen endres, på samme sted som før (`nb` og `nbJoin` i `js/app.js`). Dataene, quiz-id-ene, lagret fremdrift og tallformatet i koden er de samme. Svarfeltene godtok allerede «dager» og «tusen» med hardt mellomrom.
+- Versjonsnummeret er økt til `?v=16`.
+- Brukertesten av bølge 13: meldingen for bølge 14 hadde fortsatt plassholderen «<lim inn funn …>», så ingen funn fra eier er rettet (se spørsmål 1 i rapporten).
+
+Kontroller i `e2e.js` (10 nye, 1 endret):
+
+- Ingen løs enhet etter et tall på noen av 77 sider (alle teorikapitler, alle eksamenssett, alle 43 generatorer med løsningene åpne, formler, kalkulatorer, utskrift, quiz og forside), lest også på tvers av tekstnoder. Kontrollen ser etter alle seks enhetene, og at hver av de fire nye faktisk forekommer. Med koden fra bølge 13 fant den 39 løse tilfeller på fem sider.
+- Levert prøveeksamen og ti quizspørsmål med forklaring.
+- Kanttilfeller: «dagers», «års», «årlig», «i år 1», «dagen», «tusenlapper», «tusen kr» og tall i egen node.
+- Teori- og eksamensdataene og quiz-id-ene er uendret (id-ene sammenlignet med de rå datafilene).
+- Svar med hardt mellomrom før «dager» og «tusen» godtas, og oppgave med løsninger gir ingen sidelengs rulling i 320 px.
+- Endret: kontrollen for lånekalkulatoren lette etter «0 år» med vanlig mellomrom.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 190 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 574 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -303,17 +327,17 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Tall, tusenskille, «%» og «kr» brytes ikke lenger noe sted. Forslag til bølge 14: det samme for de andre enhetene som står etter tall («dager», «år», «tusen», «prosentpoeng»), og funn fra eiers brukertest på mobil. Hvis det ikke er funn, kan bølgen også gjelde åpne punkter som kan lukkes uten læreboka.
+Tall brytes ikke lenger fra enheten sin noe sted. Brukertesten på mobil er ikke meldt for bølge 12, 13 eller 14. Forslag til bølge 15: funn fra eiers brukertest på mobil, og åpne punkter som kan lukkes uten læreboka. Ellers er det mest verdifulle som står igjen faglig: flere oppgavetyper i prøveeksamenens trekkpott eller nye quizspørsmål der kapitlene har færrest (kapittel 1, 9 og 12 har fått mest de siste bølgene).
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 14 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 15 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 14:
-1. Hardt mellomrom mellom tall og «dager», «år», «tusen» og «prosentpoeng» i det som vises, på samme måte som «%» og «kr» i bølge 13. Data, id-er og lagret fremdrift skal ikke endres.
-2. Rett det jeg fant i brukertesten av bølge 13 (tall med «%» og «kr» på mobil): <lim inn funn, eller skriv «ingen funn»>.
-3. Øk versjonsnummeret (?v=) i index.html, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
+Innhold i bølge 15:
+1. Rett det jeg fant i brukertesten på mobil av bølge 13 og 14 (tall med «%», «kr», «dager», «år», «tusen» og «prosentpoeng»): <lim inn funn, eller skriv «ingen funn»>.
+2. Gå gjennom de åpne punktene i BOLGER.md og lukk det som kan lukkes uten læreboka.
+3. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
-Commit og push til arbeidsgrenen når alt er grønt.
+Commit, push og merge når alt er grønt.
 ```
