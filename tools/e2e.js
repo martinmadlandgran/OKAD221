@@ -227,7 +227,8 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     // Kapittel 8 etter ti feil har bare fire andre spørsmål: runden fylles med flere som venter, fortsatt ti spørsmål
     await q.evaluate(() => { const st = JSON.parse(localStorage.getItem('okad221:v1')); st.qmiss = {}; OKAD.quiz.filter((x) => x.ch === 8).slice(0, 10).forEach((x, k) => { st.qmiss[x.id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); });
     await q.reload(); await q.waitForTimeout(200); await go(q, 'quiz/8'); const r4 = await round(q, () => true); ok(r4.tot === 10 && r4.reps === 6, 'quiz-rep: kapittel med for få andre spørsmål fylles med flere som venter (' + r4.reps + ' av ' + r4.tot + ')');
-    // Lite kapittel (5 spørsmål) og mobil 320 px
+    // Lite kapittel (alle har nå minst ti, så kapittel 1 kortes ned til fem i siden) og mobil 320 px
+    await q2.evaluate(() => { const c1 = OKAD.quiz.filter((x) => x.ch === 1).slice(5); c1.forEach((x) => OKAD.quiz.splice(OKAD.quiz.indexOf(x), 1)); });
     await go(q2, 'quiz/1'); ok(/av 5/.test(await q2.textContent('.eyebrow')), 'quiz-rep: kapittel med fem spørsmål gir kort runde');
     const M = await mk({ w: 320, h: 640 }); await M.goto(B); await M.evaluate((t) => localStorage.setItem('okad221:v1', JSON.stringify(JSON.parse(t).data)), txt);
     await go(M, 'quiz'); await M.reload(); await M.waitForTimeout(250); ok(!(await overflow(M)), 'quiz-rep: oversikten i 320 px'); await M.screenshot({ path: out + '/m-quiz.png', fullPage: true });
@@ -386,6 +387,38 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
       if (tot >= 4) ok(pos.size >= 3, `bølge 11 ${nm}: riktig svar står ikke på samme plass i dataene`);
       const left = await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length); ok(left === ids.length, `bølge 11 ${nm}: feil igjen holder spørsmålene i repetisjonen`); }
     await q.screenshot({ path: out + '/m-quiz-bolge11.png', fullPage: true }); await q.context().close(); }
+  // 22) Bølge 12: quiz for kapittel 1 og hardt mellomrom i tusenskillet på hele siden
+  { const q = await mk({ w: 320, h: 640 }); await go(q, 'quiz');
+    const c1 = await q.evaluate(() => { const d = document.createElement('div'), txt = (h) => { d.innerHTML = h; return d.textContent; }, c = OKAD.quiz.filter((x) => x.ch === 1);
+      const unexplained = c.flatMap((x) => x.options.filter((o, i) => i !== x.correct && /^−?\d/.test(o) && !txt(x.why).includes(o.match(/^−?[\d \u00a0,]+\d/)[0])).map((o) => txt(x.q).slice(0, 30) + ' → ' + o));
+      return { ids: c.map((x) => x.id), pos: [...new Set(c.map((x) => x.correct))].length, unexplained }; });
+    ok(c1.ids.length >= 10, 'bølge 12: minst ti spørsmål i kapittel 1 (' + c1.ids.length + ')');
+    ok(c1.unexplained.length === 0, 'bølge 12: hvert feil tallalternativ i kapittel 1 er forklart' + (c1.unexplained.length ? ': ' + c1.unexplained.join(' | ') : ''));
+    ok(c1.pos === 4, 'bølge 12: riktig svar står på alle fire plassene i kapittel 1');
+    await go(q, 'quiz/1'); ok(/av 10/.test(await q.textContent('.eyebrow')), 'bølge 12: kapittel 1 gir full runde');
+    for (const [nm, ids] of [['kapittel 1 del 1', c1.ids.slice(0, 10)], ['kapittel 1 del 2', c1.ids.slice(10)]]) {
+      if (!ids.length) continue;
+      await q.evaluate((ids) => { const st = JSON.parse(localStorage.getItem('okad221:v1') || '{"gen":{},"exam":{},"quiz":{}}'); st.qmiss = {}; ids.forEach((id, k) => { st.qmiss[id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); }, ids);
+      await q.reload(); await go(q, 'quiz/repeter'); const tot = +(await q.textContent('.eyebrow')).match(/av (\d+)/)[1]; ok(tot === ids.length, `bølge 12 ${nm}: repetisjonsrunden har alle (${tot})`);
+      let wide = 0, why = 0;
+      for (let k = 0; k < tot; k++) { const c = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); return OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }).correct; });
+        if (await overflow(q)) wide++; await q.click(`.choice:not([data-o="${c}"]) >> nth=0`); if ((await q.textContent('#why')).length > 80) why++; if (await overflow(q)) wide++; await q.click('#nx'); }
+      ok(wide === 0, `bølge 12 ${nm}: spørsmål og forklaring uten sidelengs rulling i 320 px`); ok(why === tot, `bølge 12 ${nm}: feil svar gir forklaring på alle (${why} av ${tot})`);
+      const left = await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length); ok(left === ids.length, `bølge 12 ${nm}: feil igjen holder spørsmålene i repetisjonen`); }
+    // Ingen tusenskille med vanlig mellomrom i det som vises, på noen side (tekstfelt holdes utenfor). Lukkede fasiter ligger også i siden og telles med.
+    const loose = () => q.evaluate(() => { const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), hit = []; for (let t = w.nextNode(); t; t = w.nextNode()) { if (t.parentNode.nodeName !== 'TEXTAREA' && /\d \d{3}(?!\d)/.test(t.data)) hit.push(t.data.match(/.{0,15}\d \d{3}/)[0]); } return hit; });
+    const pages = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'tema', 'formler', 'verktoy', 'repeter'].concat(await q.evaluate(() => OKAD.theory.map((c) => 'tema/' + c.nr).concat(OKAD.exams.map((e) => 'eksamen/' + e.id), OKAD.gens.map((g) => 'oving/' + g.id + '/11'))));
+    const bad = [];
+    for (const h of pages) { await go(q, h); if (await q.locator('#all').count()) await q.click('#all');
+      const hit = await loose(); if (hit.length) bad.push(h + ': ' + hit.slice(0, 2).join(' / ')); }
+    ok(bad.length === 0, `bølge 12: tusenskillet er hardt mellomrom på alle ${pages.length} sider` + (bad.length ? ' – ' + bad.slice(0, 5).join(' | ') : ''));
+    await go(q, 'tema/12'); ok(!(await overflow(q)), 'bølge 12: teori i 320 px uten sidelengs rulling');
+    // Data og id-er er urørt: bare visningen er endret
+    ok(await q.evaluate(() => OKAD.theory.some((c) => /\d \d{3}/.test(JSON.stringify(c))) && OKAD.exams.some((e) => /\d \d{3}/.test(JSON.stringify(e)))), 'bølge 12: teori- og eksamensdataene er uendret (byttet bare i visningen)');
+    ok(await q.evaluate(() => OKAD.quiz.every((x) => x.id === OKAD.U.hash(x.q.replace(/\u00a0/g, ' ')) || x.id === OKAD.U.hash(x.q))), 'bølge 12: quiz-id-ene er de samme som før');
+    // Svar med hardt mellomrom (kopiert fra siden) og med vanlig mellomrom godtas begge
+    await go(q, 'verktoy'); await q.fill('#c1', '-1\u00a0000; 600; 600'); ok(!/ikke et tall/.test(await q.textContent('#o1')), 'bølge 12: kalkulatoren godtar beløp med hardt mellomrom');
+    await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });
