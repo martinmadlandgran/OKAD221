@@ -433,6 +433,27 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
         await go(d, h); await d.evaluate(() => { scrollTo(0, 600); document.querySelector('#view').insertAdjacentHTML('beforeend', '<p id="stale">x</p>'); }); await d.click(sel); await d.waitForTimeout(150);
         ok(await d.evaluate(() => scrollY === 0 && !document.querySelector('#stale')), `lenken til siden man står på, viser den på nytt fra toppen (${h || 'hjem'})`); }
       await go(d, 'oving'); await d.click('#nav a[href="#/analyse"]'); await d.waitForTimeout(150); ok(/#\/analyse$/.test(d.url()), 'vanlige lenker virker som før');
+      // Funn fra eier (Safari): en mellomlagret index.html uten #subnav sammen med ny app.js stoppet all navigasjon. Fanen ble markert, men innholdet ble stående.
+      await go(d, 'eksamener'); await d.evaluate(() => document.querySelector('#subnav').remove());
+      for (const [sel, h1] of [['.brand', 'Fem oppgavetyper'], ['#nav a[href="#/oving"]', 'Øv på'], ['#nav a[href="#/prove"]', 'Prøveeksamen'], ['#nav a[href="#/analyse"]', 'Hva kommer'], ['#nav a[href="#/quiz"]', 'Quiz']]) { await d.click(sel); await d.waitForTimeout(120); ok((await d.textContent('#view h1')).startsWith(h1), `uten #subnav i index.html virker navigasjonen fortsatt (${sel})`); }
+      // Alle skript og stilarket har samme versjonsnummer, så en ny index.html aldri blandes med gamle filer fra mellomlageret
+      const vs = await d.evaluate(() => [...document.querySelectorAll('script[src], link[rel=stylesheet][href^="css/"]')].map((x) => (x.getAttribute('src') || x.getAttribute('href')).split('?v=')[1]));
+      ok(vs.length >= 20 && vs.every((v) => v && v === vs[0]), 'alle skript og stilarket har samme versjonsnummer (' + vs[0] + ')');
+      // Krasjer en side, vises en feilmelding med vei videre, ikke innholdet fra forrige side
+      const errs = fails.length; await go(d, 'eksamener'); await d.evaluate(() => { OKAD.prediction.slots = null; }); await d.click('#nav a[href="#/analyse"]'); await d.waitForTimeout(120);
+      ok(/Siden kunne ikke vises/.test(await d.textContent('#view')) && (await d.locator('#reload').count()) === 1 && !/Tidligere eksamener/.test(await d.textContent('#view h1, #view h2')), 'en side som krasjer, gir feilmelding og knapp for å laste på nytt');
+      fails.splice(errs); await d.reload(); await d.waitForTimeout(200); ok(/Hva kommer/.test(await d.textContent('#view h1')), 'last på nytt viser siden igjen');
+      // Funn fra eier (Chrome og Safari): en innholdsblokkering stoppet js/data/analyse.js. Forsiden ble blank, og Øv, Analyse og ØKAD 221 viste forrige side.
+      const names = await d.evaluate(() => [...document.querySelectorAll('script[src]')].map((x) => x.getAttribute('src').split('?')[0]));
+      ok(!names.some((n) => /analy|track|stat|metric|pixel|beacon|(^|[\/_-])ads?[\/_.-]|banner|advert/i.test(n)), 'ingen skriptfil har et navn som innholdsblokkere stopper (' + names.filter((n) => /analy|track|stat|metric|pixel|beacon|banner|advert/i.test(n)).join(', ') + ')');
+      await d.context().close(); }
+    for (const f of ['prognose', 'eksamen-b', 'kreditt']) { const d = await mk(); const errs = fails.length; await d.route(new RegExp(f + '\\.js'), (r) => r.abort('blockedbyclient'));
+      await d.goto(B); await d.waitForTimeout(300); ok(!(await d.locator('#notice').isHidden()) && (await d.textContent('#notice')).includes('blokker'), `blokkert ${f}.js: siden sier fra om det`);
+      let blank = 0, stale = 0; for (const [sel, h] of [['.brand', ''], ['#nav a[href="#/oving"]', 'oving'], ['#nav a[href="#/eksamener"]', 'eksamener'], ['#nav a[href="#/analyse"]', 'analyse'], ['#nav a[href="#/prove"]', 'prove'], ['.brand', '']]) {
+        await d.click(sel); await d.waitForTimeout(120); const t = await d.textContent('#view'); if (!t.trim()) blank++; if (h !== 'eksamener' && /Prøv selv først/.test(t)) stale++; }
+      ok(blank === 0 && stale === 0, `blokkert ${f}.js: ingen blank side og aldri innholdet fra forrige side (${blank} blanke, ${stale} gamle)`);
+      fails.splice(errs); await d.context().close(); }
+    { const d = await mk();
       await go(d, 'quiz'); ok(await d.evaluate(() => getComputedStyle(document.querySelector('#subnav')).display === 'none'), 'bølge 12: raden vises ikke på desktop (toppmenyen har Formler og Quiz)'); await d.context().close(); } }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }

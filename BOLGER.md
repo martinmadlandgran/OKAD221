@@ -255,7 +255,14 @@ Funn fra eiers brukertest av bølge 12 (rettet i samme bølge):
 - PC og mobil: «ØKAD 221» på forsiden, «Øv» på Øv-siden og «Eksamensanalyse» på analysen gjorde ingenting. En lenke til siden man står på, endrer ikke adressen, så siden ble ikke tegnet på nytt og man ble stående der man var. Nå vises siden på nytt fra toppen. Lenker til andre sider virket hele tiden, og de virker som før.
 - Kontroller i `e2e.js` (22 nye etter rapporten): raden vises på Teori, Formler og Quiz i 320 px med riktig side markert, ikke på andre sider eller på desktop, uten sidelengs rulling og med trykkflater på minst 44 px. Ett trykk tar deg fra Teori til Quiz. Lenken til siden man står på, viser siden på nytt fra toppen (fire sider), og vanlige lenker virker som før.
 
-Test etter rettingene: `node tools/check.js 3000` OK, `node tools/verify.js 1000` OK (193 kontrolltall), `tools/e2e.js` 534 bestått.
+- Chrome og Safari på PC: forsiden var blank, «Øv» viste Prøveeksamen, «Eksamensanalyse» viste Tidligere eksamener, og «ØKAD 221» gjorde ingenting. Fanen ble markert, men innholdet ble stående. Årsaken var at en innholdsblokkering i nettleseren (reklame- eller sporingsblokker) stoppet filen `js/data/analyse.js`, fordi navnet ligner et sporingsskript. Uten den filen mangler prognosen og temaene, og forsiden, Øv og analysen krasjet. Prøveeksamen, eksamener, teori og quiz bruker ikke prognosen og virket. Feilen er gjenskapt ved å blokkere filen i Chromium.
+  - Første forklaring (at Safari blandet gamle og nye filer fra mellomlageret) var feil. Det som ble gjort da, beholdes fordi det gjør siden mer robust: menykoden tåler at raden mangler, alle filer har versjonsnummer (`?v=13`), og en side som krasjer, viser en feilmelding med knapp for å laste på nytt i stedet for innholdet fra forrige side.
+  - Rettet: filen heter nå `js/data/prognose.js`. Blir en fil likevel stoppet, sier siden hvilken, og at det trolig er en blokker som må slås av for siden.
+  - Kontroller i `e2e.js` (15 nye): ingen skriptfil har et navn som blokkere stopper (analy, track, stat, ads og lignende), siden sier fra og blir aldri blank eller viser forrige side når `prognose.js`, `eksamen-b.js` eller `kreditt.js` blokkeres, navigasjon uten raden i `index.html`, samme versjonsnummer på alle filer, og feilmelding med vei videre når en side krasjer.
+
+Test etter rettingene: `node tools/check.js 3000` OK, `node tools/verify.js 1000` OK (193 kontrolltall), `tools/e2e.js` 549 bestått.
+
+Regler fra nå: ingen filnavn som ligner sporing eller reklame (analyse, analytics, track, stats, ads, banner). Og øk versjonsnummeret (`?v=`) på alle filene i `index.html` i hver bølge som endrer JS eller CSS. `e2e.js` sjekker at alle har samme nummer.
 
 ## Åpne punkter
 
@@ -280,7 +287,7 @@ Kjør bølge 13 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og 
 Innhold i bølge 13:
 1. Hardt mellomrom mellom tall og «%» og mellom tall og «kr» i det som vises, på samme måte som tusenskillet i bølge 12. Data, id-er og lagret fremdrift skal ikke endres.
 2. Rett det jeg fant i brukertesten av bølge 12 (raden Teori · Formler · Quiz på mobil, og lenken til siden man står på): <lim inn funn, eller skriv «ingen funn»>.
-3. Oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
+3. Øk versjonsnummeret (?v=) i index.html, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit og push til arbeidsgrenen når alt er grønt.
 ```

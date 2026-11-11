@@ -2,6 +2,14 @@
 (function () {
   'use strict';
   const O = window.OKAD, U = O.U, F = O.F;
+  // Innholdsblokkere (reklame- og sporingsblokkere) kan stoppe enkeltfiler. Da skal siden si det, ikke bli blank.
+  const missing = [['prognosen og temaene', O.prediction && O.topics], ['eksamenssettene', O.exams && O.exams.length], ['teorien', O.theory && O.theory.length], ['quizen', O.quiz && O.quiz.length], ['oppgavegeneratorene', O.gens && O.gens.length]].filter((x) => !x[1]).map((x) => x[0]);
+  const failed = (window.OKAD_FAILED || []).map((f) => f.replace(/^.*\//, ''));
+  if (missing.length || failed.length) {
+    const nb0 = document.getElementById('notice'), msg = `Nettleseren stoppet en del av siden (${missing.concat(failed).join(', ')}). Det skyldes trolig en reklame- eller sporingsblokker. Slå den av for ${location.hostname || 'denne siden'} og last siden på nytt.`;
+    if (nb0) { nb0.hidden = false; nb0.textContent = msg; }
+    O.prediction = O.prediction || { slots: [], jokers: [] }; O.topics = O.topics || {}; O.exams = O.exams || []; O.theory = O.theory || []; O.quiz = O.quiz || []; O.gens = O.gens || []; O.genById = O.genById || {};
+  }
   const { n, pct, esc, table } = U;
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
@@ -184,7 +192,9 @@
     const tabCur = ['formler', 'quiz'].includes(cur) ? 'tema' : ['analyse', 'verktoy'].includes(cur) ? '' : cur;
     $('#tabbar').innerHTML = TABS.map(([k, t]) => `<a href="#/${k}"${k === tabCur ? ' aria-current="page"' : ''}>${t}</a>`).join('');
     // Mobil: Formler og Quiz får ikke plass i bunnmenyen og ligger under Teori. Raden øverst gjør dem synlige med ett trykk.
-    const sub = $('#subnav'); sub.hidden = tabCur !== 'tema';
+    // Lages hvis den mangler (en mellomlagret index.html fra før raden fantes, sammen med ny app.js)
+    let sub = $('#subnav'); if (!sub) { sub = document.createElement('nav'); sub.className = 'subnav'; sub.id = 'subnav'; sub.setAttribute('aria-label', 'Slå opp'); view.before(sub); }
+    sub.hidden = tabCur !== 'tema';
     sub.innerHTML = sub.hidden ? '' : SUB.map(link).join('');
   };
   const LEVEL = ['', 'Grunnleggende', 'Eksamensnivå', 'Krevende'];
@@ -779,9 +789,17 @@
     clearInterval(timerId); view.onchange = null; view.oninput = null;
     const parts = decodeURIComponent(location.hash.replace(/^#\/?/, '')).split('/');
     const known = Object.prototype.hasOwnProperty.call(routes, parts[0]);
-    drawNav(known ? ({ eksamen: 'eksamener', repeter: 'oving' }[parts[0]] || parts[0]) : '');
-    if (!known) { setTitle('Fant ikke siden'); notFound('siden', '', 'Til forsiden'); }
-    else routes[parts[0]](parts[1], parts[2]);
+    // Krasjer noe, skal brukeren få beskjed og en vei videre, ikke se innholdet fra forrige side under en ny fane.
+    try {
+      drawNav(known ? ({ eksamen: 'eksamener', repeter: 'oving' }[parts[0]] || parts[0]) : '');
+      if (!known) { setTitle('Fant ikke siden'); notFound('siden', '', 'Til forsiden'); }
+      else routes[parts[0]](parts[1], parts[2]);
+    } catch (e) {
+      if (window.console) console.error(e);
+      setTitle('Noe gikk galt');
+      view.innerHTML = `<div class="empty" role="alert"><h2>Siden kunne ikke vises</h2><p>Noe gikk galt da siden skulle tegnes. Det skjer oftest rett etter en oppdatering, når nettleseren har en blanding av gamle og nye filer. Last siden på nytt. Fremdriften din er lagret og blir ikke borte.</p><p class="small muted">Feilmelding: ${esc(String(e && e.message || e))}</p><p class="row"><button class="btn primary" type="button" id="reload">Last siden på nytt</button><a class="btn" href="#/">Til forsiden</a></p></div>`;
+      $('#reload').onclick = () => location.reload();
+    }
     scrollTo(0, 0);
     if (!firstLoad) view.focus({ preventScroll: true });
     firstLoad = false;
