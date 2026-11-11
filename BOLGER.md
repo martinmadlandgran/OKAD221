@@ -247,7 +247,15 @@ Kontroller i `e2e.js` (17 nye):
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 190 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 512 bestått.
 
-Avgjort av eier etter bølgen: «%» og «kr» skal holdes på samme linje som tallet, og det tas i bølge 13 (2a). Svaret på spørsmålet om funn fra brukertesten venter til eier har testet bølge 12 på mobil.
+Avgjort av eier etter bølgen: «%» og «kr» skal holdes på samme linje som tallet, og det tas i bølge 13 (2a).
+
+Funn fra eiers brukertest av bølge 12 (rettet i samme bølge):
+
+- Mobil: Formler og Quiz var ikke synlige i bunnmenyen, og måtte finnes under «Slå opp» på forsiden. Bunnmenyen har plass til fem knapper i 320 px, så den er uendret. I stedet viser Teori, Formler og Quiz nå en rad øverst på mobil med de tre sidene, så man bytter mellom dem med ett trykk. Raden vises ikke på andre sider, ikke på desktop (der toppmenyen har alle sju) og ikke på utskrift.
+- PC og mobil: «ØKAD 221» på forsiden, «Øv» på Øv-siden og «Eksamensanalyse» på analysen gjorde ingenting. En lenke til siden man står på, endrer ikke adressen, så siden ble ikke tegnet på nytt og man ble stående der man var. Nå vises siden på nytt fra toppen. Lenker til andre sider virket hele tiden, og de virker som før.
+- Kontroller i `e2e.js` (22 nye etter rapporten): raden vises på Teori, Formler og Quiz i 320 px med riktig side markert, ikke på andre sider eller på desktop, uten sidelengs rulling og med trykkflater på minst 44 px. Ett trykk tar deg fra Teori til Quiz. Lenken til siden man står på, viser siden på nytt fra toppen (fire sider), og vanlige lenker virker som før.
+
+Test etter rettingene: `node tools/check.js 3000` OK, `node tools/verify.js 1000` OK (193 kontrolltall), `tools/e2e.js` 534 bestått.
 
 ## Åpne punkter
 
@@ -271,7 +279,7 @@ Kjør bølge 13 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og 
 
 Innhold i bølge 13:
 1. Hardt mellomrom mellom tall og «%» og mellom tall og «kr» i det som vises, på samme måte som tusenskillet i bølge 12. Data, id-er og lagret fremdrift skal ikke endres.
-2. Rett det jeg fant i brukertesten på mobil: <lim inn funn, eller skriv «ingen funn»>.
+2. Rett det jeg fant i brukertesten av bølge 12 (raden Teori · Formler · Quiz på mobil, og lenken til siden man står på): <lim inn funn, eller skriv «ingen funn»>.
 3. Oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit og push til arbeidsgrenen når alt er grønt.

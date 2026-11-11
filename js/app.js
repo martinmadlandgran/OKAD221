@@ -176,12 +176,16 @@
 
   // ---------- Navigasjon: sju mål på desktop, fem i tommelhøyde på mobil ----------
   const NAV = [['oving', 'Øv'], ['prove', 'Prøveeksamen'], ['eksamener', 'Tidligere eksamener'], ['analyse', 'Eksamensanalyse'], ['tema', 'Teori'], ['formler', 'Formler'], ['quiz', 'Quiz']];
+  const SUB = [['tema', 'Teori'], ['formler', 'Formler'], ['quiz', 'Quiz']];
   const TABS = [['', 'Hjem'], ['oving', 'Øv'], ['prove', 'Prøve'], ['eksamener', 'Eksamener'], ['tema', 'Teori']];
   const drawNav = (cur) => {
     const link = ([k, t]) => `<a href="#/${k}"${k === cur ? ' aria-current="page"' : ''}>${t}</a>`;
     $('#nav').innerHTML = NAV.map(link).join('');
     const tabCur = ['formler', 'quiz'].includes(cur) ? 'tema' : ['analyse', 'verktoy'].includes(cur) ? '' : cur;
     $('#tabbar').innerHTML = TABS.map(([k, t]) => `<a href="#/${k}"${k === tabCur ? ' aria-current="page"' : ''}>${t}</a>`).join('');
+    // Mobil: Formler og Quiz får ikke plass i bunnmenyen og ligger under Teori. Raden øverst gjør dem synlige med ett trykk.
+    const sub = $('#subnav'); sub.hidden = tabCur !== 'tema';
+    sub.innerHTML = sub.hidden ? '' : SUB.map(link).join('');
   };
   const LEVEL = ['', 'Grunnleggende', 'Eksamensnivå', 'Krevende'];
   const genRow = (g) => `<li><a class="rowlink" href="#/oving/${g.id}"><span class="rl-title">${g.title}</span><span class="rl-sub">${g.blurb}</span>` +
@@ -783,5 +787,12 @@
     firstLoad = false;
   }
   addEventListener('hashchange', route);
+  // En lenke til siden du allerede står på, endrer ikke adressen og gir derfor ingen hashchange. Vis siden på nytt fra toppen i stedet for å gjøre ingenting.
+  const norm = (h) => decodeURIComponent((h || '').replace(/^#\/?/, '')).replace(/\/$/, '');
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = e.target.closest && e.target.closest('a[href^="#/"]'); if (!a) return;
+    if (norm(a.getAttribute('href')) === norm(location.hash)) { e.preventDefault(); route(); view.focus({ preventScroll: true }); }
+  });
   route();
 })();
