@@ -247,6 +247,8 @@ Kontroller i `e2e.js` (17 nye):
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 190 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 512 bestått.
 
+Avgjort av eier etter bølgen: «%» og «kr» skal holdes på samme linje som tallet, og det tas i bølge 13 (2a). Svaret på spørsmålet om funn fra brukertesten venter til eier har testet bølge 12 på mobil.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
