@@ -565,6 +565,29 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     ok(await q.evaluate(() => OKAD.theory.some((c) => /\d (?:mill\.|millioner|måneder|timer)/.test(JSON.stringify(c))) || OKAD.exams.some((e) => /\d (?:mill\.|millioner|måneder|timer)/.test(JSON.stringify(e)))), 'bølge 15: teori- og eksamensdataene er uendret (byttet bare i visningen)');
     await go(q, 'tema/4'); ok(!(await overflow(q)), 'bølge 15: teori i 320 px uten sidelengs rulling');
     await q.context().close(); }
+  // 26) Bølge 16: fire nye quizspørsmål i hvert av kapittel 2, 3, 5 og 6
+  { const q = await mk({ w: 320, h: 640 }); await go(q, 'quiz');
+    const cs = await q.evaluate(() => { const d = document.createElement('div'), txt = (h) => { d.innerHTML = h; return d.textContent; }, r = {};
+      for (const ch of [2, 3, 5, 6]) { const c = OKAD.quiz.filter((x) => x.ch === ch);
+        const unexplained = c.flatMap((x) => x.options.filter((o, i) => i !== x.correct && /^−?\d/.test(o) && !txt(x.why).includes(o.match(/^−?[\d  ,]+\d|^\d/)[0])).map((o) => txt(x.q).slice(0, 30) + ' → ' + o));
+        r[ch] = { ids: c.map((x) => x.id), newIds: c.slice(-4).map((x) => x.id), newPos: c.slice(-4).map((x) => x.correct).sort().join(''), pos: new Set(c.map((x) => x.correct)).size, unexplained }; }
+      return r; });
+    for (const ch of [2, 3, 5, 6]) { const c = cs[ch];
+      ok(c.ids.length >= 16, `bølge 16: minst 16 spørsmål i kapittel ${ch} (${c.ids.length})`);
+      ok(c.unexplained.length === 0, `bølge 16: hvert feil tallalternativ i kapittel ${ch} er forklart` + (c.unexplained.length ? ': ' + c.unexplained.join(' | ') : ''));
+      ok(c.newPos === '0123' && c.pos === 4, `bølge 16: riktig svar står på alle fire plassene i de nye spørsmålene i kapittel ${ch}`);
+      await go(q, 'quiz/' + ch); ok(/av 10/.test(await q.textContent('.eyebrow')), `bølge 16: kapittel ${ch} gir full runde`); }
+    const ids = [2, 3, 5, 6].flatMap((ch) => cs[ch].newIds);
+    for (const [nm, part] of [['del 1', ids.slice(0, 8)], ['del 2', ids.slice(8)]]) {
+      await q.evaluate((ids) => { const st = JSON.parse(localStorage.getItem('okad221:v1') || '{"gen":{},"exam":{},"quiz":{}}'); st.qmiss = {}; ids.forEach((id, k) => { st.qmiss[id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); }, part);
+      await q.reload(); await go(q, 'quiz/repeter'); const tot = +(await q.textContent('.eyebrow')).match(/av (\d+)/)[1]; ok(tot === part.length, `bølge 16 ${nm}: repetisjonsrunden har alle nye spørsmål (${tot})`);
+      let wide = 0, why = 0;
+      for (let k = 0; k < tot; k++) { const c = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); return OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }).correct; });
+        if (await overflow(q)) wide++; await q.click(`.choice:not([data-o="${c}"]) >> nth=0`); if ((await q.textContent('#why')).length > 80) why++; if (await overflow(q)) wide++; await q.click('#nx'); }
+      ok(wide === 0, `bølge 16 ${nm}: spørsmål og forklaring uten sidelengs rulling i 320 px`); ok(why === tot, `bølge 16 ${nm}: feil svar gir forklaring på alle (${why} av ${tot})`);
+      const left = await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length); ok(left === part.length, `bølge 16 ${nm}: feil igjen holder spørsmålene i repetisjonen`); }
+    ok(await sameIds(q), 'bølge 16: quiz-id-ene er de samme som i de rå dataene');
+    await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });
