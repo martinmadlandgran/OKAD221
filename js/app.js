@@ -350,8 +350,8 @@
     setTitle('Eksamensanalyse');
     const ys = years(), st = topicStats(), P = O.prediction;
     const cls = (v) => (v >= 25 ? 'h3' : v >= 12 ? 'h2' : 'h1');
-    const heat = '<div class="tablewrap" tabindex="0" role="region" aria-label="Tema per år, kan rulles sidelengs"><table class="data heat"><thead><tr><th>Tema</th>' + ys.map((y) => `<th><span class="sr">20</span>${String(y).slice(2)}</th>`).join('') + '<th>Sett</th><th>Sist</th></tr></thead><tbody>' +
-      st.map((t) => `<tr><th scope="row">${t.name}</th>` + ys.map((y) => { const v = t.row[y] || 0; return v ? `<td class="${cls(v)}">${Math.round(v)}</td>` : '<td class="z"><span aria-hidden="true">·</span><span class="sr">0</span></td>'; }).join('') + `<td>${t.count}/${ys.length}</td><td>${t.last || '–'}</td></tr>`).join('') + '</tbody></table></div>' +
+    const heat = '<div class="tablewrap" tabindex="0" role="region" aria-label="Tema per år, kan rulles sidelengs"><table class="data heat"><thead><tr><th>Tema</th>' + ys.map((y) => `<th>${y}</th>`).join('') + '<th>Gitt</th><th>Sist</th></tr></thead><tbody>' +
+      st.map((t) => `<tr><th scope="row">${t.name}</th>` + ys.map((y) => { const v = t.row[y] || 0; return v ? `<td class="${cls(v)}">${Math.round(v)}</td>` : '<td class="z"><span aria-hidden="true">·</span><span class="sr">0</span></td>'; }).join('') + `<td class="gitt">${t.count} av ${ys.length}</td><td>${t.last || '–'}</td></tr>`).join('') + '</tbody></table></div>' +
       '<p class="legend"><span><i style="background:rgba(var(--accent-rgb),.14)"></i>under 12 % av settet</span><span><i style="background:rgba(var(--accent-rgb),.32)"></i>12–24 %</span><span><i style="background:var(--accent)"></i>25 % eller mer</span><span>· = ikke gitt</span></p>';
     const struct = table(['Sett', 'Oppgaver og vekt'], O.exams.slice().sort((a, b) => a.year - b.year).map((e) => [`<a href="#/eksamen/${e.id}">${e.title}</a>`, e.tasks.map((t) => `<b class="num">${t.weight} %</b> ${esc(t.title)}`).join('<br>')]), { cls: 'left wrap' });
     const links = (gens) => gens.map((id) => `<a href="#/oving/${id}">${O.genById[id].title}</a>`).join(' · ');
@@ -365,7 +365,7 @@
       <h3>Jokere</h3>
       ${P.jokers.map((s) => `<details><summary>${s.title} <span class="tag">${Math.round(s.prob * 100)} % sannsynlig</span></summary><div class="inner"><p>${s.why}</p><p class="small">Øv: ${links(s.gens)}</p></div></details>`).join('')}
       <h2>Grunnlaget: hva har kommet, og hvor mye telte det?</h2>
-      <p class="small muted">Tallene er omtrentlig prosent av settet (oppgavens vekt fordelt likt på deloppgavene). Kolonnene er årstall; 17 er mars 2017, resten er høsteksamener.</p>${heat}
+      <p class="small muted">Tallene er omtrentlig prosent av settet (oppgavens vekt fordelt likt på deloppgavene). Kolonnene er årstall. 2017 er mars 2017, resten er høsteksamener. <b>Gitt</b> er hvor mange av de ti eksamenssettene temaet var med i, og <b>Sist</b> er siste år det kom.</p>${heat}
       <h3>Hyppighet når de siste årene teller mest</h3>
       <p class="small muted">Hvert år teller 25 % mindre enn året etter. Obligasjoner, som bare har kommet i 2024 og 2025, får derfor høyere tall enn ren opptelling gir.</p>
       <div>${st.map((t) => `<div class="bar-row"><div>${t.name}</div><div class="bar-track" aria-hidden="true"><i style="width:${Math.round(t.recent * 100)}%"></i></div><div class="bar-val">${Math.round(t.recent * 100)} %</div></div>`).join('')}</div>

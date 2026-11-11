@@ -189,7 +189,8 @@ table.data tr.sub > * { font-weight: 700; }
 table.data tr.dim > * { color: var(--ink-3); }
 table.data.left td { text-align: left; white-space: normal; font-family: var(--sans); font-size: .9rem; }
 table.data.wrap th, table.data.wrap td { white-space: normal; vertical-align: top; }
-table.heat td { text-align: center; padding: 6px 4px; min-width: 40px; }
+table.heat td { text-align: center; padding: 6px 4px; min-width: 52px; }
+table.heat td.gitt { white-space: nowrap; }
 table.heat td.z { color: var(--ink-3); }
 table.heat td.h1 { background: rgba(var(--accent-rgb), .14); }
 table.heat td.h2 { background: rgba(var(--accent-rgb), .32); font-weight: 700; }
