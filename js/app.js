@@ -15,15 +15,15 @@
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   const view = $('#view');
   // ---------- Hardt mellomrom i tall, så «183 028», «12,5 %», «500 kr» og «30 dager» ikke brytes over to linjer på mobil ----------
-  // Tusenskillet, mellom tall og enheten etter («%», «kr», «dager», «år», «tusen», «prosentpoeng», også «30 dagers» og «3 års»),
-  // mellom «tusen» og «kr» («1 398 tusen kr»), og mellom «kr» og et tall etter («kr 500»). Enheten må stå som eget ord: «årlig», «kroner» og «kreditt» er urørt.
+  // Tusenskillet, mellom tall og enheten etter («%», «kr», «dager», «år», «tusen», «prosentpoeng», «prosent», «mill.», «millioner», «mnd.», «måned(er)», «timer»,
+  // også «30 dagers» og «3 års»), mellom «tusen», «mill.» eller «millioner» og «kr» («1 398 tusen kr»), og mellom «kr» og et tall etter («kr 500»). Enheten må stå som eget ord: «årlig», «kroner», «kreditt», «prosentvis» og «millionær» er urørt.
   // Gjelder bare det som vises: tekstnoder i siden byttes etter hver oppdatering. Data, id-er og lagret fremdrift er urørt.
-  const UNIT = '(?:%|(?:kr|dager|år|tusen|prosentpoeng)(?:s)?(?![\\p{L}\\d]))';
-  const NBHIT = new RegExp('\\d \\d{3}(?!\\d)|\\d ' + UNIT + '|tusen kr(?![\\p{L}\\d])|(?:^|[^\\p{L}\\d])kr [−-]?\\d', 'u');
+  const UNIT = '(?:%|(?:kr|dager|år|tusen|prosentpoeng|prosent|mill|millioner|mnd|måned|måneder|timer)(?:s)?(?![\\p{L}\\d]))';
+  const NBHIT = new RegExp('\\d \\d{3}(?!\\d)|\\d ' + UNIT + '|(?:tusen|mill\\.|millioner) kr(?![\\p{L}\\d])|(?:^|[^\\p{L}\\d])kr [−-]?\\d', 'u');
   const NBUNIT = new RegExp('(\\d) (?=' + UNIT + ')', 'gu'), NBSTART = new RegExp('^ ' + UNIT, 'u');
   const nb = (t) => t.replace(/(\d) (?=\d{3}(?!\d))/g, '$1 ')
     .replace(NBUNIT, '$1 ')
-    .replace(/( tusen) (?=kr(?![\p{L}\d]))/gu, '$1 ')
+    .replace(/( (?:tusen|mill\.|millioner)) (?=kr(?![\p{L}\d]))/gu, '$1 ')
     .replace(/(^|[^\p{L}\d])kr (?=[−-]?\d)/gu, '$1kr ');
   // Enheten begynner en ny tekstnode rett etter et tall i forrige node (som «<b>12,5</b> %» eller «<b>30</b> dager»).
   const nbJoin = (t) => {

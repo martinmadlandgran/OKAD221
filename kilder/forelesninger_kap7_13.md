@@ -158,7 +158,7 @@ Kunde med lavere kredittverdighet: rente 8 % p.a., tilleggsrente 2 % p.a. ved tr
 Omsetning 12 000 000 pr. år (1 000 000 pr. md.). Kundekreditt hittil 45 dager, reduseres til 30 dager med factoring. **20 % margin** (factoringselskapet forskutterer 80 %), 13 % rente på forskudd. Administrasjonsgebyr 25 pr. faktura, snittfaktura 5 000 → 12 000 000/5 000 = 2 400 fakturaer. Sparte adm.kostnader 50 000.
 - Kapital frigjort: fordringer før = 12 000 000 · 45/360 = 1 500 000. Etter = 12 000 000 · 30/360 = 1 000 000, hvorav 80 % forskutteres (800 000) → bundet 200 000. Frigjort = 1 500 000 − 200 000 = **1 300 000**.
 - Kostnad: rente 13 % · 800 000 = 104 000 + gebyr 2 400 · 25 = 60 000 − spart 50 000 = **114 000 netto** → 114 000/1 300 000 ≈ **8,8 %**.
-(Lysbildene «Hvor mye kapital frigjøres?» og «Hva koster det?» var rene bilder.)
+(Lysbildene «Hvor mye kapital frigjøres?» og «Hva koster det?» var rene bilder.) [Bølge 15: at rentene regnes av forskuddet, følger av inndataene på lysbildet («13 % rente på forskudd») og av kapittel-LF 7.7b («Renter forskuttert beløp»). Forskuddet er 80 % av fordringene som står ute med den nye kredittiden (30 dager). Den delen av den frigjorte kapitalen som kommer av kortere kredittid, betaler kundene selv, og ingen tar renter av den.]
 
 ### Eks 7-11: Leasing [LYSBILDE oppgave; svar REKONSTRUERT]
 Maskin koster 100 000. Leasing: forskudd 40 000 nå + 3 betalinger à 25 000 i slutten av hvert år. Effektiv rente?

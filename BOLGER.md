@@ -34,6 +34,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 12 | 7 nye quizspørsmål i kapittel 1 (12 i alt), hardt mellomrom i tusenskillet på hele siden | Ferdig |
 | 13 | Hardt mellomrom mellom tall og «%» og mellom tall og «kr» på hele siden | Ferdig |
 | 14 | Hardt mellomrom mellom tall og «dager», «år», «tusen» og «prosentpoeng» på hele siden | Ferdig |
+| 15 | Åpne punkter: factoring med kortere kredittid og durasjon lukket. Hardt mellomrom også før «prosent», «mill.», «millioner», «mnd.», «måneder» og «timer» | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -314,29 +315,50 @@ Kontroller i `e2e.js` (10 nye, 1 endret):
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 190 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 574 bestått.
 
+## Bølge 15: åpne punkter og de siste enhetene (ferdig)
+
+Brukertesten på mobil av bølge 13 og 14: meldingen for bølge 15 hadde fortsatt plassholderen «<lim inn funn …>», så ingen funn fra eier er rettet (se spørsmål 1 i rapporten).
+
+Åpne punkter gjennomgått mot `kilder/`:
+
+- Factoring med kortere kredittid (eksempel 7-10): lukket. At rentene regnes av forskuddet, står i inndataene på lysbildet («13 % rente på forskudd»), som ikke er rekonstruert, og kapittel-LF 7.7b gjør det samme («Renter forskuttert beløp»). Forskuddet er 80 % av fordringene som står ute med den nye kredittiden. Resten av den frigjorte kapitalen kommer av at kundene betaler raskere, og den koster ingen renter. Det eneste som var rekonstruert, var regnestykket, og det følger direkte av inndataene. Generatoren `k7-factoring`, teorien og quizspørsmålet regner slik allerede, så ingen kode er endret. Kildemerknaden i `kilder/forelesninger_kap7_13.md` sier nå dette.
+- Durasjon og rentenivå: lukket. Svaret siden gir, følger av definisjonen og trenger ikke læreboka. Durasjonen er et snitt av tidspunktene, vektet med nåverdien av hver betaling. Når renten øker, faller vekten på de sene betalingene mer enn på de tidlige, så snittet flytter seg mot nå. Regnet ut: dD/dy = −Σ (t − D)² · wₜ / (1 + y), som er negativ for alle obligasjoner med mer enn én betaling (for en nullkupong er durasjonen lik løpetiden). Forlagets tall og LF 2024 og 2025 stemmer med dette. Setningen på forlagets lysbilde er feil, og teorisiden sier allerede det. Uansett hva læreboka sier, er svaret på siden riktig. Vil eier vite om boka har samme feil, kan punktet åpnes igjen (spørsmål 2).
+- Står åpent: Altmans grenseverdier (1,81 og 2,99) krever læreboka. Ekte utskrift og flytting mellom fysiske enheter krever eier.
+
+Hardt mellomrom før de siste enhetene. Bølge 14 sa at tall ikke lenger ble brutt fra enheten noe sted. Det stemte ikke helt. Et søk i dataene etter ord som står rett etter et tall, fant seks enheter til: «prosent», «mill.», «millioner», «mnd.», «måned(er)» og «timer» (som «2,5 millioner kr», «114,6 måneder» og «Eksamen varer 4 timer»). Med koden fra bølge 14 stod de løst på blant annet Eksamensanalysen, prøveeksamenen, papirutgaven og teori for kapittel 4 og 7.
+
+- De seks får hardt mellomrom på samme måte som før (`nb` i `js/app.js`), også i formen med -s («3 måneders kreditt») og når tallet står i egen node. «mill. kr» og «millioner kr» holdes samlet som «tusen kr».
+- Enheten må stå som eget ord: «prosentvis», «millionærer», «milliarder» og «timeregnskap» er urørt.
+- Ord som teller ting («enheter», «terminer», «aksjer», «rom») er holdt utenfor. De er ikke enheter, og et linjeskift foran dem er ikke feil.
+- Bare visningen endres. Dataene, quiz-id-ene og lagret fremdrift er de samme. Versjonsnummeret er økt til `?v=17`.
+
+Kontroller i `e2e.js` (7 nye): ingen løs enhet etter et tall på 77 sider med alle tolv enhetene, at kontrollen faktisk fant de nye enhetene, quizen med forklaringer, kanttilfeller («millionærer», «timeregnskap», «prosentvis», «mill. kr», «måneders», tall i egen node), uendrede quiz-id-er og data, og teori for kapittel 4 uten sidelengs rulling i 320 px. Med koden fra bølge 14 feilet tre av dem.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 190 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 581 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
-- Durasjon og rentenivå: forlagets lysbilder sier det motsatte av standardteorien og av forlagets egne tall (se bølge 6). Siden følger standardteorien. Læreboka er ikke lest, så det står igjen å se hva den sier.
-- Factoring med kortere kredittid bygger på forelesningens eksempel 7-10, der løsningen er rekonstruert. Det som ikke er bekreftet, er at rentene bare regnes av forskuddet. Ett nytt quizspørsmål bygger på dette.
 - Ekte utskrift og flytting mellom fysiske enheter er ikke testet (bare i hodeløs Chromium, A4-PDF).
 
 Lukket i bølge 10: aktivering av installasjonskostnad (følg oppgaveteksten), gjeldsandelen i 12.3 (avgjort), 2025 oppg. 4 og 5b (begge godtas eller vises), Black–Scholes-toleransen (avgjort).
+
+Lukket i bølge 15: factoring med kortere kredittid (rente på forskuddet står i inndataene), durasjon og rentenivå (følger av definisjonen).
 
 Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamenens trekkpott (1a), egenkapitalens internrente godtas innenfor 0,1 prosentpoeng av målsøkingssvaret (2a), og «Vis alle løsninger» før svar legger oppgaven i repetisjonslisten uten å endre treffprosenten (3a). Ingen kodeendring trengtes.
 
 ## Neste bølge (forslag)
 
-Tall brytes ikke lenger fra enheten sin noe sted. Brukertesten på mobil er ikke meldt for bølge 12, 13 eller 14. Forslag til bølge 15: funn fra eiers brukertest på mobil, og åpne punkter som kan lukkes uten læreboka. Hvis det ikke er funn, kan bølgen gi flere quizspørsmål til kapitlene med færrest: kapittel 1, 2, 3, 5 og 6 har 12 hver, mot 26 i kapittel 12.
+To åpne punkter står igjen, og ingen av dem kan lukkes uten læreboka eller eier. Brukertesten på mobil er ikke meldt for bølge 12–15. Forslag til bølge 16: flere quizspørsmål til kapitlene med færrest. Kapittel 1, 2, 3, 5 og 6 har 12 hver, mot 26 i kapittel 12. Kapittel 1 fikk sine i bølge 12, så bølgen tar kapittel 2, 3, 5 og 6, fire nye i hvert (16 hver), etter samme regler som før: hvert feil alternativ er en navngitt feil, riktig svar på alle fire plassene, tall regnet med eget skript.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 15 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 16 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 15:
-1. Rett det jeg fant i brukertesten på mobil av bølge 13 og 14 (tall med «%», «kr», «dager», «år», «tusen» og «prosentpoeng»): <lim inn funn, eller skriv «ingen funn»>.
-2. Gå gjennom de åpne punktene i BOLGER.md og lukk det som kan lukkes uten læreboka.
+Innhold i bølge 16:
+1. Fire nye quizspørsmål i hvert av kapittel 2, 3, 5 og 6 (fra 12 til 16 i hvert), etter reglene fra bølge 10–12: hvert feil alternativ er en navngitt feil som forklaringen sier hva er, riktig svar på alle fire plassene, alle tall regnet med eget skript, og bygget på kilder/.
+2. Funn fra brukertesten på mobil (stryk punktet hvis ingen): <funn>.
 3. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit, push og merge når alt er grønt.
