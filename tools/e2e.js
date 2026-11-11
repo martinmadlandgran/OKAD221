@@ -538,6 +538,33 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await go(q, 'oving/k12-kontantrabatt/7'); await q.fill('#p0-in', (await q.evaluate(() => OKAD.fmtAnswer(OKAD.make('k12-kontantrabatt', 7).parts[0]))).replace(/ /g, '\u00a0') + '\u00a0tusen'); await q.press('#p0-in', 'Enter'); ok(/Riktig/.test(await q.textContent('#p0-fb')), 'bølge 14: svar med hardt mellomrom før «tusen» godtas');
     await q.click('#all'); ok(!(await overflow(q)), 'bølge 14: oppgave med løsninger i 320 px uten sidelengs rulling'); await q.screenshot({ path: out + '/m-bolge14.png', fullPage: true });
     await q.context().close(); }
+  // 25) Bølge 15: hardt mellomrom også før «mill.», «millioner», «mnd.», «måneder», «timer» og «prosent»
+  { const q = await mk({ w: 320, h: 640 });
+    const NEW = ['mill', 'millioner', 'mnd', 'måned', 'måneder', 'timer', 'prosent'];
+    const RE = '\\d (?:%|(?:kr|dager|år|tusen|prosentpoeng|' + NEW.join('|') + ')s?(?![\\p{L}\\d]))|\\d\u00a0(?:tusen|mill\\.|millioner) kr(?![\\p{L}\\d])|(?:^|[^\\p{L}\\d])kr [−-]?\\d';
+    const loose = () => q.evaluate((src) => { const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), hit = []; let all = '';
+      for (let t = w.nextNode(); t; t = w.nextNode()) { if (['TEXTAREA', 'SCRIPT', 'STYLE'].includes(t.parentNode.nodeName)) { all += '\n'; continue; } all += t.data; }
+      const g = new RegExp(src, 'gu'); let m; while ((m = g.exec(all))) hit.push(all.slice(Math.max(0, m.index - 12), m.index + m[0].length + 3).replace(/\n/g, '⏎'));
+      return hit; }, RE);
+    await go(q, 'oving');
+    const pages = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'tema', 'formler', 'verktoy', 'repeter', 'quiz/alle'].concat(await q.evaluate(() => OKAD.theory.map((c) => 'tema/' + c.nr).concat(OKAD.exams.map((e) => 'eksamen/' + e.id), OKAD.gens.map((g) => 'oving/' + g.id + '/11'))));
+    const bad = []; let seen = 0;
+    for (const h of pages) { await go(q, h); if (await q.locator('#all').count()) await q.click('#all');
+      seen += await q.evaluate((u) => (document.body.textContent.match(new RegExp('\\d\u00a0(?:' + u + ')\\.?s?(?![\\p{L}\\d])', 'gu')) || []).length, NEW.join('|'));
+      const hit = await loose(); if (hit.length) bad.push(h + ': ' + hit.slice(0, 2).join(' / ')); }
+    ok(bad.length === 0, `bølge 15: «mill.», «millioner», «mnd.», «måneder», «timer» og «prosent» (og enhetene fra før) står med hardt mellomrom etter tallet på alle ${pages.length} sider` + (bad.length ? ' – ' + bad.slice(0, 5).join(' | ') : ''));
+    ok(seen >= 10, 'bølge 15: kontrollen fant de nye enhetene å se på (' + seen + ')');
+    await go(q, 'quiz/alle'); let qb = 0; for (let k = 0; k < 10; k++) { await q.click('.choice >> nth=0'); qb += (await loose()).length; await q.click('#nx'); }
+    ok(qb === 0, 'bølge 15: quizen uten løse enheter');
+    await go(q, 'formler');
+    const edge = await q.evaluate(async () => { const d = document.createElement('p'); document.querySelector('#view').appendChild(d);
+      d.innerHTML = '2,5 millioner kr, 1,6 mill. kr, 6 mnd, 12 mnd. rente, 1 måned, 3 måneder, 3 måneders kreditt, 4 timer, 5 prosent, 2 milliarder, 3 millionærer, 4 timeregnskap, 5 prosentvis, 2 prosentpoeng og <b>6</b> måneder';
+      await new Promise((r) => setTimeout(r, 30)); return d.textContent.replace(/\u00a0/g, '_'); });
+    ok(edge === '2,5_millioner_kr, 1,6_mill._kr, 6_mnd, 12_mnd. rente, 1_måned, 3_måneder, 3_måneders kreditt, 4_timer, 5_prosent, 2 milliarder, 3 millionærer, 4 timeregnskap, 5 prosentvis, 2_prosentpoeng og 6_måneder', 'bølge 15: kanttilfeller («millionærer», «timeregnskap», «prosentvis», «mill. kr», tall i egen node) – ' + edge);
+    ok(await sameIds(q), 'bølge 15: quiz-id-ene er de samme som før (hash av de rå dataene)');
+    ok(await q.evaluate(() => OKAD.theory.some((c) => /\d (?:mill\.|millioner|måneder|timer)/.test(JSON.stringify(c))) || OKAD.exams.some((e) => /\d (?:mill\.|millioner|måneder|timer)/.test(JSON.stringify(e)))), 'bølge 15: teori- og eksamensdataene er uendret (byttet bare i visningen)');
+    await go(q, 'tema/4'); ok(!(await overflow(q)), 'bølge 15: teori i 320 px uten sidelengs rulling');
+    await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });
