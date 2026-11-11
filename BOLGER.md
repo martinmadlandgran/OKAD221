@@ -262,7 +262,7 @@ Funn fra eiers brukertest av bølge 12 (rettet i samme bølge):
 
 Test etter rettingene: `node tools/check.js 3000` OK, `node tools/verify.js 1000` OK (193 kontrolltall), `tools/e2e.js` 549 bestått.
 
-Ønske fra eier etter at rettingene var merget: varmekartet på Eksamensanalyse viser nå hele årstall (2016–2025, ikke 16–25), og kolonnen «Sett» heter «Gitt» og viser «8 av 10». Teksten over tabellen forklarer at «Gitt» er hvor mange av de ti eksamenssettene temaet var med i, og «Sist» er siste år det kom. Versjonsnummeret er økt til `?v=14`. To nye kontroller i `e2e.js`, `tools/e2e.js` 551 bestått.
+Ønske fra eier etter at rettingene var merget: varmekartet på Eksamensanalyse viser nå hele årstall (2016–2025, ikke 16–25), og kolonnen «Sett» heter «Gitt» og viser «8 av 10». Teksten over tabellen forklarer at «Gitt» er hvor mange av de ti eksamenssettene temaet var med i, og «Sist» er siste år det kom. Varmekartet har også fått en smal kolonne helt til venstre med kapittel i læreboka («Kap.»), hentet fra temaenes kapitler i `prognose.js`, med lenke til teorien for kapitlet. Versjonsnummeret er økt til `?v=14`. Fire nye kontroller i `e2e.js`, `tools/e2e.js` 553 bestått.
 
 Regler fra nå: ingen filnavn som ligner sporing eller reklame (analyse, analytics, track, stats, ads, banner). Og øk versjonsnummeret (`?v=`) på alle filene i `index.html` i hver bølge som endrer JS eller CSS. `e2e.js` sjekker at alle har samme nummer.
 

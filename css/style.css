@@ -191,6 +191,8 @@ table.data.left td { text-align: left; white-space: normal; font-family: var(--s
 table.data.wrap th, table.data.wrap td { white-space: normal; vertical-align: top; }
 table.heat td { text-align: center; padding: 6px 4px; min-width: 52px; }
 table.heat td.gitt { white-space: nowrap; }
+table.heat thead th:nth-child(2) { text-align: left; }
+table.heat .kap { text-align: left; min-width: 0; width: 1%; white-space: nowrap; padding-left: 0; padding-right: 10px; color: var(--ink-3); }
 table.heat td.z { color: var(--ink-3); }
 table.heat td.h1 { background: rgba(var(--accent-rgb), .14); }
 table.heat td.h2 { background: rgba(var(--accent-rgb), .32); font-weight: 700; }
