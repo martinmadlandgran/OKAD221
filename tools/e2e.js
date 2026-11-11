@@ -405,11 +405,11 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
         if (await overflow(q)) wide++; await q.click(`.choice:not([data-o="${c}"]) >> nth=0`); if ((await q.textContent('#why')).length > 80) why++; if (await overflow(q)) wide++; await q.click('#nx'); }
       ok(wide === 0, `bølge 12 ${nm}: spørsmål og forklaring uten sidelengs rulling i 320 px`); ok(why === tot, `bølge 12 ${nm}: feil svar gir forklaring på alle (${why} av ${tot})`);
       const left = await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length); ok(left === ids.length, `bølge 12 ${nm}: feil igjen holder spørsmålene i repetisjonen`); }
-    // Ingen tusenskille med vanlig mellomrom i det som vises, på noen side (tekstfelt holdes utenfor)
+    // Ingen tusenskille med vanlig mellomrom i det som vises, på noen side (tekstfelt holdes utenfor). Lukkede fasiter ligger også i siden og telles med.
     const loose = () => q.evaluate(() => { const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), hit = []; for (let t = w.nextNode(); t; t = w.nextNode()) { if (t.parentNode.nodeName !== 'TEXTAREA' && /\d \d{3}(?!\d)/.test(t.data)) hit.push(t.data.match(/.{0,15}\d \d{3}/)[0]); } return hit; });
     const pages = ['', 'analyse', 'oving', 'prove', 'prove/utskrift/4242', 'eksamener', 'tema', 'formler', 'verktoy', 'repeter'].concat(await q.evaluate(() => OKAD.theory.map((c) => 'tema/' + c.nr).concat(OKAD.exams.map((e) => 'eksamen/' + e.id), OKAD.gens.map((g) => 'oving/' + g.id + '/11'))));
     const bad = [];
-    for (const h of pages) { await go(q, h); if (await q.locator('#all').count()) await q.click('#all'); else if (h.startsWith('eksamen/')) { for (const d of await q.locator('details:not([open]) > summary').all()) await d.click().catch(() => {}); }
+    for (const h of pages) { await go(q, h); if (await q.locator('#all').count()) await q.click('#all');
       const hit = await loose(); if (hit.length) bad.push(h + ': ' + hit.slice(0, 2).join(' / ')); }
     ok(bad.length === 0, `bølge 12: tusenskillet er hardt mellomrom på alle ${pages.length} sider` + (bad.length ? ' – ' + bad.slice(0, 5).join(' | ') : ''));
     await go(q, 'tema/12'); ok(!(await overflow(q)), 'bølge 12: teori i 320 px uten sidelengs rulling');
