@@ -454,6 +454,13 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
       ok(blank === 0 && stale === 0, `blokkert ${f}.js: ingen blank side og aldri innholdet fra forrige side (${blank} blanke, ${stale} gamle)`);
       fails.splice(errs); await d.context().close(); }
     { const d = await mk();
+      // Eier: hele årstall i varmekartet, og forklaring på «Gitt» (het «Sett»)
+      await go(d, 'analyse'); const hh = await d.evaluate(() => [...document.querySelectorAll('table.heat thead th')].map((x) => x.textContent.trim()));
+      ok(hh.includes('2025') && hh.includes('2016') && !hh.includes('25') && hh.includes('Gitt') && !hh.includes('Sett'), 'varmekartet har hele årstall og kolonnen Gitt (' + hh.slice(1, 4).join(',') + '…)');
+      ok(/\d+ av 10/.test(await d.textContent('table.heat tbody td.gitt')) && /Gitt.{0,5} er hvor mange av de ti eksamenssettene/.test(await d.textContent('#view')), 'Gitt vises som «8 av 10» og er forklart over tabellen');
+      const kap = await d.evaluate(() => [...document.querySelectorAll('table.heat tbody tr')].map((r) => [r.querySelector('td.kap').textContent, r.querySelector('th').textContent]));
+      ok(kap.length === 14 && kap.every(([k]) => /^\d+(, \d+)*$/.test(k)) && kap.some(([k, n]) => k === '8' && /etter skatt/.test(n)) && kap.some(([k, n]) => k === '2, 4' && /før skatt/.test(n)), 'varmekartet viser kapittel i første kolonne for alle temaer');
+      await d.click('table.heat td.kap a[href="#/tema/13"]'); await d.waitForTimeout(150); ok(/Kapittel 13/.test(await d.textContent('#view h1')), 'kapittellenken i varmekartet går til teorien');
       await go(d, 'quiz'); ok(await d.evaluate(() => getComputedStyle(document.querySelector('#subnav')).display === 'none'), 'bølge 12: raden vises ikke på desktop (toppmenyen har Formler og Quiz)'); await d.context().close(); } }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
