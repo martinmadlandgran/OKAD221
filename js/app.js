@@ -14,12 +14,26 @@
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   const view = $('#view');
-  // ---------- Tusenskille som hardt mellomrom, så «183 028» ikke brytes over to linjer på mobil ----------
+  // ---------- Hardt mellomrom i tall, så «183 028», «12,5 %», «500 kr» og «30 dager» ikke brytes over to linjer på mobil ----------
+  // Tusenskillet, mellom tall og enheten etter («%», «kr», «dager», «år», «tusen», «prosentpoeng», også «30 dagers» og «3 års»),
+  // mellom «tusen» og «kr» («1 398 tusen kr»), og mellom «kr» og et tall etter («kr 500»). Enheten må stå som eget ord: «årlig», «kroner» og «kreditt» er urørt.
   // Gjelder bare det som vises: tekstnoder i siden byttes etter hver oppdatering. Data, id-er og lagret fremdrift er urørt.
-  const NBHIT = /\d \d{3}(?!\d)/;
-  const nb = (t) => t.replace(/(\d) (?=\d{3}(?!\d))/g, '$1\u00a0');
+  const UNIT = '(?:%|(?:kr|dager|år|tusen|prosentpoeng)(?:s)?(?![\\p{L}\\d]))';
+  const NBHIT = new RegExp('\\d \\d{3}(?!\\d)|\\d ' + UNIT + '|tusen kr(?![\\p{L}\\d])|(?:^|[^\\p{L}\\d])kr [−-]?\\d', 'u');
+  const NBUNIT = new RegExp('(\\d) (?=' + UNIT + ')', 'gu'), NBSTART = new RegExp('^ ' + UNIT, 'u');
+  const nb = (t) => t.replace(/(\d) (?=\d{3}(?!\d))/g, '$1 ')
+    .replace(NBUNIT, '$1 ')
+    .replace(/( tusen) (?=kr(?![\p{L}\d]))/gu, '$1 ')
+    .replace(/(^|[^\p{L}\d])kr (?=[−-]?\d)/gu, '$1kr ');
+  // Enheten begynner en ny tekstnode rett etter et tall i forrige node (som «<b>12,5</b> %» eller «<b>30</b> dager»).
+  const nbJoin = (t) => {
+    if (!NBSTART.test(t.data)) return;
+    let p = t.previousSibling;
+    while (p && p.nodeType === 1 && p.lastChild) p = p.lastChild;
+    if (p && p.nodeType === 3 && /\d$/.test(p.data)) t.data = nb(' ' + t.data.slice(1));
+  };
   const NBSKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1 };
-  const nbNode = (t) => { if (NBHIT.test(t.data) && !(t.parentNode && NBSKIP[t.parentNode.nodeName])) t.data = nb(t.data); };
+  const nbNode = (t) => { if (t.parentNode && NBSKIP[t.parentNode.nodeName]) return; if (NBHIT.test(t.data)) t.data = nb(t.data); nbJoin(t); };
   const nbText = (node) => {
     if (node.nodeType === 3) return nbNode(node);
     if (node.nodeType !== 1 || NBSKIP[node.nodeName]) return;
