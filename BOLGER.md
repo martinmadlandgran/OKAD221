@@ -35,6 +35,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 13 | Hardt mellomrom mellom tall og «%» og mellom tall og «kr» på hele siden | Ferdig |
 | 14 | Hardt mellomrom mellom tall og «dager», «år», «tusen» og «prosentpoeng» på hele siden | Ferdig |
 | 15 | Åpne punkter: factoring med kortere kredittid og durasjon lukket. Hardt mellomrom også før «prosent», «mill.», «millioner», «mnd.», «måneder» og «timer» | Ferdig |
+| 16 | 16 nye quizspørsmål (fire i hvert av kapittel 2, 3, 5 og 6), alle feil tallalternativer i de fire kapitlene forklart | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -338,6 +339,26 @@ Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 190 gyldige q
 
 Avgjort av eier etter bølgen: brukertesten på mobil er gjort, uten funn (1a). Durasjonspunktet er lukket (2a). De seks nye enhetene er riktig valgt, og ord som teller ting holdes utenfor (3a). Ingen kodeendring trengtes.
 
+## Bølge 16: quiz for kapittel 2, 3, 5 og 6 (ferdig)
+
+Nye quizspørsmål (206 i alt, 190 før). Kapittel 2, 3, 5 og 6 har nå 16 hver. Alle tall er regnet med et eget skript. Hvert feil alternativ er en navngitt feil, og forklaringen sier hvilken. I de nye spørsmålene står riktig svar på hver av de fire plassene i hvert kapittel. Rekkefølgen stokkes på skjermen som før.
+
+- Kapittel 2, kontantstrøm: hvor mye arbeidskapital som frigjøres siste år (feil: fallet året før, det som ble bundet i år 0, det høyeste nivået), summen av prosjektets kontantstrøm over levetiden er lik summen av driftsresultatene (feil: salgsverdien glemt, investeringen glemt, avskrivningene ikke lagt til), materialer på lager verdsatt til salgsverdien (feil: historisk kost, gjenanskaffelsesverdi, null), og uoppsigelig leie mot tapt fremleie (feil: leien tatt med, bare leien, fremleie minus leie). Bygger på AS Trevare og AS Skipsverft i forelesningen. Tallene i spørsmålet om arbeidskapital er egne.
+- Kapittel 3, renteregning: avdraget i år 2 på et annuitetslån (feil: avdraget i år 1, serielånets avdrag, rentedelen), sluttverdi av en annuitet (feil: uten renter, nåverdien, forskuddsannuitet), nåverdi av ulike beløp (feil: udiskontert sum, sluttverdien, ett år for mye), og effektiv rente med kvartalsvis godskriving (feil: nominell rente, perioderenten, kontinuerlig forrentning). Tallene er fra eksemplene i forelesningen.
+- Kapittel 5, andre lønnsomhetsmetoder: diskontert payback (feil: vanlig payback, delt på første års nåverdi, rundet opp), udelbare prosjekter der rangering etter nåverdiindeks gir feil utvalg (feil: indeksrangeringen, en kombinasjon som sprenger budsjettet, bare det største prosjektet), hvor mye eierne taper på et payback-krav (feil: udiskontert, negativ NNV glemt, bare tapet i det ene prosjektet), og at ROI er et annet navn for ARR. Tallene er egne.
+- Kapittel 6, prosjektanalyse: kritisk variabel enhetskostnad (feil: feil retning, NNV i stedet for nåverdiannuitet, delt på dekningsbidraget), finansiell break-even (feil: regnskapsmessig, bare faste kostnader, bare investeringen), kritisk prisfall når salget varierer (feil: udiskontert mengde, NNV delt på gjennomsnittlig mengde, nåverdiannuitet delt på gjennomsnittlig mengde) og hvilken risiko en veldiversifisert investor bærer. Bygger på eksempel 6.1 og 6.3 i forelesningen. Tallene i spørsmålet om varierende salg er egne.
+- De nye spørsmålene tar for seg andre deler av stoffet enn de eldre. Unntaket er effektiv rente, der det eldre spørsmålet har månedlig godskriving og det nye kvartalsvis. ARR er holdt utenfor som regnespørsmål, fordi kildene sier at det ikke er etablert praksis for hvilken variant som brukes.
+
+Rettet: den nye kontrollen fant 42 feil tallalternativer i de eldre spørsmålene i kapittel 2, 3, 5 og 6 som forklaringen ikke nevnte. Forklaringene sier nå hva feilen er. I fem spørsmål var et alternativ ikke en feil som lot seg navngi. Det er byttet med en navngitt feil: 48 % ble 72,8 % (tre år med rentesrente), 318 000 ble 344 098 (bare de første 20 årene), 12,0 år ble 20,5 år (firedobling), 24 % ble 36 % (kontantstrøm i stedet for resultat), og 0,43 ble 0,177 (NNV delt på nåverdien av innbetalingene). Id-en lages fra spørsmålsteksten, så spørsmålene blir værende i repetisjonen.
+
+Brukertesten på mobil: meldingen hadde fortsatt plassholderen «<funn>». Eier meldte ingen funn etter bølge 15, så ingenting er rettet.
+
+Versjonsnummeret er økt til `?v=18`.
+
+Kontroller i `e2e.js` (25 nye): minst 16 spørsmål i hvert av de fire kapitlene, hvert feil tallalternativ forklart i hele kapitlet, riktig svar på alle fire plassene i de nye spørsmålene, full runde i hvert kapittel, alle 16 nye spørsmål i repetisjonsrunden (to runder på åtte), feil svar gir forklaring, ingen sidelengs rulling i 320 px, feil igjen holder dem i repetisjonen, og quiz-id-ene stemmer med de rå dataene. Med de eldre forklaringene feilet fire av dem.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 206 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 606 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -351,16 +372,16 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-To åpne punkter står igjen, og ingen av dem kan lukkes uten læreboka eller eier. Brukertesten på mobil etter bølge 15 ga ingen funn. Forslag til bølge 16: flere quizspørsmål til kapitlene med færrest. Kapittel 1, 2, 3, 5 og 6 har 12 hver, mot 26 i kapittel 12. Kapittel 1 fikk sine i bølge 12, så bølgen tar kapittel 2, 3, 5 og 6, fire nye i hvert (16 hver), etter samme regler som før: hvert feil alternativ er en navngitt feil, riktig svar på alle fire plassene, tall regnet med eget skript.
+Quizen har nå 206 spørsmål. Kapittel 1 har færrest (12), deretter kapittel 10 (13) og kapittel 8, 9, 11 og 13 (14 hver). Kontrollen for forklarte feilalternativer dekker nå kapittel 1, 2, 3, 5, 6, 9 og 12, men ikke 4, 7, 8, 10, 11 og 13. Forslag til bølge 17: utvid kontrollen til alle kapitlene og rett forklaringene den finner, og gi kapittel 10 og 13 fire nye spørsmål hver.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 16 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 17 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 16:
-1. Fire nye quizspørsmål i hvert av kapittel 2, 3, 5 og 6 (fra 12 til 16 i hvert), etter reglene fra bølge 10–12: hvert feil alternativ er en navngitt feil som forklaringen sier hva er, riktig svar på alle fire plassene, alle tall regnet med eget skript, og bygget på kilder/.
-2. Funn fra brukertesten på mobil (stryk punktet hvis ingen): <funn>.
+Innhold i bølge 17:
+1. Utvid kontrollen i tools/e2e.js til at hvert feil tallalternativ er forklart i alle 13 kapitler, og rett forklaringene den finner (bytt alternativer som ikke er en navngitt feil, uten å endre spørsmålsteksten).
+2. Fire nye quizspørsmål i hvert av kapittel 10 og 13, etter reglene fra bølge 16.
 3. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit, push og merge når alt er grønt.
