@@ -41,6 +41,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 19 | Prøveeksamenen på mobil: klokkeraden, hopp og fokus, levering med tomme felt, resultattabellen, Excel-formler i 320 px | Ferdig |
 | 20 | Brede tabeller på mobil: snudde årstabeller, fast første kolonne, strek og hint når tabellen kan rulles | Ferdig |
 | 21 | Fire nye quizspørsmål i kapittel 1 og 9. Alle kapitler har nå minst 16 | Ferdig |
+| 22 | To nye generatorer fra kapittel-LF (4.13 modifisert internrente, 4.11 lisens eller egenproduksjon), fire nye quizspørsmål i kapittel 4, 6 og 8 | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -487,6 +488,56 @@ Kontroller i `e2e.js` (9 nye): antall spørsmål i kapittel 1 og 9, at alle ått
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 230 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 688 bestått.
 
+## Bølge 22: to nye oppgavetyper og quiz for kapittel 4, 6 og 8 (ferdig)
+
+Meldingen hadde plassholderen «<funn>». Eier svarte «Begge» på forslaget om flere quizspørsmål i kapitlene med mest eksamensvekt og flere oppgavetyper fra kapitteloppgavene. Ingen funn fra bruk er rettet.
+
+Nye generatorer (45 i alt), i `js/gen/k4.js`. Valgt fordi de har full løsning i kapittel-LF og ingen generator fra før. 4.12 (spiller mot stadion) er holdt utenfor, fordi den er for lik `k4-to-prosjekter-fisher`. Regnefunksjonene gjenskaper alle tall i kapittel-LF (24 nye kontrolltall, 217 i alt). Begge er etterregnet over 1000 frø fra oppgaveteksten med egne formler: 11 000 nye tallsvar, 0 avvik. Fire innsatte feil ble alle fanget: én eksponent for mye i sluttverdien, arbeidskapitalen ikke frigjort, feil royalty og prisendringen redusert med royaltyandelen.
+
+- `k4-modifisert-internrente` (kap. 4 oppg. 13):
+  - Spørsmål: kontantstrøm i år 1, NNV, internrente, sluttverdien av innbetalingene reinvestert til kravet, og MIR (`MODIR` i Excel).
+  - Et tekstspørsmål om hvorfor MIR er lavere enn IR (reinvesteringsrenten), og når den er nyttig (flere internrenter).
+  - Salget ligger på to nivåer, som i LF. MIR ligger alltid mellom kravet og internrenten.
+  - Gjenskaper 1 480 000, 1 980 000, 840 003, 24,4 %, 2 250 895, 1 957 300, 2 277 000, 8 465 195 og 20,61 %.
+- `k4-lisens-egenproduksjon` (kap. 4 oppg. 11):
+  - Spørsmål: nåverdien av royalty med lisens, kontantstrøm, NNV og internrente for egenproduksjon (maskin, arbeidskapital som frigjøres, økte faste kostnader), og hvor mye mer egenproduksjon er verdt (negativt hvis lisens er best).
+  - Et spørsmål om hvor mye NNV endres når prisene revideres med de samme mengdene. Løsningen viser at lisensen bare endres med royaltyandelen.
+  - Et tekstspørsmål om forhold utenom tallene (risiko, kapital, kompetanse, tidshorisont).
+  - Egenproduksjon er best i omtrent halvparten av frøene.
+  - Gjenskaper 1 560 000, 1 320 000, 4 740 980, −4 800 000 / 4 000 000 / 4 200 000 / 4 200 000 / 3 200 000, 6 902 470, 74,64 % og +1 592 559. Prisendringen er utledet fra LFs reviderte salg med samme mengder (+15, +10, 0 og −10 per enhet).
+- Koblet inn under temaene «Kontantstrøm, NNV og internrente før skatt» og «Gjensidig utelukkende prosjekter», og under kapittel 4 i teorien og på Øv-siden. De er ikke lagt i prøveeksamenens trekkpott eller prognoseluken, som avgjort for de andre typene fra kapittel-LF. Teorien for kapittel 4 omtalte allerede `MODIR`.
+
+Nye quizspørsmål (242 i alt, 230 før). Kapittel 4 og 6 har nå 20 hver, og kapittel 8 har 22. Alle tall er fra kapittel-LF og regnet på nytt med eget skript. Hvert feil alternativ er en navngitt feil, og riktig svar står på hver av de fire plassene i de nye spørsmålene i hvert kapittel.
+
+- Kapittel 4:
+  - MIR fra sluttverdien (4.13).
+  - Optimal levetid når maskinen erstattes, med nåverdiannuiteten (4.16). Det eldre spørsmålet gjelder når den ikke erstattes.
+  - Lån til markedsrente har nåverdi 0, så eierne får hele NNV (4.10).
+  - Investeringen ved utskifting med innbytte (4.4).
+- Kapittel 6:
+  - Kritisk arbeidskapital, som kommer tilbake siste år (6.3).
+  - Antall hybler som kan stå tomme (6.7).
+  - Nåverdien av to ekstra års utleie (6.7).
+  - Kritisk volum i ett enkelt år (6.8).
+- Kapittel 8:
+  - Overhaling som kostnadsføres direkte (8.6).
+  - Arbeidskapital fra balanseposter (8.7).
+  - Økt skatt ved nedskriving av salgssummen (8.5).
+  - Hva restverdi og arbeidskapital gjør med NNV etter skatt (8.5).
+
+Versjonsnummeret er økt til `?v=24`.
+
+Kontroller i `e2e.js` (49 nye, 2 endret):
+
+- Alle fasitsvar godtas i 320 og 390 px for tre frø per type, uten sidelengs rulling med løsningene åpne.
+- MIR ligger mellom kravet og IR i 200 frø, internrenten godtas ikke som MIR, og løsningen viser `MODIR`.
+- Både lisens og egenproduksjon er best i en god del av frøene, og feil fortegn på forskjellen gir beskjed.
+- Begge typene står i teorien, på Øv-siden og under temaene, og ikke i prøveeksamenen.
+- De tolv nye quizspørsmålene: antall, riktig svar på alle fire plassene, repetisjon, forklaring, 320 px og uendrede id-er.
+- Endret: antall generatorer (43 → 45) og meldingen i kontrollen fra bølge 19.
+
+Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 242 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar), `tools/e2e.js` 737 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -500,14 +551,14 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Siden er etter Claudes vurdering ferdig til eksamen. Alle kapitler har minst 16 quizspørsmål, hvert feil svar er forklart, og mobilgjennomgangen dekker Øv, prøveeksamen og tabeller. De to åpne punktene krever læreboka (Altmans grenser) eller eier (ekte utskrift og flytting mellom enheter). Neste bølge bør bare komme hvis eier finner noe i bruk. Meldingen under er laget for det.
+Kapittel-LF har fortsatt oppgaver med full løsning uten egen generator, men de fleste ligger nær typer som finnes (4.12 spiller mot stadion, 6.7 hybelhus, 8.5–8.7 og 8.11 nåverdi etter skatt med ulike poster). Neste bølge bør bare komme hvis eier finner noe i bruk, eller vil ha mer av ett bestemt tema. Meldingen under er laget for funn. Bytt punkt 1 med for eksempel «fire nye quizspørsmål i kapittel 10 og 11» for mer innhold.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 22 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 23 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 22:
+Innhold i bølge 23:
 1. Rett det jeg har funnet i bruk (side, skjerm, hva jeg gjorde og hva som skjedde): <funn>.
 2. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 

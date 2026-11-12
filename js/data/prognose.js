@@ -7,8 +7,8 @@
   O.topics = {
     skatt: { name: 'Nåverdi etter skatt (saldoavskrivning)', ch: [8], gens: ['k8-nv-etter-skatt-komplett', 'k8-saldo-arlig-kontantstrom', 'k8-kapasitetsutvidelse', 'k8-egenproduksjon-kjop', 'k8-egenkapitalmetoden', 'k8-ir-etter-skatt', 'k8-leasing-kjop', 'k8-salg-driftsmiddel'] },
     kvm: { name: 'KVM, beta og WACC', ch: [11], gens: ['k11-wacc-kvm', 'k11-kml-beta'] },
-    prosjekt: { name: 'Kontantstrøm, NNV og internrente før skatt', ch: [2, 4], gens: ['k2-prosjekt-for-skatt', 'k4-resultat-til-kontantstrom', 'k2-hotell-differanse', 'k2-kontantstrom-egenkapital'] },
-    toprosjekt: { name: 'Gjensidig utelukkende prosjekter / Fisher-rente', ch: [4], gens: ['k4-to-prosjekter-fisher', 'k4-resultat-til-kontantstrom'] },
+    prosjekt: { name: 'Kontantstrøm, NNV og internrente før skatt', ch: [2, 4], gens: ['k2-prosjekt-for-skatt', 'k4-resultat-til-kontantstrom', 'k2-hotell-differanse', 'k2-kontantstrom-egenkapital', 'k4-modifisert-internrente'] },
+    toprosjekt: { name: 'Gjensidig utelukkende prosjekter / Fisher-rente', ch: [4], gens: ['k4-to-prosjekter-fisher', 'k4-resultat-til-kontantstrom', 'k4-lisens-egenproduksjon'] },
     folsomhet: { name: 'Kritiske verdier og følsomhet', ch: [6], gens: ['k6-kritiske-verdier', 'k2-prosjekt-for-skatt', 'k6-lite-stort-anlegg', 'k6-fortsette-avslutte', 'k6-folsomhet-internrente'] },
     portefolje: { name: 'Portefølje: forventning, risiko, korrelasjon', ch: [10], gens: ['k10-to-aksjer-tilstander', 'k10-kurser-til-avkastning'] },
     laan: { name: 'Lån og effektiv rente', ch: [7], gens: ['k7-annuitetslan-maanedlig', 'k7-rentefri-kreditt', 'k7-avbetaling-nominell-effektiv', 'k7-serielan-avdragsfri'] },

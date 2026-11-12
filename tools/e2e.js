@@ -24,7 +24,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   // 2) Alle generatorer åpner, viser løsninger, ingen overflow på mobil
   { const p = await mk({ w: 390, h: 800 }); const ids = await (async () => { await go(p, 'oving'); return p.evaluate(() => OKAD.gens.map((g) => g.id)); })();
     for (const id of ids) { await go(p, 'oving/' + id + '/11'); await p.click('#all'); ok(!(await overflow(p)), 'mobil gen ' + id); ok((await p.locator('.solution').count()) > 0, 'løsning vises ' + id); }
-    ok(ids.length === 43, '43 generatorer'); await p.context().close(); }
+    ok(ids.length === 45, '45 generatorer'); await p.context().close(); }
 
   const p = await mk();
   // 3) Svarsjekk: tomt, ugyldig, feil fortegn, desimal i stedet for prosent, riktig, Enter
@@ -668,7 +668,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   // Excel-formler i løsningene brytes etter semikolon i 320 px, og teksten som kopieres er uendret
   { const q = await mk({ w: 320, h: 640 }); await go(q, 'oving'); const ids = await q.evaluate(() => OKAD.gens.map((g) => g.id)); const wide = [];
     for (const id of ids) { await go(q, 'oving/' + id + '/11'); await q.click('#all'); if (await overflow(q)) wide.push(id); }
-    ok(wide.length === 0, 'bølge 19: alle 43 oppgavetyper med løsningene åpne uten sidelengs rulling i 320 px' + (wide.length ? ' – ' + wide.join(', ') : ''));
+    ok(wide.length === 0, 'bølge 19: alle 45 oppgavetyper med løsningene åpne uten sidelengs rulling i 320 px' + (wide.length ? ' – ' + wide.join(', ') : ''));
     await go(q, 'oving/k7-annuitetslan-maanedlig/11'); await q.click('#all');
     const c = await q.evaluate(() => { const cs = [...document.querySelectorAll('#view code')].filter((x) => x.textContent.includes(';')); return { n: cs.length, wbr: cs.every((x) => x.querySelectorAll('wbr').length === (x.textContent.match(/;/g) || []).length), clean: cs.every((x) => !/[\u200b\u00ad]/.test(x.textContent)), fits: cs.every((x) => x.getBoundingClientRect().right <= innerWidth) }; });
     ok(c.n > 0 && c.wbr && c.fits, `bølge 19: Excel-formlene får bruddpunkt etter hvert semikolon og holder seg innenfor skjermen (${c.n} formler)`);
@@ -744,6 +744,49 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     ok(wide === 0, 'bølge 21: spørsmål og forklaring uten sidelengs rulling i 320 px'); ok(why === tot, `bølge 21: feil svar gir forklaring på alle (${why} av ${tot})`);
     ok(await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length) === ids.length, 'bølge 21: feil igjen holder spørsmålene i repetisjonen');
     ok(await sameIds(q), 'bølge 21: quiz-id-ene er de samme som i de rå dataene');
+    await q.context().close(); }
+  // 32) Bølge 22: modifisert internrente (4.13), lisens eller egenproduksjon (4.11), og fire nye quizspørsmål i kapittel 4, 6 og 8
+  { const NEW = ['k4-modifisert-internrente', 'k4-lisens-egenproduksjon'];
+    for (const w of [320, 390]) { const q = await mk({ w, h: 700 });
+      for (const id of NEW) for (const seed of [7, 11, 23]) {
+        await go(q, `oving/${id}/${seed}`); const fa = await q.evaluate(([g, s]) => OKAD.make(g, s).parts.map((x) => (x.kind === 'num' ? OKAD.fmtAnswer(x) : null)), [id, seed]);
+        for (let i = 0; i < fa.length; i++) if (fa[i]) { await q.fill(`#p${i}-in`, fa[i]); await q.press(`#p${i}-in`, 'Enter'); }
+        const fb = await q.evaluate(() => [...document.querySelectorAll('.fb')].map((x) => x.textContent).filter(Boolean));
+        ok(fb.length === fa.filter(Boolean).length && fb.every((x) => /Riktig/.test(x)), `bølge 22 ${w}px ${id}/${seed}: alle fasitsvar godtas`);
+        await q.click('#all'); ok(!(await overflow(q)), `bølge 22 ${w}px ${id}/${seed}: ingen sidelengs rulling med løsningene åpne`); }
+      await q.context().close(); }
+    const q = await mk({ w: 390, h: 800 }); await go(q, 'oving');
+    // MIR ligger mellom kravet og IR, og internrenten godtas ikke som MIR
+    const mr = await q.evaluate(() => { let ok = true; for (let s = 1; s <= 200; s++) { const t = OKAD.make('k4-modifisert-internrente', s), r = +t.text.match(/Avkastningskravet er <b>(\d+)/)[1] / 100; if (!(t.parts[4].answer > r && t.parts[4].answer < t.parts[2].answer)) ok = false; } return ok; });
+    ok(mr, 'bølge 22: MIR ligger mellom avkastningskravet og internrenten i 200 frø');
+    await go(q, 'oving/k4-modifisert-internrente/7'); await q.fill('#p4-in', await q.evaluate(() => OKAD.fmtAnswer(OKAD.make('k4-modifisert-internrente', 7).parts[2]))); await q.press('#p4-in', 'Enter');
+    ok(!/Riktig/.test(await q.textContent('#p4-fb')), 'bølge 22: internrenten godtas ikke som modifisert internrente');
+    await q.click('#all'); ok(/MODIR/.test(await q.textContent('#p4-sol')), 'bølge 22: løsningen viser Excel-funksjonen MODIR');
+    // Lisens: begge utfallene forekommer, og feil fortegn på forskjellen gjenkjennes
+    const lic = await q.evaluate(() => { let own = 0, neg = 0; for (let s = 1; s <= 400; s++) { if (OKAD.make('k4-lisens-egenproduksjon', s).parts[4].answer > 0) own++; else if (!neg) neg = s; } return { own, neg }; });
+    ok(lic.own > 120 && lic.own < 280, `bølge 22: både lisens og egenproduksjon er best i en god del av frøene (egenproduksjon i ${lic.own} av 400)`);
+    await go(q, 'oving/k4-lisens-egenproduksjon/' + lic.neg); const d = await q.evaluate((s) => OKAD.make('k4-lisens-egenproduksjon', s).parts[4].answer, lic.neg);
+    await q.fill('#p4-in', String(Math.round(-d))); await q.press('#p4-in', 'Enter'); ok(/fortegnet er feil/.test(await q.textContent('#p4-fb')), 'bølge 22: positivt svar når lisens er best, gir beskjed om fortegnet');
+    // Kapittel 4 i teorien og på Øv-siden, under temaene, ikke i prøveeksamenen
+    await go(q, 'tema/4'); ok((await q.locator('a[href="#/oving/k4-modifisert-internrente"], a[href^="#/oving/k4-modifisert-internrente"]').count()) > 0 && (await q.locator('a[href^="#/oving/k4-lisens-egenproduksjon"]').count()) > 0, 'bølge 22: begge typene står under «Øv på kapitlet» i teori for kapittel 4');
+    await go(q, 'oving'); ok(await q.evaluate(() => /Modifisert internrente/.test(document.querySelector('#view').textContent) && /Lisens eller egenproduksjon/.test(document.querySelector('#view').textContent)), 'bølge 22: begge typene står på Øv-siden');
+    ok(await q.evaluate(() => !OKAD.mockSlots.some((m) => m.pool.some(([g]) => /k4-modifisert-internrente|k4-lisens-egenproduksjon/.test(g)))), 'bølge 22: de nye typene er ikke i prøveeksamenens trekkpott');
+    ok(await q.evaluate(() => OKAD.topics.prosjekt.gens.includes('k4-modifisert-internrente') && OKAD.topics.toprosjekt.gens.includes('k4-lisens-egenproduksjon')), 'bølge 22: de nye typene ligger under temaene for prosjektanalyse og gjensidig utelukkende prosjekter');
+    // Quiz: fire nye i kapittel 4, 6 og 8
+    await go(q, 'quiz');
+    const r = await q.evaluate(() => { const re = /sluttverdi 8.465.195|NNV ved 12.% er 180.357|Halvparten finansieres med et lån til 8|koster 4.300.000, og installasjonen|Arbeidskapitalen på 100.000 bindes i år 0 og frigjøres i år 5|Hvor mange hybler kan stå tomme|leie ut i to år til|Hvor mye kan salget i år 4 falle|overhaling på 1.500.000 som kostnadsføres|råmaterialer på lager for 600.000|nåverdien i år 0 av den økte skatten fordi saldoen|NNV etter skatt er 262.676 uten restverdi/;
+      const c = (ch) => OKAD.quiz.filter((x) => x.ch === ch).length; return { n: [c(4), c(6), c(8)], nye: OKAD.quiz.filter((x) => re.test(x.q)).map((x) => ({ id: x.id, c: x.correct, ch: x.ch })) }; });
+    ok(r.n[0] >= 20 && r.n[1] >= 20 && r.n[2] >= 22, `bølge 22: kapittel 4, 6 og 8 har ${r.n.join(', ')} spørsmål`);
+    ok(r.nye.length === 12, 'bølge 22: alle tolv nye quizspørsmål finnes (' + r.nye.length + ')');
+    for (const ch of [4, 6, 8]) ok(r.nye.filter((x) => x.ch === ch).map((x) => x.c).sort().join('') === '0123', `bølge 22: riktig svar på alle fire plassene i de nye spørsmålene i kapittel ${ch}`);
+    for (const [nm, part] of [['del 1', r.nye.slice(0, 6).map((x) => x.id)], ['del 2', r.nye.slice(6).map((x) => x.id)]]) {
+      await q.evaluate((ids) => { const st = JSON.parse(localStorage.getItem('okad221:v1') || '{"gen":{},"exam":{},"quiz":{}}'); st.qmiss = {}; ids.forEach((id, k) => { st.qmiss[id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); }, part);
+      await q.reload(); await go(q, 'quiz/repeter'); const tot = +(await q.textContent('.eyebrow')).match(/av (\d+)/)[1]; ok(tot === part.length, `bølge 22 quiz ${nm}: repetisjonsrunden har alle (${tot})`);
+      let wide = 0, why = 0;
+      for (let k = 0; k < tot; k++) { const c = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); return OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }).correct; });
+        if (await overflow(q)) wide++; await q.click(`.choice:not([data-o="${c}"]) >> nth=0`); if ((await q.textContent('#why')).length > 80) why++; if (await overflow(q)) wide++; await q.click('#nx'); }
+      ok(wide === 0, `bølge 22 quiz ${nm}: ingen sidelengs rulling`); ok(why === tot, `bølge 22 quiz ${nm}: feil svar gir forklaring på alle (${why} av ${tot})`); }
+    ok(await sameIds(q), 'bølge 22: quiz-id-ene er de samme som i de rå dataene');
     await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }

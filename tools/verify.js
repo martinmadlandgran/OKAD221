@@ -1,6 +1,6 @@
 /* Kjør: node tools/verify.js [antall frø]
    Faglig kontroll som ikke bruker generatorenes egen fasit:
-   1) regnefunksjonene for de nye oppgavetypene mot tall i kilder/ (eksamen 2022 og 2023, kapittel-LF 2.1, 6.1, 6.5, 6.9, 8.1, 8.3, 8.8, 8.9, 8.10, 8.12, 11.13, 12.1, 12.2, 12.3 og 12.5, 7.7b og 7.8 og forelesningens eksempel 7-10),
+   1) regnefunksjonene for de nye oppgavetypene mot tall i kilder/ (eksamen 2022 og 2023, kapittel-LF 2.1, 4.11, 4.13, 6.1, 6.5, 6.9, 8.1, 8.3, 8.8, 8.9, 8.10, 8.12, 11.13, 12.1, 12.2, 12.3 og 12.5, 7.7b og 7.8 og forelesningens eksempel 7-10),
    2) uavhengig etterregning av de nye generatorene: tallene leses fra oppgaveteksten og regnes med egne formler,
    3) kontroll av rettingene fra bølge 5 (minimum-varians-vekt, markedsverdier, fortegn nær 0, entydig kombinasjon). */
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -106,6 +106,16 @@ eq('forelesning 7-10 frigjort', fl.frig, 1300000, 0.5); eq('forelesning 7-10 ren
 // Kap. 12 oppg. 3 (nøkkeltall fra balansen 2022). LFs gjeldsandel 97,1 % lar seg ikke gjenskape fra balansen; regnet gjeldsandel er 58,7 %.
 const nk = O._ratioCalc({ S: 72900, AM: 35280, VL: 16450, KF: 21970, KB: 150, LL: 15000, KK: 14600, KG2: 13760, Y: 365, Db: 60 });
 eq('kap12.3 sum eiendeler', nk.TA, 73850, 0.5); eq('kap12.3 balanselikviditet', nk.BL, 1.36, 0.005); eq('kap12.3 kasselikviditet', nk.KL, 0.78, 0.005); eq('kap12.3 kundekredittid', nk.D, 110, 0.05);
+// Kap. 4 oppg. 13 (modifisert internrente)
+const mi = O._mirCalc({ I: 4000000, sales: [1975000, 1975000, 2600000, 2600000], vk: 0.2, fk: 100000, r: 0.15 });
+eq('kap4.13 KS år 1', mi.cf[1], 1480000, 0.5); eq('kap4.13 KS år 3', mi.cf[3], 1980000, 0.5); eq('kap4.13 NNV', mi.npv, 840003, 1); eq('kap4.13 IR %', mi.irr * 100, 24.4, 0.05);
+eq('kap4.13 sluttverdi år 1', mi.fvs[0], 2250895, 1); eq('kap4.13 sluttverdi år 2', mi.fvs[1], 1957300, 1); eq('kap4.13 sluttverdi år 3', mi.fvs[2], 2277000, 1); eq('kap4.13 sum sluttverdi', mi.fv, 8465195, 1); eq('kap4.13 MIR %', mi.mir * 100, 20.61, 0.005);
+// Kap. 4 oppg. 11 (lisens eller egenproduksjon). Prisendringen er utledet fra LFs reviderte salg (14,5 / 15,6 / 14,4 / 9,9 mill. med samme mengder).
+const li = O._licCalc({ price: [130, 120, 120, 100], qty: [100000, 120000, 120000, 110000], roy: 0.12, vek: 60, fk: 3000000, M: 3000000, AK: 1800000, r: 0.13, dP: [15, 10, 0, -10] });
+eq('kap4.11 royalty år 1', li.royalty[0], 1560000, 0.5); eq('kap4.11 royalty år 4', li.royalty[3], 1320000, 0.5); eq('kap4.11 NV lisens', li.nvLic, 4740980, 1);
+[-4800000, 4000000, 4200000, 4200000, 3200000].forEach((v, t) => eq('kap4.11 KS egenproduksjon år ' + t, li.cf[t], v, 0.5));
+eq('kap4.11 NNV egenproduksjon', li.npv, 6902470, 1); eq('kap4.11 IR egenproduksjon %', li.irr * 100, 74.64, 0.005);
+[1500000, 1200000, 0, -1100000].forEach((v, t) => eq('kap4.11 endring omsetning år ' + (t + 1), li.dRev[t], v, 0.5)); eq('kap4.11 endring nåverdi', li.dNpv, 1592559, 1);
   out.forEach((l) => { if (/^AVVIK/.test(l)) problems++; }); console.log(out.filter((l) => /^AVVIK/.test(l)).join('\n') || `kilder: ${out.length} kontrolltall stemmer`);
 }
 // ---------- 2) Nye generatorer, etterregnet fra oppgaveteksten ----------
@@ -345,6 +355,30 @@ for (let s = 1; s <= SEEDS; s++) {
     const mine = [irr(fs), sh, inn, nd3, ned, ned - inn];
     if (!(ned > inn)) { bad++; fails.push('salg: nedskriving ikke best, frø ' + s); }
     t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('salg av driftsmiddel', s, pp, mine[k]); }); }
+  // ---------- Modifisert internrente ----------
+  { const t = O.make('k4-modifisert-internrente', s), x = t.text;
+    const I = num(m1(x, R('Investeringen er <b>' + NUM + '</b> i år 0'))), T = +m1(x, /varer i <b>(\d) år/), vk = +m1(x, /Variable kostnader er <b>(\d+) %/) / 100;
+    const fk = num(m1(x, R('faste kostnadene er <b>' + NUM + '</b> per år'))), r = +m1(x, /Avkastningskravet er <b>(\d+) %/) / 100;
+    const sales = [...m1(x, /Salg<\/th>(.*?)<\/tr>/).matchAll(new RegExp('<b>' + NUM + '</b>', 'g'))].map((z) => num(z[1]));
+    if (sales.length !== T) { bad++; fails.push('MIR: antall år, frø ' + s); }
+    const fl = [-I].concat(sales.map((v) => v * (1 - vk) - fk)); let npv = 0, fv = 0; fl.forEach((c, k) => { npv += pv(c, r, k); if (k > 0) fv += c * Math.pow(1 + r, T - k); });
+    const mir = Math.pow(fv / I, 1 / T) - 1, ir = irr(fl);
+    if (!(mir > r && mir < ir)) { bad++; fails.push('MIR: ligger ikke mellom kravet og IR, frø ' + s); }
+    const mine = [fl[1], npv, ir, fv, mir];
+    t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('modifisert internrente', s, pp, mine[k]); }); }
+  // ---------- Lisens eller egenproduksjon ----------
+  { const t = O.make('k4-lisens-egenproduksjon', s), x = t.text;
+    const roy = +m1(x, /betale <b>(\d+) %/) / 100, M = num(m1(x, R('maskin til <b>' + NUM + '</b>'))), AK = num(m1(x, R('binde <b>' + NUM + '</b> i arbeidskapital')));
+    const vek = num(m1(x, R('Variable kostnader er <b>' + NUM + '</b> per enhet'))), fk = num(m1(x, R('øker med <b>' + NUM + '</b> per år'))), r = +m1(x, /Avkastningskravet er <b>(\d+) %/) / 100;
+    const row = (lbl) => [...m1(x, R(lbl + '</th>(.*?)</tr>')).matchAll(new RegExp('<b>' + NUM + '</b>', 'g'))].map((z) => num(z[1]));
+    const P = row('Pris per enhet'), Q = row('Mengde'), T = P.length;
+    const P2 = [...m1(t.parts[5].q, /prisene til (.*?) i år/).matchAll(new RegExp('<b>' + NUM + '</b>', 'g'))].map((z) => num(z[1]));
+    let nvL = 0, npv = 0, dn = 0; const fl = [-(M + AK)];
+    for (let k = 0; k < T; k++) { nvL += pv(roy * P[k] * Q[k], r, k + 1); const c = Q[k] * (P[k] - vek) - fk + (k === T - 1 ? AK : 0); fl.push(c); dn += pv(Q[k] * (P2[k] - P[k]), r, k + 1); }
+    fl.forEach((c, k) => { npv += pv(c, r, k); });
+    const mine = [nvL, fl[1], npv, irr(fl), npv - nvL, dn];
+    t.parts.forEach((pp, k) => { if (pp.kind === 'num') cmp('lisens eller egenproduksjon', s, pp, mine[k]); }); }
+
 }
   problems += bad; console.log(`nye generatorer: ${checked} tallsvar over ${SEEDS} frø, ${bad} avvik`); fails.forEach((z) => console.log('  ', z));
 }
