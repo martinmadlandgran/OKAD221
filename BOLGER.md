@@ -689,6 +689,8 @@ Kontroller i `e2e.js` (13 nye, 2 endret):
 
 Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 258 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar, 0 avvik), `tools/e2e.js` 799 bestått.
 
+Avgjort av eier etter bølgen: «Pensum»-linjen står på alle deloppgaver, også dem med ett kapittel (1a). Oppgavene om WACC og nåverdi etter skatt blir stående under kapittel 8, med merke og henvisning fra kapittel 11 (2a). Ingen kodeendring trengtes.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
