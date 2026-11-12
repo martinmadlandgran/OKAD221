@@ -538,6 +538,8 @@ Kontroller i `e2e.js` (49 nye, 2 endret):
 
 Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 242 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar), `tools/e2e.js` 737 bestått.
 
+Avgjort av eier etter bølgen: modifisert internrente og lisens eller egenproduksjon holdes utenfor prøveeksamenens trekkpott, som de andre typene fra kapittel-LF (a). Ingen kodeendring trengtes.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
