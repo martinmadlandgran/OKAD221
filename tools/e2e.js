@@ -631,6 +631,52 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     ok(await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length) === ids.length, 'bølge 18: feil igjen holder spørsmålene i repetisjonen');
     ok(await sameIds(q), 'bølge 18: quiz-id-ene er de samme som i de rå dataene');
     await q.context().close(); }
+  // 29) Bølge 19: prøveeksamenen på mobil (320 og 390 px)
+  for (const w of [320, 390]) { const q = await mk({ w, h: w === 320 ? 640 : 800 });
+    await go(q, 'prove'); ok((await q.evaluate(() => document.querySelector('#dur').getBoundingClientRect().height)) >= 44, `bølge 19 ${w}px: tidsvalget har trykkflate på minst 44 px`);
+    await q.click('#start'); await q.waitForTimeout(300);
+    const bar = await q.evaluate(() => { const b = document.querySelector('.sticky-bar'), r = b.getBoundingClientRect(), kids = [...b.querySelectorAll('.row > *')].filter((e) => getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 0);
+      const mids = kids.map((e) => { const k = e.getBoundingClientRect(); return k.top + k.height / 2; });
+      return { h: r.height, oneRow: Math.max(...mids) - Math.min(...mids) < 6, right: Math.max(...kids.map((e) => e.getBoundingClientRect().right)), btn: ['#abort', '#submit'].every((s) => b.querySelector(s).getBoundingClientRect().height >= 44), filled: document.querySelector('#filled').innerText.trim(), aria: document.querySelector('#filled').getAttribute('aria-label') }; });
+    ok(bar.h <= 64 && bar.oneRow, `bølge 19 ${w}px: klokkeraden er én rad og høyst 64 px (${Math.round(bar.h)} px)`);
+    ok(bar.right <= w - 10, `bølge 19 ${w}px: Lever-knappen går ikke ut over kanten (${Math.round(bar.right)} px)`);
+    ok(bar.btn, `bølge 19 ${w}px: Avbryt og Lever har trykkflate på minst 44 px`);
+    ok(/^0\/\d+ svar$/.test(bar.filled) && /^0 av \d+ tallsvar fylt ut$/.test(bar.aria), `bølge 19 ${w}px: telleren er kort på skjermen og hel for skjermleser (${bar.filled} / ${bar.aria})`);
+    const under = (sel) => q.evaluate((sel) => { const e = document.querySelector(sel); e.scrollIntoView({ block: 'start' }); return e.getBoundingClientRect().top >= document.querySelector('.sticky-bar').getBoundingClientRect().bottom - 1; }, sel);
+    ok(await under('#mo4'), `bølge 19 ${w}px: overskriften til oppgave 5 havner under klokkeraden, ikke bak den`);
+    ok(await under('#m2_1-in'), `bølge 19 ${w}px: et svarfelt havner under klokkeraden, ikke bak den`);
+    // Lever med tomme felt, og velg å fortsette: beskjeden sier hvor, og du havner på første tomme felt
+    await q.fill('#m0_0-in', '1'); let msg = ''; q.removeAllListeners('dialog'); q.on('dialog', (d) => { msg = d.message(); d.dismiss(); });
+    await q.click('#submit'); await q.waitForTimeout(200);
+    const foc = await q.evaluate(() => { const a = document.activeElement, r = a.getBoundingClientRect(); return { id: a.id, vis: r.top >= document.querySelector('.sticky-bar').getBoundingClientRect().bottom - 1 && r.bottom <= innerHeight }; });
+    ok(/oppgave 1 \(\d+\), oppgave 2 \(\d+\)/.test(msg) && /Levere likevel/.test(msg), `bølge 19 ${w}px: beskjeden ved levering sier hvilke oppgaver som mangler svar`);
+    ok(foc.id === 'm0_1-in' && foc.vis, `bølge 19 ${w}px: «ikke lever» tar deg til første tomme felt, synlig under klokkeraden (${foc.id})`);
+    ok(!!(await q.$('.sticky-bar')), `bølge 19 ${w}px: prøven står urørt når du ikke leverer`);
+    // Tiden er ute: raden blir høyere, og avstanden fra toppen følger med
+    await q.evaluate(() => { const st = JSON.parse(localStorage.getItem('okad221:v1')); st.mock.start = Date.now() - 5 * 3600e3; localStorage.setItem('okad221:v1', JSON.stringify(st)); }); await q.reload(); await q.waitForTimeout(1300);
+    ok(/Tiden er ute/.test(await q.textContent('#timeup')) && await under('#mo2'), `bølge 19 ${w}px: når tiden er ute, havner oppgavene fortsatt under den høyere raden`);
+    // Lever: resultattabellen får plass, også poengkolonnen
+    q.removeAllListeners('dialog'); q.on('dialog', (d) => d.accept()); await q.click('#submit'); await q.waitForTimeout(300);
+    const res = await q.evaluate(() => { const t = document.querySelector('#result table'), w = t.closest('.tablewrap'), last = t.querySelector('thead th:last-child').getBoundingClientRect(); return { fits: t.scrollWidth <= w.clientWidth + 1, poeng: last.right <= w.getBoundingClientRect().right + 1, pad: document.documentElement.style.scrollPaddingTop }; });
+    ok(res.fits && res.poeng, `bølge 19 ${w}px: resultattabellen får plass uten sidelengs rulling, med poengkolonnen synlig`);
+    ok(res.pad === '', `bølge 19 ${w}px: avstanden fra toppen nullstilles når klokkeraden er borte`);
+    ok(!(await overflow(q)), `bølge 19 ${w}px: levert prøveeksamen uten sidelengs rulling`);
+    if (w === 320) await q.screenshot({ path: out + '/m-bolge19-levert.png' });
+    await q.click('#again'); await q.click('#start'); await q.waitForTimeout(200); await go(q, 'oving');
+    ok((await q.evaluate(() => document.documentElement.style.scrollPaddingTop)) === '', `bølge 19 ${w}px: avstanden fra toppen nullstilles når du går til en annen side`);
+    await go(q, 'prove'); await q.click('#abort'); await q.context().close(); }
+  // Excel-formler i løsningene brytes etter semikolon i 320 px, og teksten som kopieres er uendret
+  { const q = await mk({ w: 320, h: 640 }); await go(q, 'oving'); const ids = await q.evaluate(() => OKAD.gens.map((g) => g.id)); const wide = [];
+    for (const id of ids) { await go(q, 'oving/' + id + '/11'); await q.click('#all'); if (await overflow(q)) wide.push(id); }
+    ok(wide.length === 0, 'bølge 19: alle 43 oppgavetyper med løsningene åpne uten sidelengs rulling i 320 px' + (wide.length ? ' – ' + wide.join(', ') : ''));
+    await go(q, 'oving/k7-annuitetslan-maanedlig/11'); await q.click('#all');
+    const c = await q.evaluate(() => { const cs = [...document.querySelectorAll('#view code')].filter((x) => x.textContent.includes(';')); return { n: cs.length, wbr: cs.every((x) => x.querySelectorAll('wbr').length === (x.textContent.match(/;/g) || []).length), clean: cs.every((x) => !/[\u200b\u00ad]/.test(x.textContent)), fits: cs.every((x) => x.getBoundingClientRect().right <= innerWidth) }; });
+    ok(c.n > 0 && c.wbr && c.fits, `bølge 19: Excel-formlene får bruddpunkt etter hvert semikolon og holder seg innenfor skjermen (${c.n} formler)`);
+    ok(c.clean, 'bølge 19: formlene inneholder ingen usynlige tegn, så de kan kopieres rett inn i Excel');
+    await q.context().close(); }
+  { const q = await mk(); await go(q, 'prove'); await q.click('#start'); await q.waitForTimeout(200);
+    ok(/^0 av \d+ tallsvar fylt ut$/.test((await q.evaluate(() => document.querySelector('#filled').innerText)).trim()), 'bølge 19: på PC står telleren med hele teksten');
+    await q.click('#abort'); await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });

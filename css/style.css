@@ -243,6 +243,9 @@ ol.steps { padding-left: 1.3em; } ol.steps li { margin: .5em 0; }
 .slot h3 { margin: 0 0 4px; font-size: 1.2rem; }
 .timer { font: 700 1.25rem var(--mono); font-variant-numeric: tabular-nums; }
 .sticky-bar { position: sticky; top: 55px; z-index: 20; background: var(--bg); padding: 10px 0; border-bottom: 3px solid var(--rule); margin-bottom: 20px; }
+.show-m { display: none; }
+#filled { white-space: nowrap; }
+table.data.result th[scope=row] { min-width: 9em; }
 .choice { display: block; width: 100%; text-align: left; margin: 8px 0; padding: 12px 14px; min-height: 48px; border: 1.5px solid var(--ink-3); background: var(--bg); color: var(--ink); font: inherit; cursor: pointer; }
 .choice:hover:not(:disabled) { border-color: var(--ink); background: var(--tint); }
 .choice.right { border-color: var(--good); background: var(--good-bg); font-weight: 700; }
@@ -274,7 +277,10 @@ ol.steps { padding-left: 1.3em; } ol.steps li { margin: .5em 0; }
   .rowlink { grid-template-columns: 1fr; } .rl-meta { grid-row: auto; grid-column: 1; text-align: left; }
   .slot { grid-template-columns: 1fr; } .slot .big { font-size: 1.6rem; } .slot .big small { display: inline; margin-left: 8px; }
   .bar-row { grid-template-columns: 1fr 3.2rem; } .bar-row > :first-child { grid-column: 1 / -1; }
-  .sticky-bar { top: 49px; } .sticky-bar .hide-m { display: none; }
+  .sticky-bar { top: 49px; padding: 6px 0; margin-bottom: 14px; } .sticky-bar .hide-m { display: none; } .sticky-bar .show-m { display: inline; }
+  .sticky-bar > .row { flex-wrap: nowrap; gap: 6px; } .sticky-bar .timer { font-size: 1.05rem; } .sticky-bar #abort { padding-inline: 4px; } .sticky-bar #submit { padding-inline: 14px; }
+  select { min-height: 44px; }
+  table.data.result th, table.data.result td { padding: 5px 4px; } table.data.result th[scope=row] { min-width: 0; hyphens: auto; } table.data.result thead th { white-space: normal; letter-spacing: 0; vertical-align: bottom; }
   table.data th, table.data td { padding: 5px 8px; }
   footer { padding-bottom: 90px; }
   #impbox .callout { padding: 10px 10px 10px 12px; } #impbox table.data th, #impbox table.data td { padding: 5px 5px; } #impbox table.data thead th { letter-spacing: 0; }
