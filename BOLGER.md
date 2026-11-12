@@ -44,6 +44,8 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 22 | To nye generatorer fra kapittel-LF (4.13 modifisert internrente, 4.11 lisens eller egenproduksjon), fire nye quizspørsmål i kapittel 4, 6 og 8 | Ferdig |
 | 23 | Fire nye quizspørsmål i kapittel 10 og 11 | Ferdig |
 | 24 | Fire nye quizspørsmål i kapittel 3 og 7 | Ferdig |
+| 25 | Excel-arbeidsbøker: eksamensoppgaver per kapittel, og fasit | Ferdig |
+| 26 | Nyeste eksamen først i Excel, og nedlasting av Excel-filene fra siden | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -600,6 +602,63 @@ Første kjøring feilet på ett søkemønster i testen (hardt mellomrom foran «
 
 Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 258 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar, 0 avvik), `tools/e2e.js` 765 bestått.
 
+Avgjort av eier etter bølgen: kontantrabatten regnes med 360 dager, som i kapittel-LF 7.1c (a). Ingen kodeendring trengtes.
+
+## Bølge 25: Excel-arbeidsbøker per kapittel (ferdig)
+
+Ønske fra eier: ett felles Excel-ark (eller ett per kapittel) med alle eksamensoppgaver og relevante oppgaver for hvert kapittel i boka. Oppgavene skal være slik de ble gitt på eksamen, med samme struktur og utseende gjennom hele arket, og med fasit og løsningsforslag.
+
+Laget av `tools/excel.py`, fra de samme dataene som siden bruker. Ingen endring i siden, så versjonsnummeret er uendret.
+
+- `excel/OKAD221_oppgaver.xlsx`: fanen «Oversikt» (med lenker) og én fane per kapittel, «Kap 1» til «Kap 13». Hver fane har tre deler:
+  - **Eksamensoppgaver:** hele oppgaven med ordrett tekst. Tabellene er lagt inn som tall i celler, og hvert delspørsmål har en gul celle til eget svar.
+  - **Delspørsmål i oppgaver under andre kapitler:** liste med lenke til fanen der oppgaven står.
+  - **Kapitteloppgaver i læreboka:** fra kapittel-LF, med oppgavetype og tall. Kildene har bare løsningsforslaget, så teksten er ikke ordrett, og det står i fanen.
+- `excel/OKAD221_fasit.xlsx`: samme faner og rekkefølge. Delspørsmålet står først, så svaret, løsningen med tabeller og kilden («Løsningsforslaget» eller «Løsningsforslaget og egen utregning»). Kapitteloppgavene har oppbygging og sluttsvar. Fanen «Merknader» har merknadene om feil og avvik i løsningsforslagene, per eksamenssett.
+- Hver oppgave står samlet under kapitlet der tyngden ligger, så eksamensteksten ikke deles opp:
+  - kapittel 3: 1
+  - kapittel 4: 16
+  - kapittel 7: 6
+  - kapittel 8: 10
+  - kapittel 10: 7
+- Oppgavene om WACC og nåverdi etter skatt står under kapittel 8, og kapittel 11 viser til dem. Kapittel 1 har verken eksamensoppgaver eller kapitteloppgaver med løsning i kildene.
+- Utforming: Arial, samme oppbygging for hver oppgave og en farget linje med eksamen, oppgavenummer, vekt og tittel. Tabellene har grå overskriftsrad og dobbel strek under sumrader, som på siden. Liggende utskrift, tilpasset sidebredden.
+
+Kontroll:
+- Hvert ord i oppgavetekstene og delspørsmålene står i oppgavefilen, og hvert ord i svarene og løsningene står i fasitfilen.
+- Oppgavefilen har ingen svar eller løsninger.
+- Begge filene er gjort om til PDF med LibreOffice og sett gjennom.
+- Tallene i fasiten er de samme som i eksamensdataene, som ble kontrollert i bølge 4 og senere. De er satt inn som verdier fra løsningsforslagene, ikke som formler.
+
+## Bølge 26: nyeste eksamen først, og Excel-filene på siden (ferdig)
+
+Ønske fra eier: nyeste eksamen skal stå først i arbeidsbøkene, og Excel-filene skal kunne lastes ned fra siden der det passer.
+
+- Arbeidsbøkene viser nå eksamenssettene fra 2025 og bakover. Det gjelder oppgavene i hver kapittelfane, listen over delspørsmål og fanen «Merknader».
+- `tools/excel.py` lager også `js/data/excel.js`, med filstørrelsene, hva hver kapittelfane inneholder og hvilken fane hver oppgave står i. Siden henter alt fra den, så lenkene og antallene alltid stemmer med filene.
+- Lenkene på siden:
+  - **Tidligere eksamener:** en boks øverst som forklarer hva filene inneholder, med knappene «Last ned oppgavene» og «Last ned fasit», begge med filstørrelse. Den sier også at filene passer best på PC.
+  - **Hvert eksamenssett:** under hver oppgave står hvilken fane den ligger i, for eksempel «I Excel: fanen «Kap 8» i oppgavefilen og fasiten», med vanlige lenker.
+  - **Teori, «Øv på kapitlet»:** hva fanen for kapitlet inneholder (eksamensoppgaver, henvisninger og kapitteloppgaver), med de samme to knappene. Kapittel 1 har ingen lenke, fordi fanen er tom.
+- Når noe går galt: lenkene har `download`, så filen lastes ned i stedet for å åpnes i nettleseren. Er `excel.js` blokkert eller tom, vises ingen Excel-lenker, og resten av siden virker. «kB» står med hardt mellomrom, så det ikke brytes fra tallet.
+- Versjonsnummeret er økt til `?v=27`.
+
+Kontroller i `e2e.js` (21 nye):
+
+- I 320 og 1200 px:
+  - Begge knappene finnes på Tidligere eksamener, med filstørrelse.
+  - Hver oppgave i 2025 viser fanen sin.
+  - Teorien for kapittel 4 og 13 viser innholdet i fanen.
+  - Kapittel 1 har ingen lenke.
+  - Ingen sidelengs rulling.
+- Knappene er store nok å trykke på i 320 px.
+- Filene svarer på serveren, er xlsx (zip) og er like store som oppgitt, og et klikk gir nedlasting med riktig filnavn.
+- Alle 40 oppgaver står i en fane.
+- Siden virker uten datafilen.
+- Kapittel 4 i arbeidsboka har nyeste eksamen først.
+
+Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 258 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar, 0 avvik), `tools/e2e.js` 786 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -618,9 +677,9 @@ Alle kapitler har nå minst 16 quizspørsmål, og kapitlene med mest eksamensvek
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 25 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 27 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 25:
+Innhold i bølge 27:
 1. Rett det jeg har funnet i bruk (side, skjerm, hva jeg gjorde og hva som skjedde): <funn>.
 2. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
