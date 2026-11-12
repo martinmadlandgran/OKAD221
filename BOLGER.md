@@ -42,6 +42,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 20 | Brede tabeller på mobil: snudde årstabeller, fast første kolonne, strek og hint når tabellen kan rulles | Ferdig |
 | 21 | Fire nye quizspørsmål i kapittel 1 og 9. Alle kapitler har nå minst 16 | Ferdig |
 | 22 | To nye generatorer fra kapittel-LF (4.13 modifisert internrente, 4.11 lisens eller egenproduksjon), fire nye quizspørsmål i kapittel 4, 6 og 8 | Ferdig |
+| 23 | Fire nye quizspørsmål i kapittel 10 og 11 | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -540,6 +541,39 @@ Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 242 gyldige q
 
 Avgjort av eier etter bølgen: modifisert internrente og lisens eller egenproduksjon holdes utenfor prøveeksamenens trekkpott, som de andre typene fra kapittel-LF (a). Ingen kodeendring trengtes.
 
+## Bølge 23: quiz for kapittel 10 og 11 (ferdig)
+
+Meldingen hadde punkt 1 byttet ut med «fire nye quizspørsmål i kapittel 10 og 11», som foreslått etter bølge 22. Ingen funn fra bruk er meldt.
+
+Nye quizspørsmål (250 i alt, 242 før). Kapittel 10 har nå 21 og kapittel 11 22. Alle tall er regnet med et eget skript. Hvert feil alternativ er en navngitt feil, og forklaringen sier hvilken. Riktig svar står på hver av de fire plassene i de nye spørsmålene i hvert kapittel. De nye spørsmålene tar for seg deler av stoffet som de eldre ikke dekket.
+
+- Kapittel 10:
+  - Årlig standardavvik fra daglig, 1,5 % · √252 = 23,81 % (feil: ganget med 252, 365 kalenderdager, ingen omregning). Fra forelesningen.
+  - Halvsterk markedseffisiens (feil: svak, sterk, og at innsidegevinst betyr at markedet er ineffisient). Fra forelesningen.
+  - Minimum-varians-porteføljen med negativ kovarians, 15,2 % i A (feil: kovariansen glemt, standardavvik i stedet for varians, andelen i B). Kapittel-LF 10.4.
+  - Empirisk standardavvik med n − 1, 14,00 % (feil: delt på n, variansen, roten av summen uten å dele). Kapittel-LF 11.1.
+- Kapittel 11:
+  - Resultat per aksje med 70 % lånefinansiering av en utvidelse, 2,17 (feil: renter på det gamle lånet glemt, nye aksjer glemt, utvidelsen finansiert med aksjer). Kapittel-LF 11.7.
+  - Over- eller underpriset etter markedslinjen: kravet er 12 %, aksjen ventes å gi 14 % og er underpriset (feil: retningen snudd, beta ganget med markedsavkastningen, risikofri rente glemt). Kapittel-LF 11.4.
+  - Hvorfor kapitalverdimodellen passer dårlig for en eier som har alt i én bedrift: den bærer også usystematisk risiko (småbedriftspremie). Fra forelesningen.
+  - Avkastningskrav etter prosjektets egen beta, 16,2 % (feil: selskapets krav på 13 %, risikofri rente glemt, beta ganget med markedsavkastningen). Kapittel-LF 11.5.
+
+Versjonsnummeret er økt til `?v=25`.
+
+Kontroller i `e2e.js` (14 nye):
+
+- Antall spørsmål i kapittel 10 og 11, og at alle åtte nye finnes.
+- Riktig svar står på alle fire plassene i hvert kapittel.
+- Hvert tall i et feil alternativ er forklart, også i alternativer som begynner med tekst («Overpriset – kravet er 15,5 %»). Kontrollen fra bølge 17 ser bare på alternativer som begynner med et tall.
+- Kapittelrunden tar med alle fire som venter i kapitlet.
+- Repetisjonsrunden har alle åtte, og riktig svar gir forklaring og tømmer repetisjonen.
+- Feil svar gir forklaring og holder spørsmålet i repetisjonen.
+- Ingen sidelengs rulling i 320 px, og quiz-id-ene er uendret.
+
+Første kjøring feilet på ett av søkemønstrene i testen: siden gjør mellomrommet foran «%» om til hardt mellomrom. Mønsteret er rettet, ikke dataene.
+
+Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 250 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (129 000 tallsvar, 0 avvik), `tools/e2e.js` 751 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -553,14 +587,14 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Kapittel-LF har fortsatt oppgaver med full løsning uten egen generator, men de fleste ligger nær typer som finnes (4.12 spiller mot stadion, 6.7 hybelhus, 8.5–8.7 og 8.11 nåverdi etter skatt med ulike poster). Neste bølge bør bare komme hvis eier finner noe i bruk, eller vil ha mer av ett bestemt tema. Meldingen under er laget for funn. Bytt punkt 1 med for eksempel «fire nye quizspørsmål i kapittel 10 og 11» for mer innhold.
+Alle kapitler har nå minst 16 quizspørsmål, og kapitlene med mest eksamensvekt har 20 eller flere. Kapittel-LF har få oppgaver med full løsning igjen som ikke ligger nær en generator som finnes. Neste bølge bør bare komme hvis eier finner noe i bruk. Meldingen under er laget for funn. Bytt punkt 1 med for eksempel «fire nye quizspørsmål i kapittel 3 og 7» for mer innhold.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 23 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 24 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 23:
+Innhold i bølge 24:
 1. Rett det jeg har funnet i bruk (side, skjerm, hva jeg gjorde og hva som skjedde): <funn>.
 2. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
