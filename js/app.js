@@ -34,9 +34,20 @@
   };
   const NBSKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1 };
   const nbNode = (t) => { if (t.parentNode && NBSKIP[t.parentNode.nodeName]) return; if (NBHIT.test(t.data)) t.data = nb(t.data); nbJoin(t); };
+  // Excel-formler («=AVDRAG(3,45%/12;60;-330000)») er ett langt ord uten mellomrom og kan skyve siden sidelengs på mobil.
+  // <wbr> etter hvert semikolon lar formelen brytes mellom argumentene, aldri inni et tall, og blir ikke med når formelen kopieres til Excel.
+  const wbrCode = (el) => {
+    const codes = el.nodeName === 'CODE' ? [el] : el.querySelectorAll ? el.querySelectorAll('code') : [];
+    for (const c of codes) {
+      if (c.dataset.wbr || !c.textContent.includes(';')) continue; c.dataset.wbr = '1';
+      const w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT), ts = []; for (let t = w.nextNode(); t; t = w.nextNode()) if (t.data.includes(';')) ts.push(t);
+      for (const t of ts) { const f = document.createDocumentFragment(); t.data.split(';').forEach((piece, i, arr) => { f.appendChild(document.createTextNode(piece + (i < arr.length - 1 ? ';' : ''))); if (i < arr.length - 1) f.appendChild(document.createElement('wbr')); }); t.parentNode.replaceChild(f, t); }
+    }
+  };
   const nbText = (node) => {
     if (node.nodeType === 3) return nbNode(node);
     if (node.nodeType !== 1 || NBSKIP[node.nodeName]) return;
+    wbrCode(node);
     const w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
     for (let t = w.nextNode(); t; t = w.nextNode()) nbNode(t);
   };
@@ -559,6 +570,11 @@
     };
   }
 
+  // Under prøveeksamenen står klokkeraden fast øverst. Det du hopper eller blir sendt til (oppgave, svarfelt), skal havne under raden, ikke bak den.
+  function mockPad() {
+    const bar = $('.sticky-bar'); if (!bar) { document.documentElement.style.scrollPaddingTop = ''; return; }
+    document.documentElement.style.scrollPaddingTop = Math.ceil((parseFloat(getComputedStyle(bar).top) || 0) + bar.offsetHeight + 8) + 'px';
+  }
   routes.prove = (sub, seedStr) => {
     clearInterval(timerId); setTitle('Prøveeksamen');
     if (sub === 'utskrift') return printMock(seedStr);
@@ -584,7 +600,7 @@
       <div id="result" tabindex="-1"></div>` + slots.map((s, i) => `<section><h2 id="mo${i}">Oppgave ${i + 1} <span class="pts">${s.weight} %</span></h2><div class="task-text">${s.task.text}</div><div id="mp${i}"></div></section>`).join('');
     const RS = slots.map((s, i) => renderParts(s.task, $(`#mp${i}`), { exam: true, prefix: `m${i}_` }));
     const inputs = $$('input[type=text], textarea', view), numInputs = $$('input[type=text]', view);
-    const countFilled = () => { const k = numInputs.filter((el) => el.value.trim()).length; $('#filled').textContent = `${k} av ${nNum} tallsvar fylt ut`; return k; };
+    const countFilled = () => { const k = numInputs.filter((el) => el.value.trim()).length; $('#filled').innerHTML = `${k}<span class="hide-m"> av ${nNum} tallsvar fylt ut</span><span class="show-m">/${nNum} svar</span>`; $('#filled').setAttribute('aria-label', `${k} av ${nNum} tallsvar fylt ut`); return k; };
     inputs.forEach((el) => { if (M.ans[el.id]) el.value = M.ans[el.id]; el.oninput = () => { M.ans[el.id] = el.value; save(); countFilled(); }; });
     countFilled();
     let warned = false;
@@ -592,14 +608,21 @@
       const el = $('#timer'); if (!el) return clearInterval(timerId);
       const used = Math.floor((Date.now() - M.start) / 1000), left = M.dur ? M.dur * 60 - used : used, a = Math.abs(left);
       el.textContent = (M.dur && left < 0 ? '+' : '') + [Math.floor(a / 3600), Math.floor(a % 3600 / 60), a % 60].map((x) => String(x).padStart(2, '0')).join(':');
-      if (M.dur && left <= 0 && !warned) { warned = true; $('#timeup').innerHTML = '<p class="callout warn" style="margin:8px 0 0">Tiden er ute. Du kan levere nå, eller fortsette – klokken viser hvor mye du har gått over.</p>'; }
+      if (M.dur && left <= 0 && !warned) { warned = true; $('#timeup').innerHTML = '<p class="callout warn" style="margin:8px 0 0">Tiden er ute. Du kan levere nå, eller fortsette – klokken viser hvor mye du har gått over.</p>'; mockPad(); }
     };
     if (M.paper) $('#timer').textContent = 'Svar fra papir'; else { tick(); timerId = setInterval(tick, 1000); }
+    mockPad(); addEventListener('resize', mockPad);
     $('#print').onclick = () => print();
     $('#abort').onclick = () => { if (confirm('Avbryte prøveeksamenen? Svarene dine slettes og forsøket teller ikke.')) { S.mock = null; save(); routes.prove(); } };
     $('#submit').onclick = () => {
       const blankCount = nNum - countFilled();
-      if (blankCount && !confirm(`${blankCount} av ${nNum} tallsvar er ikke fylt ut og gir null poeng. Levere likevel?`)) return;
+      if (blankCount) {
+        const where = slots.map((s, i) => [i, $$(`#mp${i} input[type=text]`).filter((el) => !el.value.trim()).length]).filter((x) => x[1]).map(([i, k]) => `oppgave ${i + 1} (${k})`).join(', ');
+        if (!confirm(`${blankCount} av ${nNum} tallsvar er ikke fylt ut og gir null poeng: ${where}. Levere likevel?`)) {
+          const first = numInputs.find((el) => !el.value.trim()); if (first) { first.scrollIntoView({ block: 'start' }); first.focus({ preventScroll: true }); }
+          return;
+        }
+      }
       clearInterval(timerId);
       let total = 0, missed = 0; const rows = [];
       slots.forEach((s, i) => {
@@ -611,10 +634,10 @@
       const mins = Math.round((Date.now() - M.start) / 60000), score = Math.round(total);
       const grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 60 ? 'C' : score >= 50 ? 'D' : score >= 40 ? 'E' : 'F';
       rows.push({ cells: ['Sum', '100 %', '', `${score} %`], cls: 'sum' });
-      $('#result').innerHTML = `<h1>${score} % – omtrent karakter ${grade}</h1><p>${M.paper ? 'Svarene er tastet inn fra papiret.' : `Tid brukt: ${mins} minutter.`} Bare tallsvarene er rettet. Drøftingsdelene sammenligner du selv med momentlistene under. På den ordentlige eksamenen gis det også uttelling for riktig metode når sluttsvaret er feil, så dette er et forsiktig anslag.</p>` + table(['Oppgave', 'Vekt', 'Riktige tallsvar', 'Poeng'], rows, { cls: 'left' }) + (missed ? `<p>${missed === 1 ? 'Oppgaven' : `De ${missed} oppgavene`} med feil tallsvar ligger nå i <a href="#/repeter">repetisjonslisten</a>, med de samme tallene.</p>` : '') + '<p class="row"><button class="btn primary" type="button" id="again">Ny prøveeksamen</button></p>';
+      $('#result').innerHTML = `<h1>${score} % – omtrent karakter ${grade}</h1><p>${M.paper ? 'Svarene er tastet inn fra papiret.' : `Tid brukt: ${mins} minutter.`} Bare tallsvarene er rettet. Drøftingsdelene sammenligner du selv med momentlistene under. På den ordentlige eksamenen gis det også uttelling for riktig metode når sluttsvaret er feil, så dette er et forsiktig anslag.</p>` + table(['Oppgave', 'Vekt', 'Riktige tallsvar', 'Poeng'], rows, { cls: 'left wrapth result' }) + (missed ? `<p>${missed === 1 ? 'Oppgaven' : `De ${missed} oppgavene`} med feil tallsvar ligger nå i <a href="#/repeter">repetisjonslisten</a>, med de samme tallene.</p>` : '') + '<p class="row"><button class="btn primary" type="button" id="again">Ny prøveeksamen</button></p>';
       (S.mockLog = S.mockLog || []).push(Object.assign({ date: new Date().toLocaleDateString('nb-NO'), score, min: mins, t: Date.now() }, M.paper ? { paper: true } : {})); S.mock = null; save();
       inputs.forEach((el) => { el.readOnly = true; });
-      $('.sticky-bar').remove(); $('#again').onclick = () => routes.prove();
+      $('.sticky-bar').remove(); mockPad(); removeEventListener('resize', mockPad); $('#again').onclick = () => routes.prove();
       $('#result').onclick = (e) => { const j = e.target.dataset.jump; if (j) { e.preventDefault(); $('#' + j).scrollIntoView(); } };
       scrollTo(0, 0); $('#result').focus();
     };
@@ -800,7 +823,7 @@
   // ---------- Ruter ----------
   let firstLoad = true;
   function route() {
-    clearInterval(timerId); view.onchange = null; view.oninput = null;
+    clearInterval(timerId); view.onchange = null; view.oninput = null; removeEventListener('resize', mockPad); document.documentElement.style.scrollPaddingTop = '';
     const parts = decodeURIComponent(location.hash.replace(/^#\/?/, '')).split('/');
     const known = Object.prototype.hasOwnProperty.call(routes, parts[0]);
     // Krasjer noe, skal brukeren få beskjed og en vei videre, ikke se innholdet fra forrige side under en ny fane.

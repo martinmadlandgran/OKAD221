@@ -38,6 +38,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 16 | 16 nye quizspørsmål (fire i hvert av kapittel 2, 3, 5 og 6), alle feil tallalternativer i de fire kapitlene forklart | Ferdig |
 | 17 | Alle feil tallalternativer forklart i alle 13 kapitler, fire nye quizspørsmål i kapittel 10 og 13 | Ferdig |
 | 18 | Fire nye quizspørsmål i kapittel 8 og 11 | Ferdig |
+| 19 | Prøveeksamenen på mobil: klokkeraden, hopp og fokus, levering med tomme felt, resultattabellen, Excel-formler i 320 px | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -404,6 +405,29 @@ Kontroller i `e2e.js` (11 nye): antall spørsmål i kapittel 8 og 11, at alle å
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 222 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 630 bestått.
 
+Avgjort av eier etter bølgen: bølge 19 er en gjennomgang av prøveeksamenen på mobil (a).
+
+## Bølge 19: prøveeksamenen på mobil (ferdig)
+
+Gått gjennom i 320 og 390 px: start, tidtaking, svarfelt, oppgavetekster og tabeller, levering og retting. Det som var tungt å bruke:
+
+- Klokkeraden (klokke, antall svar, Avbryt, Lever) brøt over tre linjer og var 103 px høy i 320 px (121 px i 390 px). Med toppteksten og bunnmenyen gikk omtrent en tredjedel av skjermen til faste felt. Nå er den én rad på 59 px. Telleren står som «12/35 svar» på mobil og «12 av 35 tallsvar fylt ut» på PC og for skjermleser.
+- Det man hoppet til, havnet bak klokkeraden: overskriften «Oppgave 5» og svarfelt som ble rullet fram. Avstanden fra toppen settes nå etter den faktiske høyden på raden, også når «Tiden er ute» gjør raden høyere. Den nullstilles når raden forsvinner (levert eller annen side).
+- Levering med tomme felt sa bare «7 av 35 tallsvar er ikke fylt ut». Nå står det hvor: «oppgave 2 (3), oppgave 5 (4)». Velger man å ikke levere, havner man på første tomme felt, synlig under raden.
+- Resultattabellen etter levering var 930 px bred i 292 px, så vekt, riktige svar og poeng lå utenfor skjermen. Oppgavenavnene brytes nå, og hele tabellen får plass i 320 px.
+- Tidsvalget var 40 px høyt. Nå er det 44 px, som de andre trykkflatene.
+- Funnet underveis: i noen sett rullet siden sidelengs i 320 px etter levering. Excel-formler i løsningene (som `=AVDRAG(3,45%/12;60;-330000)`) er ett langt ord uten mellomrom. De får nå et bruddpunkt (`<wbr>`) etter hvert semikolon når siden tegnes, så de brytes mellom argumentene og aldri inni et tall. `<wbr>` er ikke et tegn, så formelen som kopieres til Excel, er uendret. Gjelder alle sider. Feilen fantes også på Øv-siden, men kontrollen der kjørte i 390 px.
+
+Prøvd og ikke tatt med: tabellene i oppgaveteksten må rulles sidelengs i 320 px (24 av 37 tabeller i alle 43 oppgavetyper, de fleste årstabeller med fem–sju tallkolonner). Radnavn som brytes og tettere celler ga bare to færre, og gjorde nøkkeltallstabellen fra bølge 9 for bred. Det trenger en egen løsning (se neste bølge).
+
+Brukertesten på mobil: ingen funn meldt.
+
+Endret i `js/app.js` (`mockPad`, `wbrCode`, telleren og leveringen) og `css/style.css`. Versjonsnummeret er økt til `?v=21`.
+
+Kontroller i `e2e.js` (34 nye), i både 320 og 390 px: tidsvalget og knappene har trykkflate på minst 44 px, klokkeraden er én rad og høyst 64 px, Lever går ikke ut over kanten, telleren er kort på skjermen og hel for skjermleser, oppgaveoverskrift og svarfelt havner under raden, også når tiden er ute, beskjeden ved levering sier hvilke oppgaver som mangler svar, «ikke lever» tar deg til første tomme felt og lar prøven stå, resultattabellen får plass med poengkolonnen synlig, ingen sidelengs rulling etter levering, og avstanden fra toppen nullstilles etter levering og ved sidebytte. I tillegg: alle 43 oppgavetyper med løsningene åpne uten sidelengs rulling i 320 px, Excel-formlene får bruddpunkt etter hvert semikolon, og formlene har ingen usynlige tegn. På PC står telleren med hele teksten.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 222 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 664 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -417,15 +441,15 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Kapittel 1 har nå færrest spørsmål (12), deretter kapittel 9 (14). Alle andre har 16 eller flere. Kapittel 1 har ingen regneeksempler i kildene, og eksamen spør lite om det. Forslag til bølge 19 er derfor ikke flere quizspørsmål, men en gjennomgang av prøveeksamenen på mobil: start, tidtaking, levering og retting i 320 og 390 px, med fokus på det som er tungt å bruke på liten skjerm (lange oppgavetekster, tabeller og svarfelt). Kontrollspørsmålet gjelder: hva skal brukeren gjøre her, og hvor godt fungerer det når noe går galt?
+Tabellene i oppgaveteksten er det som nå er tyngst på mobil: 24 av 37 må rulles sidelengs i 320 px, og det er ingenting som viser at tabellen fortsetter. Forslag til bølge 20: gjør det synlig når en tabell kan rulles (en skygge er ikke lov etter utformingsreglene, så for eksempel en linje i kanten og teksten «Rull sidelengs» under), hold første kolonne fast mens man ruller, og vurder om de bredeste årstabellene kan snus med årene som rader på mobil, slik nøkkeltallstabellen ble i bølge 9.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 19 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 20 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 19:
-1. Gå gjennom prøveeksamenen på mobil (320 og 390 px): start, tidtaking, svarfelt, lange oppgavetekster og tabeller, levering og retting. Rett det som er tungt å bruke på liten skjerm, og legg kontroller i tools/e2e.js.
+Innhold i bølge 20:
+1. Tabellene i oppgaveteksten på mobil (320 og 390 px): gjør det synlig når en tabell kan rulles sidelengs, hold første kolonne fast mens man ruller, og snu de bredeste årstabellene med årene som rader der det gjør dem lettere å lese. Legg kontroller i tools/e2e.js.
 2. Funn fra brukertesten på mobil (stryk punktet hvis ingen): <funn>.
 3. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
