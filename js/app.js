@@ -247,15 +247,15 @@
   themeBtn.onclick = () => { const next = curTheme() === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next; paintTheme(); try { localStorage.setItem('okad221:theme', next); } catch (e) { /* ignorer */ } };
 
   // ---------- Navigasjon: sju mål på desktop, fem i tommelhøyde på mobil ----------
-  const NAV = [['oving', 'Øv'], ['prove', 'Prøveeksamen'], ['eksamener', 'Tidligere eksamener'], ['analyse', 'Eksamensanalyse'], ['tema', 'Teori'], ['formler', 'Formler'], ['quiz', 'Quiz']];
-  const SUB = [['tema', 'Teori'], ['formler', 'Formler'], ['quiz', 'Quiz']];
+  const NAV = [['oving', 'Øv'], ['prove', 'Prøveeksamen'], ['eksamener', 'Tidligere eksamener'], ['analyse', 'Eksamensanalyse'], ['tema', 'Teori'], ['formler', 'Formler'], ['quiz', 'Quiz'], ['verktoy', 'Kalkulatorer']];
+  const SUB = [['tema', 'Teori'], ['formler', 'Formler'], ['quiz', 'Quiz'], ['verktoy', 'Kalkulator']];
   const TABS = [['', 'Hjem'], ['oving', 'Øv'], ['prove', 'Prøve'], ['eksamener', 'Eksamener'], ['tema', 'Teori']];
   const drawNav = (cur) => {
     const link = ([k, t]) => `<a href="#/${k}"${k === cur ? ' aria-current="page"' : ''}>${t}</a>`;
     $('#nav').innerHTML = NAV.map(link).join('');
-    const tabCur = ['formler', 'quiz'].includes(cur) ? 'tema' : ['analyse', 'verktoy'].includes(cur) ? '' : cur;
+    const tabCur = ['formler', 'quiz', 'verktoy'].includes(cur) ? 'tema' : cur === 'analyse' ? '' : cur;
     $('#tabbar').innerHTML = TABS.map(([k, t]) => `<a href="#/${k}"${k === tabCur ? ' aria-current="page"' : ''}>${t}</a>`).join('');
-    // Mobil: Formler og Quiz får ikke plass i bunnmenyen og ligger under Teori. Raden øverst gjør dem synlige med ett trykk.
+    // Mobil: Formler, Quiz og Kalkulatorer får ikke plass i bunnmenyen og ligger under Teori. Raden øverst gjør dem synlige med ett trykk.
     // Lages hvis den mangler (en mellomlagret index.html fra før raden fantes, sammen med ny app.js)
     let sub = $('#subnav'); if (!sub) { sub = document.createElement('nav'); sub.className = 'subnav'; sub.id = 'subnav'; sub.setAttribute('aria-label', 'Slå opp'); view.before(sub); }
     sub.hidden = tabCur !== 'tema';
@@ -418,16 +418,17 @@
       st.map((t) => `<tr><td class="kap">${(O.topics[t.k].ch || []).map((c) => `<a href="#/tema/${c}" aria-label="Teori, kapittel ${c}">${c}</a>`).join(', ')}</td><th scope="row">${t.name}</th>` + ys.map((y) => { const v = t.row[y] || 0; return v ? `<td class="${cls(v)}">${Math.round(v)}</td>` : '<td class="z"><span aria-hidden="true">·</span><span class="sr">0</span></td>'; }).join('') + `<td class="gitt">${t.count} av ${ys.length}</td><td>${t.last || '–'}</td></tr>`).join('') + '</tbody></table></div>' +
       '<p class="legend"><span><i style="background:rgba(var(--accent-rgb),.14)"></i>under 12 % av settet</span><span><i style="background:rgba(var(--accent-rgb),.32)"></i>12–24 %</span><span><i style="background:var(--accent)"></i>25 % eller mer</span><span>· = ikke gitt</span></p>';
     const struct = table(['Sett', 'Oppgaver og vekt'], O.exams.slice().sort((a, b) => a.year - b.year).map((e) => [`<a href="#/eksamen/${e.id}">${e.title}</a>`, e.tasks.map((t) => `<b class="num">${t.weight} %</b> ${esc(t.title)}`).join('<br>')]), { cls: 'left wrap' });
-    const links = (gens) => gens.map((id) => `<a href="#/oving/${id}">${O.genById[id].title}</a>`).join(' · ');
+    // Øv-lenkene som nedtrekksmeny (details), så de ikke fyller teksten. Virker med tastatur og uten egen kode.
+    const links = (gens) => `<details class="menu"><summary>Øv på ${gens.length === 1 ? 'oppgavetypen' : `oppgavetypene (${gens.length})`}</summary><ul>${gens.map((id) => `<li><a href="#/oving/${id}">${O.genById[id].title}</a></li>`).join('')}</ul></details>`;
     view.innerHTML = `
       <p class="eyebrow">Ti sett · ${U.sum(O.exams.map((e) => e.tasks.length))} oppgaver · ${U.sum(O.exams.map((e) => U.sum(e.tasks.map((t) => t.parts.length))))} deloppgaver</p>
       <h1>Hva kommer på eksamen i 2026?</h1>
       <p class="lead">Kort svar: mest sannsynlig de samme fem oppgavetypene som i 2025. Under ser du anslaget, og lenger ned dataene det bygger på.</p>
       <h2>Prognosen</h2>
       <p class="small muted">Stort tall = andel av karakteren oppgavetypen pleier å ha. Sannsynligheten er et skjønn ut fra mønsteret, ikke en beregning.</p>
-      ${P.slots.map((s) => `<div class="slot"><div class="big">${s.weight[0]}–${s.weight[1]} %<small>${Math.round(s.prob * 100)} % sannsynlig</small></div><div><h3>${s.nr}. ${s.title}</h3><p>${s.why}</p><p class="small">Øv: ${links(s.gens)}</p></div></div>`).join('')}
+      ${P.slots.map((s) => `<div class="slot"><div class="big">${s.weight[0]}–${s.weight[1]} %<small>${Math.round(s.prob * 100)} % sannsynlig</small></div><div><h3>${s.nr}. ${s.title}</h3><p>${s.why}</p>${links(s.gens)}</div></div>`).join('')}
       <h3>Jokere</h3>
-      ${P.jokers.map((s) => `<details><summary>${s.title} <span class="tag">${Math.round(s.prob * 100)} % sannsynlig</span></summary><div class="inner"><p>${s.why}</p><p class="small">Øv: ${links(s.gens)}</p></div></details>`).join('')}
+      ${P.jokers.map((s) => `<details><summary>${s.title} <span class="tag">${Math.round(s.prob * 100)} % sannsynlig</span></summary><div class="inner"><p>${s.why}</p>${links(s.gens)}</div></details>`).join('')}
       <h2>Grunnlaget: hva har kommet, og hvor mye telte det?</h2>
       <p class="small muted">Tallene er omtrentlig prosent av settet (oppgavens vekt fordelt likt på deloppgavene). Kolonnene er årstall. 2017 er mars 2017, resten er høsteksamener. <b>Kap.</b> er kapitlet i læreboka (Bredesen, 7. utg.), og lenken går til teorien. <b>Gitt</b> er hvor mange av de ti eksamenssettene temaet var med i, og <b>Sist</b> er siste år det kom.</p>${heat}
       <h3>Hyppighet når de siste årene teller mest</h3>
@@ -705,7 +706,9 @@
       e.tasks.map((t) => {
         const related = [...new Set((t.gens || []).concat(t.topics.concat(...t.parts.map((p) => p.topics || [])).filter((k) => O.topics[k]).map((k) => O.topics[k].gens[0])))].filter((g) => O.genById[g]);
         return `<section><h2>Oppgave ${t.nr} <span class="pts">${t.weight} %</span> · ${esc(t.title)}</h2><div class="task-text">${t.text || ''}</div>` +
-          t.parts.map((p) => { const k = `${e.id}-${t.nr}${p.label}`; return `<div class="part"><div class="letter" aria-hidden="true">${p.label}</div><div class="body"><div class="part-q">${p.q}</div>
+          t.parts.map((p) => { const k = `${e.id}-${t.nr}${p.label}`, chs = [...new Set((p.topics || t.topics).flatMap((x) => (O.topics[x] ? O.topics[x].ch : [])))].sort((a, b) => a - b);
+            const kap = chs.length ? `<p class="kapline">Pensum: ${chs.map((c) => `<a href="#/tema/${c}">kap. ${c}</a>`).reduce((acc, x, i, a) => acc + (i ? (i === a.length - 1 ? ' og ' : ', ') : '') + x, '')}</p>` : '';
+            return `<div class="part"><div class="letter" aria-hidden="true">${p.label}</div><div class="body">${kap}<div class="part-q">${p.q}</div>
             <details><summary>Fasit</summary><div class="inner">${p.answer}</div></details>
             <details><summary>Løsning steg for steg</summary><div class="inner"><p class="tag">${src[p.src] || 'Tall fra løsningsforslaget, forklaringen er lagt til'}</p>${p.method}</div></details>
             <p><label><input type="checkbox" data-k="${k}" ${S.exam[k] ? 'checked' : ''}>Denne fikk jeg til (deloppgave ${t.nr}${p.label})</label></p></div></div>`; }).join('') +

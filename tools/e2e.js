@@ -426,7 +426,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     // Funn fra brukertesten: Formler og Quiz er synlige på mobil fra Teori, Formler og Quiz, med ett trykk
     for (const h of ['tema', 'tema/4', 'formler', 'quiz', 'quiz/1']) { await go(q, h); const sub = await q.evaluate(() => { const n = document.querySelector('#subnav'); return n && getComputedStyle(n).display !== 'none' ? [...n.querySelectorAll('a')].map((a) => a.textContent + (a.getAttribute('aria-current') ? '*' : '')) : null; });
       const want = h.startsWith('tema') ? 'Teori*' : h.startsWith('formler') ? 'Formler*' : 'Quiz*';
-      ok(!!sub && sub.length === 3 && sub.includes(want), `bølge 12: raden Teori · Formler · Quiz vises i 320 px på ${h} (${sub})`); ok(!(await overflow(q)), `bølge 12: raden gir ingen sidelengs rulling på ${h}`); }
+      ok(!!sub && sub.length === 4 && sub.includes(want), `bølge 12: raden Teori · Formler · Quiz · Kalkulator vises i 320 px på ${h} (${sub})`); ok(!(await overflow(q)), `bølge 12: raden gir ingen sidelengs rulling på ${h}`); }
     for (const h of ['', 'oving', 'eksamener', 'prove']) { await go(q, h); ok(await q.evaluate(() => getComputedStyle(document.querySelector('#subnav')).display === 'none'), `bølge 12: raden vises ikke på ${h || 'hjem'}`); }
     await go(q, 'tema'); await q.click('#subnav a[href="#/quiz"]'); await q.waitForTimeout(150); ok(/#\/quiz$/.test(q.url()) && (await q.locator('#subnav a[aria-current="page"]').textContent()) === 'Quiz', 'bølge 12: ett trykk fra Teori til Quiz');
     ok(await q.evaluate(() => { const r = document.querySelector('#subnav a').getBoundingClientRect(); return r.height >= 44; }), 'bølge 12: trykkflaten i raden er minst 44 px høy');
@@ -880,9 +880,51 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     ok((await q.locator('#xl').count()) === 0 && (await q.locator('.rowlink').count()) === 10, 'bølge 26: blokkert datafil gir siden uten Excel-lenker');
     await go(q, 'tema/4'); ok((await q.locator('h1').count()) === 1 && (await q.locator('#xl').count()) === 0, 'bølge 26: teorien virker uten datafilen');
     // Nyeste eksamen først i arbeidsboka
-    const xl = require('child_process').execFileSync('python3', ['-c', "import openpyxl;ws=openpyxl.load_workbook('excel/OKAD221_oppgaver.xlsx')['Kap 4'];print('|'.join(str(r[1]) for r in ws.iter_rows(values_only=True) if r[1] and ' · Oppgave ' in str(r[1])))"], { cwd: root, encoding: 'utf8' }).trim().split('|');
+    const xl = require('child_process').execFileSync('python3', ['-c', "import openpyxl;ws=openpyxl.load_workbook('excel/OKAD221_oppgaver.xlsx')['Kap 4'];print('|'.join(str(r[2]) for r in ws.iter_rows(values_only=True) if r[2] and ' · Oppgave ' in str(r[2])))"], { cwd: root, encoding: 'utf8' }).trim().split('|');
     const yrs = xl.map((x) => +x.match(/\d{4}/)[0]); ok(yrs.length === 16 && yrs.every((y, i) => !i || y <= yrs[i - 1]) && yrs[0] === 2025, 'bølge 26: kapittel 4 i Excel har nyeste eksamen først (' + yrs.join(', ') + ')');
     await q.context().close(); }
+  // 36) Bølge 27: kalkulatorene synlige, Øv-lenkene i prognosen som nedtrekksmeny, pensum per deloppgave, kapittelmerke i Excel
+  { const d = await mk({ w: 1200, h: 900 }); await go(d, 'analyse');
+    ok(await d.evaluate(() => [...document.querySelectorAll('#nav a')].some((a) => a.textContent === 'Kalkulatorer' && a.getAttribute('href') === '#/verktoy')), 'bølge 27: Kalkulatorer står i toppmenyen');
+    await d.click('#nav a[href="#/verktoy"]'); await d.waitForTimeout(150); ok(/#\/verktoy$/.test(d.url()) && (await d.textContent('#nav a[aria-current="page"]')) === 'Kalkulatorer', 'bølge 27: menyen åpner kalkulatorene og markerer dem');
+    await go(d, 'analyse');
+    const m = await d.evaluate(() => { const P = OKAD.prediction, all = P.slots.concat(P.jokers), menus = [...document.querySelectorAll('details.menu')];
+      return { n: menus.length, want: all.length, closed: menus.every((x) => !x.open), links: menus.map((x) => [...x.querySelectorAll('a')].map((a) => a.getAttribute('href').replace('#/oving/', ''))).every((l, i) => l.join() === all[i].gens.join()), loose: [...document.querySelectorAll('.slot p.small')].filter((p) => /^Øv:/.test(p.textContent)).length }; });
+    ok(m.n === m.want && m.closed && m.links && m.loose === 0, `bølge 27: hver prognose og joker har en lukket nedtrekksmeny med de samme Øv-lenkene (${m.n} av ${m.want})`);
+    await d.focus('.slot details.menu summary'); await d.keyboard.press('Enter'); ok(await d.evaluate(() => document.querySelector('.slot details.menu').open && document.querySelector('.slot details.menu a').getBoundingClientRect().height > 30), 'bølge 27: menyen åpnes med tastaturet, og lenkene er store nok');
+    await d.click('.slot details.menu a'); await d.waitForTimeout(150); ok(/#\/oving\/k2-prosjekt-for-skatt(\/\d+)?$/.test(d.url()), 'bølge 27: lenken i menyen åpner oppgavetypen');
+    await d.context().close();
+    const q = await mk({ w: 320, h: 700 }); await go(q, 'analyse');
+    for (let i = 0; i < 5; i++) await q.click(`.slot details.menu summary >> nth=${i}`);
+    ok(!(await overflow(q)), 'bølge 27: åpne menyer gir ingen sidelengs rulling i 320 px');
+    ok(await q.evaluate(() => [...document.querySelectorAll('.slot details.menu summary')].every((x) => x.getBoundingClientRect().height >= 40)), 'bølge 27: menyknappene er store nok å trykke på mobil');
+    await go(q, 'verktoy'); const sub = await q.evaluate(() => [...document.querySelectorAll('#subnav a')].map((a) => a.textContent + (a.getAttribute('aria-current') ? '*' : '')));
+    ok(sub.join() === 'Teori,Formler,Quiz,Kalkulator*' && (await q.textContent('#tabbar a[aria-current="page"]')) === 'Teori', `bølge 27: på mobil ligger Kalkulator i raden under Teori (${sub})`);
+    ok(!(await overflow(q)), 'bølge 27: raden med fire lenker gir ingen sidelengs rulling i 320 px');
+    // Pensum per deloppgave
+    let bad = 0, tot = 0; for (const e of await q.evaluate(() => OKAD.exams.map((x) => x.id))) { await go(q, 'eksamen/' + e);
+      const r = await q.evaluate((id) => { const ex = OKAD.exams.find((x) => x.id === id), want = ex.tasks.flatMap((t) => t.parts.map((p) => [...new Set((p.topics || t.topics).flatMap((k) => OKAD.topics[k].ch))].sort((a, b) => a - b).join()));
+        const got = [...document.querySelectorAll('.part .kapline')].map((k) => [...k.querySelectorAll('a')].map((a) => a.getAttribute('href').replace('#/tema/', '')).join());
+        return { tot: want.length, bad: want.filter((w, i) => w !== got[i]).length + Math.abs(want.length - got.length) }; }, e); bad += r.bad; tot += r.tot;
+      if (await overflow(q)) bad++; }
+    ok(bad === 0 && tot === 143, `bølge 27: alle ${tot} deloppgaver viser pensum med riktige kapitler og uten sidelengs rulling`);
+    await go(q, 'eksamen/2016'); ok(/^Pensum: kap\. 2 og kap\. 4$/.test((await q.textContent('.part .kapline')).trim()), 'bølge 27: 2016 1a viser «Pensum: kap. 2 og kap. 4»');
+    await q.click('.part .kapline a >> nth=1'); await q.waitForTimeout(150); ok(/#\/tema\/4$/.test(q.url()), 'bølge 27: kapittellenken åpner teorien');
+    await q.context().close();
+    // Excel: kapittelmerket til venstre for delspørsmålene
+    const out = require('child_process').execFileSync('python3', ['-c', `
+import openpyxl
+for f in ['excel/OKAD221_oppgaver.xlsx', 'excel/OKAD221_fasit.xlsx']:
+    wb = openpyxl.load_workbook(f); n = 0; first = None
+    for ws in wb.worksheets:
+        for r in range(1, ws.max_row + 1):
+            v = ws.cell(r, 1).value
+            if v:
+                n += 1
+                if ws.title == 'Kap 4' and first is None: first = (v, ws.cell(r, 2).value)
+    print(n, first)`], { cwd: require('path').join(__dirname, '..'), encoding: 'utf8' }).trim().split('\n');
+    ok(out.length === 2 && out.every((l) => /^50 \('\+ kap 2', 'a\)'\)$/.test(l)), 'bølge 27: Excel har 50 kapittelmerker i begge filene, til venstre for bokstaven (' + out.join(' | ') + ')');
+  }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });

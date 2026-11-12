@@ -155,6 +155,16 @@ details > summary { cursor: pointer; padding: 10px 4px; font-weight: 600; }
 details > summary:hover { background: var(--tint); }
 details > .inner { padding: 4px 4px 16px 20px; }
 details > .inner > :first-child { margin-top: 0; }
+/* Nedtrekksmeny (Øv-lenkene i prognosen): knapp som åpner en liste under seg. Ingen skygge, den skyver innholdet ned. */
+details.menu { display: inline-block; border: 0; margin: 6px 0 0; max-width: 100%; }
+details.menu > summary { list-style: none; display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 14px; border: 1.5px solid var(--accent); color: var(--accent); font-size: .92rem; }
+details.menu > summary::-webkit-details-marker { display: none; }
+details.menu > summary::after { content: '▾'; }
+details.menu[open] > summary::after { content: '▴'; }
+details.menu > summary:hover { background: var(--accent); color: var(--accent-ink); }
+details.menu > ul { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-top: 0; }
+details.menu > ul a { display: block; padding: 10px 14px; border-top: 1px solid var(--line); }
+.kapline { margin: 0 0 4px; font-size: .8rem; color: var(--ink-3); }
 dl.defs dt { font-weight: 700; margin-top: 12px; } dl.defs dd { margin: 2px 0 0; color: var(--ink-2); max-width: 75ch; }
 
 /* ---------- Diagram (stjernediagram): bare linjer og tekst i temaets farger ---------- */
@@ -268,7 +278,7 @@ table.data.result th[scope=row] { min-width: 9em; }
   .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--bg); border-top: 3px solid var(--rule); padding-bottom: env(safe-area-inset-bottom); }
   .tabbar a { text-align: center; padding: 11px 2px 10px; min-height: 52px; font-size: .8rem; color: var(--ink-2); text-decoration: none; border-top: 4px solid transparent; margin-top: -3px; }
   .tabbar a[aria-current="page"] { color: var(--ink); font-weight: 700; border-top-color: var(--accent); }
-  .subnav:not([hidden]) { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--rule); }
+  .subnav:not([hidden]) { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--rule); }
   .subnav a { text-align: center; padding: 12px 2px 10px; min-height: 48px; font-size: .9rem; color: var(--ink-2); text-decoration: none; border-bottom: 4px solid transparent; margin-bottom: -1px; }
   .subnav a[aria-current="page"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--accent); }
   .plan a { grid-template-columns: 5.6rem 1fr; } .plan .m { grid-column: 2; } .plan .w { font-size: 1.35rem; } .plan li.heavy .w { font-size: 1.7rem; } .plan li.light .w { font-size: 1.15rem; }
