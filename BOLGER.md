@@ -44,6 +44,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 22 | To nye generatorer fra kapittel-LF (4.13 modifisert internrente, 4.11 lisens eller egenproduksjon), fire nye quizspørsmål i kapittel 4, 6 og 8 | Ferdig |
 | 23 | Fire nye quizspørsmål i kapittel 10 og 11 | Ferdig |
 | 24 | Fire nye quizspørsmål i kapittel 3 og 7 | Ferdig |
+| 25 | Excel-arbeidsbøker: eksamensoppgaver per kapittel, og fasit | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -599,6 +600,34 @@ Kontroller i `e2e.js` (14 nye, de samme som i bølge 23): antall og at alle ått
 Første kjøring feilet på ett søkemønster i testen (hardt mellomrom foran «dager»), som i bølge 23. Mønsteret er rettet, ikke dataene.
 
 Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 258 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar, 0 avvik), `tools/e2e.js` 765 bestått.
+
+Avgjort av eier etter bølgen: kontantrabatten regnes med 360 dager, som i kapittel-LF 7.1c (a). Ingen kodeendring trengtes.
+
+## Bølge 25: Excel-arbeidsbøker per kapittel (ferdig)
+
+Ønske fra eier: ett felles Excel-ark (eller ett per kapittel) med alle eksamensoppgaver og relevante oppgaver for hvert kapittel i boka. Oppgavene skal være slik de ble gitt på eksamen, med samme struktur og utseende gjennom hele arket, og med fasit og løsningsforslag.
+
+Laget av `tools/excel.py`, fra de samme dataene som siden bruker. Ingen endring i siden, så versjonsnummeret er uendret.
+
+- `excel/OKAD221_oppgaver.xlsx`: fanen «Oversikt» (med lenker) og én fane per kapittel, «Kap 1» til «Kap 13». Hver fane har tre deler:
+  - **Eksamensoppgaver:** hele oppgaven med ordrett tekst. Tabellene er lagt inn som tall i celler, og hvert delspørsmål har en gul celle til eget svar.
+  - **Delspørsmål i oppgaver under andre kapitler:** liste med lenke til fanen der oppgaven står.
+  - **Kapitteloppgaver i læreboka:** fra kapittel-LF, med oppgavetype og tall. Kildene har bare løsningsforslaget, så teksten er ikke ordrett, og det står i fanen.
+- `excel/OKAD221_fasit.xlsx`: samme faner og rekkefølge. Delspørsmålet står først, så svaret, løsningen med tabeller og kilden («Løsningsforslaget» eller «Løsningsforslaget og egen utregning»). Kapitteloppgavene har oppbygging og sluttsvar. Fanen «Merknader» har merknadene om feil og avvik i løsningsforslagene, per eksamenssett.
+- Hver oppgave står samlet under kapitlet der tyngden ligger, så eksamensteksten ikke deles opp:
+  - kapittel 3: 1
+  - kapittel 4: 16
+  - kapittel 7: 6
+  - kapittel 8: 10
+  - kapittel 10: 7
+- Oppgavene om WACC og nåverdi etter skatt står under kapittel 8, og kapittel 11 viser til dem. Kapittel 1 har verken eksamensoppgaver eller kapitteloppgaver med løsning i kildene.
+- Utforming: Arial, samme oppbygging for hver oppgave og en farget linje med eksamen, oppgavenummer, vekt og tittel. Tabellene har grå overskriftsrad og dobbel strek under sumrader, som på siden. Liggende utskrift, tilpasset sidebredden.
+
+Kontroll:
+- Hvert ord i oppgavetekstene og delspørsmålene står i oppgavefilen, og hvert ord i svarene og løsningene står i fasitfilen.
+- Oppgavefilen har ingen svar eller løsninger.
+- Begge filene er gjort om til PDF med LibreOffice og sett gjennom.
+- Tallene i fasiten er de samme som i eksamensdataene, som ble kontrollert i bølge 4 og senere. De er satt inn som verdier fra løsningsforslagene, ikke som formler.
 
 ## Åpne punkter
 
