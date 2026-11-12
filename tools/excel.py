@@ -259,7 +259,7 @@ class Sheet:
 
 
 # ---------- Bygging ----------
-EXAMS = sorted(D['exams'], key=lambda e: e['year'])
+EXAMS = sorted(D['exams'], key=lambda e: e['year'], reverse=True)  # nyeste først
 SRC = {'LF': 'Løsningsforslaget', 'LF+egen': 'Løsningsforslaget og egen utregning', 'egen': 'Egen utregning (ingen LF for dette punktet)'}
 
 
@@ -292,7 +292,7 @@ def build(fasit):
     ov.text('Bredesen, Investering og finansiering (7. utg.). Eksamenssettene 2016–2025 og kapitteloppgavene i læreboka, ordnet etter kapittel.', F_MUTED)
     ov.blank()
     intro = [
-        'Hver eksamensoppgave står samlet under det kapitlet tyngden ligger i, med ordrett tekst og tall fra eksamenssettet. '
+        'Hver eksamensoppgave står samlet under det kapitlet tyngden ligger i, med ordrett tekst og tall fra eksamenssettet. Nyeste eksamen står først. '
         'Delspørsmål som hører til andre kapitler, er listet nederst i disse kapitlenes faner, med henvisning.',
         'Oppgavene om WACC og nåverdi etter skatt står under kapittel 8, med henvisning fra kapittel 11 for WACC-delen.',
         'Tabeller er lagt inn som tall i celler, så de kan brukes direkte i utregningen.',
@@ -467,7 +467,16 @@ def build(fasit):
 
 
 os.makedirs(OUT, exist_ok=True)
-for fasit, name in [(False, 'OKAD221_oppgaver.xlsx'), (True, 'OKAD221_fasit.xlsx')]:
+files = {}
+for fasit, key, name in [(False, 'oppgaver', 'OKAD221_oppgaver.xlsx'), (True, 'fasit', 'OKAD221_fasit.xlsx')]:
     build(fasit).save(os.path.join(OUT, name))
+    files[key] = {'path': 'excel/' + name, 'kb': round(os.path.getsize(os.path.join(OUT, name)) / 1024)}
     print('skrev', name)
+
+# Liten datafil til nettsiden: filene, størrelsen og hva hver kapittelfane inneholder
+manifest = {'files': files, 'ch': {ch: {'exam': len(tasks_for(ch)), 'cross': len(cross_for(ch)), 'book': len(LF.get(ch, []))} for ch in range(1, 14)},
+            'tasks': {f"{e['id']}-{t['nr']}": main_chapter(t) for e in EXAMS for t in e['tasks']}}
+with open(os.path.join(ROOT, 'js', 'data', 'excel.js'), 'w', encoding='utf-8') as f:
+    f.write('/* Laget av tools/excel.py. Ikke rediger for hånd. Excel-arbeidsbøkene i excel/ og hva hver kapittelfane inneholder. */\n')
+    f.write("(function (root) { 'use strict'; const O = (root.OKAD = root.OKAD || {}); O.excel = " + json.dumps(manifest, ensure_ascii=False) + '; })(typeof globalThis !== \'undefined\' ? globalThis : this);\n')
 print({ch: (len(tasks_for(ch)), len(cross_for(ch)), len(LF.get(ch, []))) for ch in range(1, 14)})

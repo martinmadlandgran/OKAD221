@@ -854,6 +854,35 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     ok(await q.evaluate((id) => !!JSON.parse(localStorage.getItem('okad221:v1')).qmiss[id], one), 'bølge 24: feil igjen holder spørsmålet i repetisjonen');
     ok(await sameIds(q), 'bølge 24: quiz-id-ene er de samme som i de rå dataene');
     await q.context().close(); }
+  // 35) Bølge 26: Excel-arbeidsbøkene kan lastes ned fra siden
+  { const fs = require('fs'), path = require('path'), root = path.join(__dirname, '..');
+    for (const w of [320, 1200]) { const q = await mk({ w, h: 800 });
+      await go(q, 'eksamener'); const ex = await q.evaluate(() => [...document.querySelectorAll('#xl a[download]')].map((a) => ({ href: a.getAttribute('href'), t: a.textContent })));
+      ok(ex.length === 2 && /oppgaver\.xlsx$/.test(ex[0].href) && /fasit\.xlsx$/.test(ex[1].href) && ex.every((a) => /Excel, \d+.kB/.test(a.t)), `bølge 26 ${w}px: Tidligere eksamener har nedlasting av oppgaver og fasit med filstørrelse`);
+      ok(!(await overflow(q)), `bølge 26 ${w}px: ingen sidelengs rulling på Tidligere eksamener`);
+      if (w === 320) { const hs = await q.evaluate(() => [...document.querySelectorAll('#xl a.btn')].map((a) => a.getBoundingClientRect().height)); ok(hs.every((h) => h >= 40), 'bølge 26: knappene er store nok å trykke på mobil'); }
+      await go(q, 'eksamen/2025'); const t = await q.evaluate(() => [...document.querySelectorAll('.xl')].map((x) => x.textContent));
+      ok(t.length === 5 && /fanen «Kap 8»/.test(t[4]) && /fanen «Kap 4»/.test(t[0]), `bølge 26 ${w}px: hver oppgave i 2025 viser hvilken fane den står i (${t.length})`);
+      ok(!(await overflow(q)), `bølge 26 ${w}px: ingen sidelengs rulling på eksamen 2025`);
+      await go(q, 'tema/4'); ok(await q.evaluate(() => /Fanen «Kap 4» har 16 eksamensoppgaver/.test(document.querySelector('#xl').textContent) && document.querySelectorAll('#xl a[download]').length === 2), `bølge 26 ${w}px: teori for kapittel 4 viser innholdet i fanen og nedlastingen`);
+      await go(q, 'tema/1'); ok((await q.locator('#xl').count()) === 0, `bølge 26 ${w}px: kapittel 1 har ingen Excel-lenke, fordi fanen er tom`);
+      await go(q, 'tema/13'); ok(/5 kapitteloppgaver fra boka/.test(await q.textContent('#xl')), `bølge 26 ${w}px: kapittel 13 viser kapitteloppgavene`);
+      await q.context().close(); }
+    // Filene finnes, svarer på serveren og er like store som oppgitt
+    const q = await mk(); await go(q, 'eksamener');
+    const info = await q.evaluate(async () => { const out = []; for (const k of ['oppgaver', 'fasit']) { const f = OKAD.excel.files[k], r = await fetch(f.path); const b = await r.arrayBuffer(); out.push({ ok: r.ok, kb: f.kb, real: Math.round(b.byteLength / 1024), zip: new Uint8Array(b.slice(0, 2)).join(',') }); } return out; });
+    ok(info.every((x) => x.ok && x.zip === '80,75' && Math.abs(x.real - x.kb) <= 1), 'bølge 26: begge filene lastes ned, er xlsx og har oppgitt størrelse');
+    const [dl] = await Promise.all([q.waitForEvent('download'), q.click('#xl a[download] >> nth=0')]); ok(/OKAD221_oppgaver\.xlsx$/.test(dl.suggestedFilename()), 'bølge 26: klikk gir nedlasting med riktig filnavn');
+    // Alle 40 oppgavene har en fane, og datafilen stemmer med eksamensdataene
+    ok(await q.evaluate(() => OKAD.exams.every((e) => e.tasks.every((t) => OKAD.excel.tasks[`${e.id}-${t.nr}`] >= 1)) && Object.values(OKAD.excel.ch).reduce((a, x) => a + x.exam, 0) === 40), 'bølge 26: alle 40 eksamensoppgaver står i en kapittelfane');
+    // Uten datafilen vises ingen lenker, og siden virker
+    await q.route('**/js/data/excel.js*', (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' })); await q.reload(); await go(q, 'eksamener');
+    ok((await q.locator('#xl').count()) === 0 && (await q.locator('.rowlink').count()) === 10, 'bølge 26: blokkert datafil gir siden uten Excel-lenker');
+    await go(q, 'tema/4'); ok((await q.locator('h1').count()) === 1 && (await q.locator('#xl').count()) === 0, 'bølge 26: teorien virker uten datafilen');
+    // Nyeste eksamen først i arbeidsboka
+    const xl = require('child_process').execFileSync('python3', ['-c', "import openpyxl;ws=openpyxl.load_workbook('excel/OKAD221_oppgaver.xlsx')['Kap 4'];print('|'.join(str(r[1]) for r in ws.iter_rows(values_only=True) if r[1] and ' · Oppgave ' in str(r[1])))"], { cwd: root, encoding: 'utf8' }).trim().split('|');
+    const yrs = xl.map((x) => +x.match(/\d{4}/)[0]); ok(yrs.length === 16 && yrs.every((y, i) => !i || y <= yrs[i - 1]) && yrs[0] === 2025, 'bølge 26: kapittel 4 i Excel har nyeste eksamen først (' + yrs.join(', ') + ')');
+    await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });

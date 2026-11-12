@@ -683,9 +683,15 @@
   };
 
   // ---------- Tidligere eksamener ----------
+  // Excel-arbeidsbøkene (laget av tools/excel.py). Mangler datafilen, vises ingen lenker.
+  const XL = O.excel;
+  const xlLink = (k, txt, cls) => `<a${cls ? ` class="${cls}"` : ''} href="${XL.files[k].path}" download>${txt}</a>`;
+  const xlButtons = () => `<p class="row">${xlLink('oppgaver', `Last ned oppgavene (Excel, ${XL.files.oppgaver.kb}\u00a0kB)`, 'btn primary')}${xlLink('fasit', `Last ned fasit (Excel, ${XL.files.fasit.kb}\u00a0kB)`, 'btn')}</p>`;
   routes.eksamener = () => {
     setTitle('Tidligere eksamener');
-    view.innerHTML = '<h1>Tidligere eksamener</h1><p class="lead">Prøv selv først. Åpne deretter fasit og løsning, og kryss av det du fikk til.</p><ul class="rows">' +
+    view.innerHTML = '<h1>Tidligere eksamener</h1><p class="lead">Prøv selv først. Åpne deretter fasit og løsning, og kryss av det du fikk til.</p>' +
+      (XL ? `<div class="callout" id="xl"><h4 style="margin-top:0">Alle oppgavene i Excel</h4><p>Alle ${O.exams.reduce((a, e) => a + e.tasks.length, 0)} eksamensoppgavene er ordnet etter kapittel i læreboka, med nyeste eksamen først og tabellene som tall i cellene. Kapitteloppgavene fra boka er også med. Fasiten ligger i en egen fil, så du ikke ser svarene mens du jobber.</p>${xlButtons()}<p class="small muted">Excel-filene passer best på PC. På mobil åpnes de i en app for regneark.</p></div>` : '') +
+      '<ul class="rows">' +
       O.exams.map((e) => {
         const tot = U.sum(e.tasks.map((t) => t.parts.length)), done = U.sum(e.tasks.map((t) => t.parts.filter((p) => S.exam[`${e.id}-${t.nr}${p.label}`]).length));
         return `<li><a class="rowlink" href="#/eksamen/${e.id}"><span class="rl-title">${e.title}</span><span class="rl-sub">${e.tasks.map((t) => `${t.weight} % ${esc(t.title)}`).join(' · ')}</span><span class="rl-meta"><b>${done}</b> / ${tot} krysset av</span></a></li>`;
@@ -703,13 +709,19 @@
             <details><summary>Fasit</summary><div class="inner">${p.answer}</div></details>
             <details><summary>Løsning steg for steg</summary><div class="inner"><p class="tag">${src[p.src] || 'Tall fra løsningsforslaget, forklaringen er lagt til'}</p>${p.method}</div></details>
             <p><label><input type="checkbox" data-k="${k}" ${S.exam[k] ? 'checked' : ''}>Denne fikk jeg til (deloppgave ${t.nr}${p.label})</label></p></div></div>`; }).join('') +
-          `<p class="small noprint">Samme type med nye tall: ${related.map((g) => `<a href="#/oving/${g}">${O.genById[g].title}</a>`).join(' · ')}</p></section>`;
+          `<p class="small noprint">Samme type med nye tall: ${related.map((g) => `<a href="#/oving/${g}">${O.genById[g].title}</a>`).join(' · ')}` +
+          (XL && XL.tasks[`${e.id}-${t.nr}`] ? `<br><span class="xl">I Excel: fanen «Kap ${XL.tasks[`${e.id}-${t.nr}`]}» i ${xlLink('oppgaver', 'oppgavefilen', '')} og ${xlLink('fasit', 'fasiten', '')}.</span>` : '') + '</p></section>';
       }).join('');
     view.onchange = (ev) => { const k = ev.target.dataset && ev.target.dataset.k; if (k) { S.exam[k] = ev.target.checked; save(); } };
   };
 
   // ---------- Teori ----------
   const fitem = (x) => `<div class="fitem"><b>${x.name}</b><div class="formula" tabindex="0">${x.html}</div><div class="small muted">${x.note || ''}</div></div>`;
+  const xlChapter = (nr) => {
+    const x = XL && XL.ch[nr]; if (!x || !(x.exam + x.cross + x.book)) return '';
+    const what = [x.exam && `${x.exam} ${x.exam === 1 ? 'eksamensoppgave' : 'eksamensoppgaver'}`, x.cross && `${x.cross} ${x.cross === 1 ? 'henvisning' : 'henvisninger'} til delspørsmål i andre kapitler`, x.book && `${x.book} kapitteloppgaver fra boka`].filter(Boolean);
+    return `<div id="xl"><h3>Eksamensoppgaver i Excel</h3><p>Fanen «Kap ${nr}» har ${what.length > 1 ? what.slice(0, -1).join(', ') + ' og ' + what[what.length - 1] : what[0]}. Nyeste eksamen står først, og fasiten ligger i en egen fil.</p>${xlButtons()}</div>`;
+  };
   routes.tema = (nr) => {
     if (!nr) {
       setTitle('Teori');
@@ -724,7 +736,7 @@
     const sec = (title, html) => (html ? `<h2>${title}</h2>${html}` : '');
     view.innerHTML = `<div class="crumbs"><a href="#/tema">Teori</a> › Kapittel ${c.nr}</div><p class="eyebrow">Eksamensvekt: ${c.examWeight}</p><h1>Kapittel ${c.nr}: ${c.title}</h1>
       <div class="callout"><h4 style="margin-top:0">På eksamen</h4>${c.examNotes || ''}</div>${c.summary || ''}` +
-      sec('Øv på kapitlet', (gens.length ? `<ul class="rows">${gens.map(genRow).join('')}</ul>` : '<p class="muted">Det finnes ingen regneoppgaver for dette kapitlet.</p>') + (hasQuiz ? `<p><a class="btn" href="#/quiz/${c.nr}">Ta quiz for kapittel ${c.nr}</a></p>` : '')) +
+      sec('Øv på kapitlet', (gens.length ? `<ul class="rows">${gens.map(genRow).join('')}</ul>` : '<p class="muted">Det finnes ingen regneoppgaver for dette kapitlet.</p>') + (hasQuiz ? `<p><a class="btn" href="#/quiz/${c.nr}">Ta quiz for kapittel ${c.nr}</a></p>` : '') + xlChapter(c.nr)) +
       sec('Fremgangsmåter', (c.methods || []).map((m) => `<h3>${m.title}</h3><ol class="steps">${m.steps.map((s) => `<li>${s}</li>`).join('')}</ol>`).join('')) +
       sec('Typiske feil', (c.pitfalls || []).length ? '<ul class="keypoints">' + c.pitfalls.map((x) => `<li>${x}</li>`).join('') + '</ul>' : '') +
       sec('Formler', (c.formulas || []).map(fitem).join('')) +
