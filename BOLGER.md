@@ -36,6 +36,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 14 | Hardt mellomrom mellom tall og «dager», «år», «tusen» og «prosentpoeng» på hele siden | Ferdig |
 | 15 | Åpne punkter: factoring med kortere kredittid og durasjon lukket. Hardt mellomrom også før «prosent», «mill.», «millioner», «mnd.», «måneder» og «timer» | Ferdig |
 | 16 | 16 nye quizspørsmål (fire i hvert av kapittel 2, 3, 5 og 6), alle feil tallalternativer i de fire kapitlene forklart | Ferdig |
+| 17 | Alle feil tallalternativer forklart i alle 13 kapitler, fire nye quizspørsmål i kapittel 10 og 13 | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -359,6 +360,33 @@ Kontroller i `e2e.js` (25 nye): minst 16 spørsmål i hvert av de fire kapitlene
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 206 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 606 bestått.
 
+Avgjort av eier etter bølgen: de fem byttede alternativene beholdes (1a), og kontrollen av forklarte feilalternativer skal gjelde alle 13 kapitler (2a). Fulgt opp i bølge 17.
+
+## Bølge 17: forklarte feilalternativer i alle kapitler, quiz for kapittel 10 og 13 (ferdig)
+
+Kontrollen fra bølge 16 gjelder nå alle 13 kapitler. Den fant 54 feil tallalternativer som forklaringen ikke nevnte, i kapittel 4 (5), 7 (7), 8 (8), 10 (7), 11 (12), 12 (5) og 13 (10). I kapittel 12 lå de i eldre spørsmål som bølge 11 ikke dekket.
+
+- Forklaringene sier nå hva hver feil er. Eksempler: «1 472 727 framskriver NNV ett år», «244 000 er summen av avskrivningene, ikke restsaldoen», «0,15 setter risikofri rente i telleren», «7 200 legger premien til i stedet for å trekke den fra».
+- 13 alternativer var ikke en feil som lot seg navngi, og er byttet. Spørsmålsteksten er urørt, så id-en og repetisjonen er den samme.
+  - Kapittel 7: 11,39 % ble 1,00 % (perioderenten), 13,00 % ble 6,15 % (bare et halvt år), og 10,09 % ble 8,24 % (provisjonen glemt).
+  - Kapittel 8: 2,78 % ble 3,85 % (delt på 0,78), 2,46 % ble 3,00 % (skatten glemt), og 17 200 ble 15 840 (bare oppjusteringen skattlagt).
+  - Kapittel 10: 0,40 ble 3,33 (delt på variansene).
+  - Kapittel 11: 10,5 % ble 9,0 % (bare risikopremien), 8,50 % ble 7,20 % (bare egenkapitaldelen), og 0,033 ble 0,040 (markedets varians uten beta).
+  - Kapittel 12: 180 000 ble 147 945 (365 dager i stedet for 360), og 54 000 ble 54 000 000 (glemt å dele på dagene).
+  - Kapittel 13: 380 ble 22 (premien, ikke en kurs).
+- Alle nye tall i forklaringene er regnet med et eget skript.
+
+Nye quizspørsmål (214 i alt, 206 før). Kapittel 10 har nå 17 og kapittel 13 18. Riktig svar står på hver av de fire plassene i de nye spørsmålene i hvert kapittel.
+
+- Kapittel 10, eksempel 10-2 til 10-4 i forelesningen: kovariansen fra en simultanfordeling (feil: avvikene ikke trukket fra forventningene, korrelasjonen, produktet av forventningene), standardavviket til en 50/50-portefølje med negativ korrelasjon (feil: veid snitt, kovariansen glemt, variansen), geometrisk årlig avkastning for Hovedindeksen (feil: logavkastning, uten rentesrente, feil antall år), og logavkastning over én dag (feil: aritmetisk avkastning, kronebeløp, delt på sluttkursen).
+- Kapittel 13, eksempel 13-2 til 13-4: verdien av kjøpsopsjonen i binomialmodellen (feil: uten lånet, lånet ikke diskontert, sannsynligheten brukt), kursen der aksjer og opsjoner gir samme gevinst (feil: opsjonens nullpunkt, dagens kurs, innløsningskursen), gevinst på salgsopsjoner (feil: premien glemt, behandlet som kjøpsopsjon, premien lagt til), og nullpunktet for kjøper av salgsopsjon (feil: premien lagt til, premien glemt, trukket fra dagens kurs).
+
+Versjonsnummeret er økt til `?v=19`.
+
+Kontroller i `e2e.js` (13 nye): hvert feil tallalternativ er forklart i alle 13 kapitler (feilet med 54 treff før rettingene), riktig svar på alle fire plassene i hvert kapittel, antall spørsmål i kapittel 10 og 13, at alle åtte nye spørsmål finnes og har riktig svar på alle fire plassene, full runde i begge kapitlene, alle nye spørsmål i repetisjonsrunden, feil svar gir forklaring, ingen sidelengs rulling i 320 px, feil igjen holder dem i repetisjonen, og uendrede quiz-id-er.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 214 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 619 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -372,16 +400,16 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Quizen har nå 206 spørsmål. Kapittel 1 har færrest (12), deretter kapittel 10 (13) og kapittel 8, 9, 11 og 13 (14 hver). Kontrollen for forklarte feilalternativer dekker nå kapittel 1, 2, 3, 5, 6, 9 og 12, men ikke 4, 7, 8, 10, 11 og 13. Forslag til bølge 17: utvid kontrollen til alle kapitlene og rett forklaringene den finner, og gi kapittel 10 og 13 fire nye spørsmål hver.
+Alle feilalternativer i quizen er nå forklart. Kapittel 1 har færrest spørsmål (12), deretter kapittel 8, 9 og 11 (14 hver). Forslag til bølge 18: fire nye quizspørsmål i hvert av kapittel 8 og 11, de to kapitlene med mest eksamensvekt blant dem som har få spørsmål (nåverdi etter skatt og WACC/KVM), etter reglene fra bølge 16.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 17 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 18 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 17:
-1. Utvid kontrollen i tools/e2e.js til at hvert feil tallalternativ er forklart i alle 13 kapitler, og rett forklaringene den finner (bytt alternativer som ikke er en navngitt feil, uten å endre spørsmålsteksten).
-2. Fire nye quizspørsmål i hvert av kapittel 10 og 13, etter reglene fra bølge 16.
+Innhold i bølge 18:
+1. Fire nye quizspørsmål i hvert av kapittel 8 og 11 (fra 14 til 18), etter reglene fra bølge 16: hvert feil alternativ er en navngitt feil som forklaringen sier hva er, riktig svar på alle fire plassene, alle tall regnet med eget skript, og bygget på kilder/.
+2. Funn fra brukertesten på mobil (stryk punktet hvis ingen): <funn>.
 3. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit, push og merge når alt er grønt.
