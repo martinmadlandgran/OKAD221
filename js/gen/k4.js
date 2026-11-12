@@ -1,4 +1,4 @@
-/* Kapittel 4 – Obligasjoner og aksjer. */
+/* Kapittel 4 – Obligasjoner og aksjer, modifisert internrente (kapittel-LF 4.13) og lisens eller egenproduksjon (kapittel-LF 4.11). */
 (function (root) {
   'use strict';
   const O = root.OKAD, F = O.F, U = O.U;
@@ -148,6 +148,129 @@
               f(`P<sub>3</sub> = ${frac(`D<sub>4</sub>`, 'k − g')} = ${frac(`${n(D[2], 3)} · ${n(1 + g, 2)}`, `${n(k, 2)} − ${n(g, 2)}`)} = ${n(p3, 2)}`) + f(`P<sub>0</sub> = ${n(p0two, 2)} kr`) },
         ],
       };
+    },
+  });
+  // ==================================================================
+  // Modifisert internrente (kap. 4 oppg. 13)
+  // ==================================================================
+  /** Ren beregning, også brukt til kontroll mot kapittel-LF 4.13. sales[t-1] er salget i år t. */
+  function mirCalc({ I, sales, vk, fk, r }) {
+    const T = sales.length, cf = [-I].concat(sales.map((s) => s * (1 - vk) - fk));
+    const npv = F.npv(r, cf), irr = F.irr(cf);
+    const fvs = cf.slice(1).map((c, k) => c * Math.pow(1 + r, T - (k + 1))), fv = U.sum(fvs);
+    const mir = Math.pow(fv / I, 1 / T) - 1;
+    return { T, cf, npv, irr, fvs, fv, mir };
+  }
+  O._mirCalc = mirCalc;
+  const mirFirms = [['Fjellbryggeriet AS', 'en ny ølserie'], ['Kystkjøkken AS', 'ferdigretter av fisk'], ['Nordlys Design AS', 'en serie lamper'], ['Trehus Vest AS', 'ferdighytter i moduler'], ['Bakeriet Sør AS', 'glutenfrie brød']];
+
+  O.reg({
+    id: 'k4-modifisert-internrente', chapter: 4, level: 2, minutes: 15, examLike: 'Kapitteloppgave 4.13 – ikke gitt som egen oppgave 2016–2025',
+    title: 'Modifisert internrente: NNV, IR og MIR',
+    topic: 'Prosjektanalyse før skatt',
+    blurb: 'Kontantstrøm, nåverdi og internrente, sluttverdien av innbetalingene reinvestert til avkastningskravet, og den modifiserte internrenten (MODIR).',
+    gen(R) { let t; for (let k = 0; k < 400; k++) { t = this.build(R); if (t) break; } return t.task; },
+    build(R) {
+      const [firm, prod] = R.pick(mirFirms);
+      const T = R.pick([4, 4, 5]), r = R.pick([0.10, 0.12, 0.15]), vk = R.pick([0.2, 0.25, 0.3, 0.35]);
+      const I = R.int(6, 16) * 500000, fk = R.int(1, 4) * 100000;
+      const s1 = Math.round(I * R.pick([0.45, 0.5, 0.55, 0.6]) / 25000) * 25000, s2 = Math.round(s1 * R.pick([1.2, 1.3, 1.4]) / 25000) * 25000, k1 = Math.floor(T / 2);
+      const sales = U.range(1, T).map((t) => (t <= k1 ? s1 : s2));
+      const c = mirCalc({ I, sales, vk, fk, r });
+      if (!(c.npv > 0 && c.irr - r >= 0.04 && c.irr < 0.6)) return null;
+      const yrs = U.range(1, T);
+      const task = {
+        text: `<p>${firm} vurderer å starte produksjon av ${prod}. Investeringen er <b>${n(I)}</b> i år 0, og prosjektet varer i <b>${T} år</b> uten restverdi. Variable kostnader er <b>${pct(vk, 0)}</b> av salget, og de betalbare faste kostnadene er <b>${n(fk)}</b> per år. Avkastningskravet er <b>${pct(r, 0)}</b>. Se bort fra skatt og arbeidskapital.</p>` +
+          table(['År'].concat(yrs.map(String)), [['Salg'].concat(sales.map((s) => `<b>${n(s)}</b>`))]),
+        parts: [
+          { q: 'Hva er kontantstrømmen i år 1?', answer: c.cf[1], unit: 'kr',
+            sol: f(`${n(sales[0])} · (1 − ${n(vk * 100)} %) − ${n(fk)} = ${n(sales[0] * (1 - vk))} − ${n(fk)} = ${n(c.cf[1])}`) },
+          { q: 'Beregn prosjektets nåverdi (NNV).', answer: c.npv, unit: 'kr', tol: { abs: I * 0.001 },
+            sol: U.cfTable([['Salg', [null].concat(sales)], ['Variable kostnader', [null].concat(sales.map((s) => -s * vk))], ['Faste kostnader', [null].concat(sales.map(() => -fk))], ['Investering', [-I]], ['Kontantstrøm', c.cf, 'sum']], T) +
+              `<p><code>=NNV(${n(r * 100)}%; år 1–${T}) + år 0</code> = <b>${n(c.npv)}</b>.</p>` },
+          { q: 'Beregn prosjektets internrente (IR).', answer: c.irr, unit: '%',
+            sol: `<p><code>=IR(kontantstrøm år 0–${T})</code> = <b>${pct(c.irr, 2)}</b>. Internrenten forutsetter at innbetalingene underveis kan plasseres til ${pct(c.irr, 2)}, altså langt over avkastningskravet på ${pct(r, 0)}.</p>` },
+          { q: `Anta at innbetalingene reinvesteres til avkastningskravet fram til år ${T}. Hva er sluttverdien av innbetalingene i år ${T}?`, answer: c.fv, unit: 'kr', tol: { abs: I * 0.001 },
+            hint: `Hver innbetaling forrentes med ${pct(r, 0)} fra året den kommer, til år ${T}. Innbetalingen i år ${T} forrentes ikke.`,
+            sol: U.table(['År', 'Kontantstrøm', 'Faktor', `Sluttverdi år ${T}`], yrs.map((t) => [String(t), n(c.cf[t]), `${n(1 + r, 2)}<sup>${T - t}</sup>`, n(c.fvs[t - 1])]).concat([{ cells: ['Sum', '', '', n(c.fv)], cls: 'sum' }])) + `<p>Hver innbetaling ganges med ${n(1 + r, 2)} opphøyd i antall år fram til år ${T}.</p>` },
+          { q: 'Beregn den modifiserte internrenten (MIR).', answer: c.mir, unit: '%',
+            hint: 'Den modifiserte internrenten er renten som gjør investeringen i år 0 lik sluttverdien av innbetalingene.',
+            sol: f(`MIR = ${frac(n(c.fv), n(I))}<sup>1/${T}</sup> − 1`) + f(`= <b>${pct(c.mir, 2)}</b>`) +
+              `<p>I Excel: <code>=MODIR(kontantstrøm år 0–${T}; ${n(r * 100)}%; ${n(r * 100)}%)</code>. MIR ligger mellom kravet (${pct(r, 0)}) og IR (${pct(c.irr, 2)}), fordi innbetalingene her bare forrentes med kravet.</p>` },
+          { kind: 'text', q: 'Hvorfor er den modifiserte internrenten lavere enn internrenten, og når er det et poeng å bruke den?',
+            points: [`<b>Reinvesteringsrenten</b>: internrenten forutsetter at innbetalingene underveis plasseres til internrenten selv (${pct(c.irr, 1)}). MIR forutsetter at de plasseres til avkastningskravet (${pct(r, 0)}), som er mer realistisk.`,
+              '<b>Samme konklusjon om lønnsomhet</b>: MIR er over kravet når NNV er positiv, så den sier ikke noe annet om prosjektet skal gjennomføres.',
+              '<b>Flere internrenter</b>: skifter kontantstrømmen fortegn flere ganger, kan det finnes flere internrenter. MIR gir ett svar.',
+              '<b>Rangering</b>: ved gjensidig utelukkende prosjekter er NNV fortsatt beslutningsregelen. Ulik størrelse kan gi feil rangering også med MIR.'] },
+        ],
+      };
+      return { p: { I, sales, vk, fk, r }, c, task };
+    },
+  });
+
+  // ==================================================================
+  // Lisens eller egenproduksjon (kap. 4 oppg. 11)
+  // ==================================================================
+  /** Ren beregning, også brukt til kontroll mot kapittel-LF 4.11. price[t-1] og qty[t-1] gjelder år t. */
+  function licCalc({ price, qty, roy, vek, fk, M, AK, r, dP }) {
+    const T = price.length, rev = price.map((p, k) => p * qty[k]);
+    const royalty = rev.map((x) => x * roy), nvLic = F.npv(r, [0].concat(royalty));
+    const cf = [-(M + AK)].concat(qty.map((q, k) => q * (price[k] - vek) - fk + (k === T - 1 ? AK : 0)));
+    const npv = F.npv(r, cf), irr = F.irr(cf);
+    const dRev = dP ? qty.map((q, k) => q * dP[k]) : null, dNpv = dP ? F.npv(r, [0].concat(dRev)) : null;
+    return { T, rev, royalty, nvLic, cf, npv, irr, diff: npv - nvLic, dRev, dNpv, dLic: dP ? dNpv * roy : null };
+  }
+  O._licCalc = licCalc;
+  const licFirms = [['Sykkelfabrikken Nord AS', 'en ny elsykkelmotor', 'en stor tysk produsent'], ['Lydverk AS', 'en trådløs høyttaler', 'en svensk elektronikkjede'], ['Fjordtekstil AS', 'et nytt regntøy', 'en internasjonal klesprodusent'], ['Kaldt Vann AS', 'en vannrenser for hytter', 'en dansk produsent']];
+
+  O.reg({
+    id: 'k4-lisens-egenproduksjon', chapter: 4, level: 2, minutes: 25, examLike: 'Kapitteloppgave 4.11 – ikke gitt som egen oppgave 2016–2025',
+    title: 'Lisens eller egenproduksjon: nåverdi av royalty mot NNV av egen produksjon',
+    topic: 'Prosjektrangering',
+    blurb: 'Nåverdien av royalty fra en lisens, kontantstrøm, NNV og internrente for egen produksjon med maskin og arbeidskapital, og hva reviderte priser gjør med nåverdien.',
+    gen(R) { let t; for (let k = 0; k < 400; k++) { t = this.build(R); if (t) break; } return t.task; },
+    build(R) {
+      const [firm, prod, buyer] = R.pick(licFirms);
+      const T = 4, r = R.pick([0.10, 0.12, 0.13, 0.15]), roy = R.pick([0.08, 0.10, 0.12, 0.15]);
+      const p0 = R.int(10, 16) * 10, pf = R.pick([[1, 0.92, 0.92, 0.77], [1, 1, 0.9, 0.8], [1, 0.95, 0.9, 0.85]]);
+      const price = pf.map((x) => Math.round(p0 * x / 5) * 5);
+      const q0 = R.int(8, 15) * 10000, qf = R.pick([[1, 1.2, 1.2, 1.1], [1, 1.1, 1.2, 1], [1, 1.25, 1.3, 1.15]]);
+      const qty = qf.map((x) => Math.round(q0 * x / 1000) * 1000);
+      const vek = Math.round(p0 * R.pick([0.4, 0.45, 0.5]) / 5) * 5;
+      const fk = Math.round(q0 * (p0 - vek) * R.pick([0.45, 0.6, 0.75]) / 100000) * 100000;
+      const M = Math.round(q0 * p0 * R.pick([0.2, 0.25, 0.3]) / 100000) * 100000, AK = Math.round(q0 * p0 * R.pick([0.1, 0.12, 0.15]) / 100000) * 100000;
+      const dP = R.pick([[10, 10, 0, -10], [5, 10, 5, -15], [15, 10, 0, -10], [-5, 0, 10, 10]]);
+      const c = licCalc({ price, qty, roy, vek, fk, M, AK, r, dP });
+      if (!(c.npv > 0 && c.irr > r + 0.05 && c.irr < 1.5 && Math.abs(c.diff) > 0.05 * c.nvLic && M > 0 && AK > 0 && fk > 0)) return null;
+      const own = c.diff > 0, yrs = U.range(1, T), newP = price.map((p, k) => p + dP[k]);
+      const task = {
+        text: `<p>${firm} har utviklet ${prod}. ${buyer[0].toUpperCase() + buyer.slice(1)} tilbyr seg å produsere og selge produktet på lisens og betale <b>${pct(roy, 0)}</b> av omsetningen i royalty. Alternativet er å produsere selv. Da må bedriften kjøpe en maskin til <b>${n(M)}</b> og binde <b>${n(AK)}</b> i arbeidskapital i år 0. Arbeidskapitalen frigjøres i år ${T}, og maskinen har ingen restverdi. Variable kostnader er <b>${n(vek)}</b> per enhet, og de faste kostnadene øker med <b>${n(fk)}</b> per år. Avkastningskravet er <b>${pct(r, 0)}</b>. Pris og mengde er de samme med lisens og egenproduksjon. Se bort fra skatt.</p>` +
+          table(['År'].concat(yrs.map(String)), [['Pris per enhet'].concat(price.map((x) => `<b>${n(x)}</b>`)), ['Mengde'].concat(qty.map((x) => `<b>${n(x)}</b>`))]),
+        parts: [
+          { q: 'Hva er nåverdien av royaltyinntektene med lisens?', answer: c.nvLic, unit: 'kr', tol: { abs: c.nvLic * 0.001 },
+            hint: 'Royaltyen er en andel av omsetningen (pris · mengde). Lisensen krever ingen investering.',
+            sol: U.cfTable([['Omsetning', [null].concat(c.rev)], [`Royalty (${pct(roy, 0)})`, [null].concat(c.royalty), 'sum']], T) + `<p><code>=NNV(${n(r * 100)}%; royalty år 1–${T})</code> = <b>${n(c.nvLic)}</b>.</p>` },
+          { q: 'Hva er kontantstrømmen i år 1 ved egenproduksjon?', answer: c.cf[1], unit: 'kr',
+            sol: f(`${n(qty[0])} · (${n(price[0])} − ${n(vek)}) − ${n(fk)} = ${n(qty[0] * (price[0] - vek))} − ${n(fk)} = ${n(c.cf[1])}`) },
+          { q: 'Beregn NNV for egenproduksjon.', answer: c.npv, unit: 'kr', tol: { abs: c.nvLic * 0.001 },
+            sol: U.cfTable([['Omsetning', [null].concat(c.rev)], ['Variable kostnader', [null].concat(qty.map((q) => -q * vek))], ['Økte faste kostnader', [null].concat(qty.map(() => -fk))], ['Maskin', [-M]], ['Arbeidskapital', [-AK].concat(yrs.map((t) => (t === T ? AK : null)))], ['Kontantstrøm', c.cf, 'sum']], T) +
+              `<p><code>=NNV(${n(r * 100)}%; år 1–${T}) + år 0</code> = <b>${n(c.npv)}</b>.</p>` },
+          { q: 'Beregn internrenten for egenproduksjon.', answer: c.irr, unit: '%',
+            sol: `<p><code>=IR(kontantstrøm år 0–${T})</code> = <b>${pct(c.irr, 2)}</b>. Internrenten kan ikke sammenlignes med lisensen, som ikke har noen investering og derfor ingen internrente.</p>` },
+          { q: 'Hvor mye mer er egenproduksjon verdt enn lisens, målt i nåverdi? (Negativt hvis lisens er best.)', answer: c.diff, unit: 'kr', tol: { abs: c.nvLic * 0.001 },
+            sol: f(`${n(c.npv)} − ${n(c.nvLic)} = <b>${n(c.diff)}</b>`) + `<p>${own ? 'Egenproduksjon' : 'Lisens'} gir høyest nåverdi. Begge alternativene er regnet mot det samme avkastningskravet, så nåverdiene kan sammenlignes direkte.</p>` },
+          { q: `Markedsavdelingen reviderer prisene til ${newP.map((x) => '<b>' + n(x) + '</b>').join(', ')} i år 1–${T}, med de samme mengdene. Hvor mye endres NNV for egenproduksjon?`, answer: c.dNpv, unit: 'kr', tol: { abs: c.nvLic * 0.001 },
+            hint: 'Når mengden og de variable kostnadene per enhet er de samme, endres kontantstrømmen bare med prisendringen ganger mengden.',
+            sol: U.cfTable([['Prisendring', [null].concat(dP)], ['Endring i omsetning (= endring i kontantstrøm)', [null].concat(c.dRev), 'sum']], T) +
+              `<p>Nåverdien endres med <b>${n(c.dNpv)}</b>. Med lisens endres nåverdien bare med royaltyandelen: ${pct(roy, 0)} · ${n(c.dNpv)} = ${n(c.dLic)}. Egenproduksjon tar hele gevinsten og hele tapet ved prisendringer.</p>` },
+          { kind: 'text', q: 'Hvilke forhold utenom tallene bør trekke inn i valget mellom lisens og egenproduksjon?',
+            points: ['<b>Risiko</b>: egenproduksjon tar hele risikoen for pris og salg, og har faste kostnader og kapital bundet. Royaltyen svinger bare med omsetningen.',
+              '<b>Kapital</b>: egenproduksjon binder kapital i maskin og arbeidskapital, som kanskje kunne vært brukt bedre andre steder.',
+              '<b>Kompetanse og kontroll</b>: egen produksjon gir kontroll over kvalitet og kunnskap. Med lisens kan lisenstakeren bygge opp kompetanse og bli en konkurrent.',
+              '<b>Tidshorisont</b>: beregningen dekker bare de oppgitte årene. Lisensavtalens lengde og hva som skjer etterpå, kan endre bildet.'] },
+        ],
+      };
+      return { p: { price, qty, roy, vek, fk, M, AK, r, dP }, c, task };
     },
   });
 })(typeof globalThis !== 'undefined' ? globalThis : this);
