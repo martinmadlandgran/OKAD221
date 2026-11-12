@@ -46,6 +46,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 24 | Fire nye quizspørsmål i kapittel 3 og 7 | Ferdig |
 | 25 | Excel-arbeidsbøker: eksamensoppgaver per kapittel, og fasit | Ferdig |
 | 26 | Nyeste eksamen først i Excel, og nedlasting av Excel-filene fra siden | Ferdig |
+| 27 | Kapittelmerke i Excel, pensum per deloppgave på siden, Øv-meny i prognosen, Kalkulatorer i menyen | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -659,6 +660,35 @@ Kontroller i `e2e.js` (21 nye):
 
 Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 258 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar, 0 avvik), `tools/e2e.js` 786 bestått.
 
+## Bølge 27: kapittelmerke, pensum per deloppgave, Øv-meny og kalkulatorene (ferdig)
+
+Ønsker fra eier:
+- et merke til venstre for «a)» i Excel når deloppgaven også bygger på et annet kapittel
+- vurdere det samme på siden
+- Øv-lenkene i prognosen som nedtrekksmeny
+- kalkulatorene mer synlige
+- om noen oppgaver i Excel krever at man lager grafer selv
+
+- **Excel:** kolonne A er satt av til et oransje merke, for eksempel «+ kap 2» eller «+ kap 10, 11», til venstre for bokstaven. Merket viser kapitlene deloppgaven bygger på utenom fanens eget. 50 deloppgaver er merket i hver fil, flest i kapittel 4 («+ kap 2» for kontantstrøm, «+ kap 6» for kritiske verdier) og i kapittel 8 («+ kap 11» for WACC). Forklaringen står i Oversikt-fanen. Resten av oppsettet er flyttet én kolonne til høyre.
+- **Eksamenssidene:** siden har ingen «egen» kapittelfane å regne fra, så hver deloppgave viser alle kapitlene den bygger på, for eksempel «Pensum: kap. 2 og kap. 4», med lenker til teorien. Det gjelder alle 143 deloppgaver.
+- **Eksamensanalyse:** Øv-lenkene under hver prognose og joker ligger i en lukket nedtrekksmeny, «Øv på oppgavetypene (5)», som åpner en liste med store trykkflater. Den bruker `details`, så den virker med tastatur og uten egen kode, og den skyver innholdet ned i stedet for å legge seg over.
+- **Kalkulatorer:** står nå i toppmenyen på PC. På mobil ligger Kalkulator i raden under Teori (Teori · Formler · Quiz · Kalkulator), og Teori er markert i bunnmenyen. Lenkene på forsiden og i bunnteksten er som før.
+- **Grafer:** ingen eksamensoppgave 2016–2025 ber om graf eller figur. Eneste kapitteloppgave med figur er 6.1 (stjernediagram). Kolonnene til høyre for oppgavene er tomme i alle faner, så det er plass til grafer der.
+- Versjonsnummeret er økt til `?v=28`.
+
+Kontroller i `e2e.js` (13 nye, 2 endret):
+
+- Kalkulatorer står i toppmenyen og markeres.
+- Hver prognose og joker har en lukket meny med de samme lenkene som før, og ingen løse «Øv:»-linjer.
+- Menyen åpnes med tastaturet, og lenken i den åpner oppgavetypen.
+- Menyene gir ingen sidelengs rulling i 320 px og har store nok knapper.
+- Kalkulator ligger i raden under Teori på mobil, uten sidelengs rulling.
+- Alle 143 deloppgaver viser riktige kapitler uten sidelengs rulling. 2016 1a viser «kap. 2 og kap. 4», og kapittellenken åpner teorien.
+- Excel har 50 merker i begge filene, til venstre for bokstaven.
+- Endret: raden under Teori har fire lenker, og kontrollen fra bølge 26 leser oppgavetittelen i den nye kolonnen.
+
+Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 258 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar, 0 avvik), `tools/e2e.js` 799 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -677,9 +707,9 @@ Alle kapitler har nå minst 16 quizspørsmål, og kapitlene med mest eksamensvek
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 27 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 28 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 27:
+Innhold i bølge 28:
 1. Rett det jeg har funnet i bruk (side, skjerm, hva jeg gjorde og hva som skjedde): <funn>.
 2. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
