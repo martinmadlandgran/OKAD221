@@ -790,7 +790,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await q.context().close(); }
   // 33) Bølge 23: fire nye quizspørsmål i kapittel 10 og 11
   { const q = await mk({ w: 320, h: 640 }); await go(q, 'quiz');
-    const r = await q.evaluate(() => { const re = /Daglig standardavvik for en aksje er 1,5|ikke innsideinformasjon\?|varians 0,0486 \(σ = 22,05|avkastning 15,00 %, −13,04 %|eiendeler for 6.000.000, finansiert med 25|Aksje G har beta 0,7|hele formuen sin i eget selskap|Et nytt prosjekt har beta 1,4/;
+    const r = await q.evaluate(() => { const re = /Daglig standardavvik for en aksje er 1,5|ikke innsideinformasjon\?|varians 0,0486 \(σ = 22,05|avkastning 15,00.%, −13,04.%|eiendeler for 6.000.000, finansiert med 25|Aksje G har beta 0,7|hele formuen sin i eget selskap|Et nytt prosjekt har beta 1,4/;
       const d = document.createElement('div'), txt = (h) => { d.innerHTML = h; return d.textContent; }, c = (ch) => OKAD.quiz.filter((x) => x.ch === ch);
       const nye = OKAD.quiz.filter((x) => re.test(x.q));
       return { n: [c(10).length, c(11).length], nye: nye.map((x) => ({ id: x.id, c: x.correct, ch: x.ch })),
