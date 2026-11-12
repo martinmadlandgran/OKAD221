@@ -43,6 +43,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 21 | Fire nye quizspørsmål i kapittel 1 og 9. Alle kapitler har nå minst 16 | Ferdig |
 | 22 | To nye generatorer fra kapittel-LF (4.13 modifisert internrente, 4.11 lisens eller egenproduksjon), fire nye quizspørsmål i kapittel 4, 6 og 8 | Ferdig |
 | 23 | Fire nye quizspørsmål i kapittel 10 og 11 | Ferdig |
+| 24 | Fire nye quizspørsmål i kapittel 3 og 7 | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -574,6 +575,31 @@ Første kjøring feilet på ett av søkemønstrene i testen: siden gjør mellomr
 
 Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 250 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (129 000 tallsvar, 0 avvik), `tools/e2e.js` 751 bestått.
 
+## Bølge 24: quiz for kapittel 3 og 7 (ferdig)
+
+Meldingen hadde plassholderen «<funn>». Eier valgte da fire nye quizspørsmål i kapittel 3 og 7, som var forslaget etter bølge 23. Ingen funn fra bruk er rettet.
+
+Nye quizspørsmål (258 i alt, 250 før). Kapittel 3 har nå 20 og kapittel 7 23. Alle tall er fra kapittel-LF eller forelesningen og er regnet på nytt med et eget skript. Hvert feil alternativ er en navngitt feil, og riktig svar står på hver av de fire plassene i de nye spørsmålene i hvert kapittel.
+
+- Kapittel 3:
+  - Evigvarende annuitet med vekst, 637 500 (feil: veksten glemt, delt på veksten, første betaling vokst ett år for mye). Kapittel-LF 3.10c.
+  - To betalinger flyttet til år 3, 178 967 (feil: summert uten renter, verdien i år 0, diskontert ett år for mye). Kapittel-LF 3.3.
+  - Forskuddsannuitet fra nåverdi, 26 858 (feil: etterskudd, uten renter, ganget med 1,05 i stedet for delt). Kapittel-LF 3.7e.
+  - Årlig sparebeløp for å nå en sluttverdi, 54 292 (feil: uten renter, sluttverdien behandlet som nåverdi, forskudd). Kapittel-LF 3.8b.
+- Kapittel 7:
+  - Effektiv årsrente for kontantrabatt, 27,43 % (feil: ingen rentesrente, 2 % i stedet for 2/98, perioderenten). Kapittel-LF 7.1c. Det eldre spørsmålet spør bare om perioderenten.
+  - Effektiv rente med etablerings- og termingebyr, 10,01 % (feil: nominell rente, termingebyrene glemt, etableringsgebyret glemt). Kapittel-LF 7.1a–b.
+  - Overkurs når markedsrenten faller, 28 259 (feil: underkursen ved 6 %, 1 % av lånet i fem år, hele innfrielsesbeløpet). Forelesningens eksempel 7-6.
+  - Restgjeld på et annuitetslån etter tre kvartaler, 165 464 (feil: serielån, terminene summert uten diskontering, diskontert med ny markedsrente). Kapittel-LF 7.10.
+
+Versjonsnummeret er økt til `?v=26`.
+
+Kontroller i `e2e.js` (14 nye, de samme som i bølge 23): antall og at alle åtte finnes, riktig svar på alle fire plassene, hvert tall i feil alternativer forklart, kapittelrunde og repetisjon, forklaring ved riktig og feil svar, 320 px og uendrede quiz-id-er.
+
+Første kjøring feilet på ett søkemønster i testen (hardt mellomrom foran «dager»), som i bølge 23. Mønsteret er rettet, ikke dataene.
+
+Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 258 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar, 0 avvik), `tools/e2e.js` 765 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -587,14 +613,14 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Alle kapitler har nå minst 16 quizspørsmål, og kapitlene med mest eksamensvekt har 20 eller flere. Kapittel-LF har få oppgaver med full løsning igjen som ikke ligger nær en generator som finnes. Neste bølge bør bare komme hvis eier finner noe i bruk. Meldingen under er laget for funn. Bytt punkt 1 med for eksempel «fire nye quizspørsmål i kapittel 3 og 7» for mer innhold.
+Alle kapitler har nå minst 16 quizspørsmål, og kapitlene med mest eksamensvekt har 20 eller flere. Kapittel-LF har få oppgaver med full løsning igjen som ikke ligger nær en generator som finnes. Neste bølge bør bare komme hvis eier finner noe i bruk. Meldingen under er laget for funn. Bytt punkt 1 med for eksempel «fire nye quizspørsmål i kapittel 2 og 5» for mer innhold. Erstatt «<funn>» med selve funnet, ellers spør Claude hva bølgen skal inneholde.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 24 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 25 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 24:
+Innhold i bølge 25:
 1. Rett det jeg har funnet i bruk (side, skjerm, hva jeg gjorde og hva som skjedde): <funn>.
 2. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 

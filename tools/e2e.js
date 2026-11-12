@@ -821,6 +821,39 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     ok(await q.evaluate((id) => !!JSON.parse(localStorage.getItem('okad221:v1')).qmiss[id], one), 'bølge 23: feil igjen holder spørsmålet i repetisjonen');
     ok(await sameIds(q), 'bølge 23: quiz-id-ene er de samme som i de rå dataene');
     await q.context().close(); }
+  // 34) Bølge 24: fire nye quizspørsmål i kapittel 3 og 7
+  { const q = await mk({ w: 320, h: 640 }); await go(q, 'quiz');
+    const r = await q.evaluate(() => { const re = /25.500 utbetales om ett år og vokser|50.000 i år 2 og 150.000 i år 5|fire like årlige beløp\. Det første betales i dag|300.000 på kontoen om fem år|98 om 15.dager eller 100 om 45.dager|to årlige terminer på 27.272|faller markedsrenten til 4|16 terminer på 13.869/;
+      const d = document.createElement('div'), txt = (h) => { d.innerHTML = h; return d.textContent; }, c = (ch) => OKAD.quiz.filter((x) => x.ch === ch);
+      const nye = OKAD.quiz.filter((x) => re.test(x.q));
+      return { n: [c(3).length, c(7).length], nye: nye.map((x) => ({ id: x.id, c: x.correct, ch: x.ch })),
+        unexplained: nye.flatMap((x) => x.options.filter((o, i) => i !== x.correct).filter((o) => { const m = o.match(/−?\d[\d  ]*(,\d+)?/); return m && !txt(x.why).includes(m[0].trim()); }).map((o) => txt(x.q).slice(0, 30) + ' → ' + o)) }; });
+    ok(r.n[0] >= 20 && r.n[1] >= 23, `bølge 24: kapittel 3 og 7 har ${r.n.join(' og ')} spørsmål`);
+    ok(r.nye.length === 8, 'bølge 24: alle åtte nye quizspørsmål finnes (' + r.nye.length + ')');
+    for (const ch of [3, 7]) ok(r.nye.filter((x) => x.ch === ch).map((x) => x.c).sort().join('') === '0123', `bølge 24: riktig svar på alle fire plassene i de nye spørsmålene i kapittel ${ch}`);
+    ok(r.unexplained.length === 0, 'bølge 24: hvert tall i et feil alternativ er forklart, også når teksten står først' + (r.unexplained.length ? ': ' + r.unexplained.join(' | ') : ''));
+    await q.evaluate((ids) => { const st = JSON.parse(localStorage.getItem('okad221:v1') || '{"gen":{},"exam":{},"quiz":{}}'); st.qmiss = {}; ids.forEach((id, k) => { st.qmiss[id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); }, r.nye.map((x) => x.id));
+    // En kapittelrunde tar med de fire som venter i kapitlet (høyst fem per runde)
+    for (const ch of [3, 7]) { await q.reload(); await go(q, 'quiz/' + ch); let rep = 0; const n = +(await q.textContent('.eyebrow')).match(/av (\d+)/)[1];
+      for (let k = 0; k < n; k++) { if (await q.locator('#qrep').count()) rep++; const c = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); return OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }).correct; });
+        await q.click(`.choice:not([data-o="${c}"]) >> nth=0`); await q.click('#nx'); }
+      ok(rep === 4, `bølge 24: kapittelrunden for kapittel ${ch} tar med alle fire nye som venter (${rep})`); }
+    await q.evaluate((ids) => { const st = JSON.parse(localStorage.getItem('okad221:v1')); st.qmiss = {}; ids.forEach((id, k) => { st.qmiss[id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); }, r.nye.map((x) => x.id));
+    await q.reload(); await go(q, 'quiz/repeter'); const tot = +(await q.textContent('.eyebrow')).match(/av (\d+)/)[1];
+    ok(tot === 8, `bølge 24: repetisjonsrunden har alle åtte (${tot})`);
+    let wide = 0, why = 0, seen = 0;
+    for (let k = 0; k < tot; k++) { const c = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); return OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }).correct; });
+      if (await overflow(q)) wide++; await q.click(`.choice[data-o="${c}"]`); if ((await q.textContent('#why')).length > 80) why++; if (await overflow(q)) wide++; await q.click('#nx'); seen++; }
+    ok(wide === 0, 'bølge 24: spørsmål og forklaring uten sidelengs rulling i 320 px'); ok(why === 8, `bølge 24: riktig svar gir også forklaring (${why} av 8)`);
+    ok(await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss || {}).length) === 0, 'bølge 24: riktig svar tømmer repetisjonen');
+    // Feil svar på ett spørsmål holder det i repetisjonen
+    const one = r.nye.find((x) => x.ch === 7).id;
+    await q.evaluate((id) => { const st = JSON.parse(localStorage.getItem('okad221:v1')); st.qmiss = { [id]: { t: 1, n: 1 } }; localStorage.setItem('okad221:v1', JSON.stringify(st)); }, one);
+    await q.reload(); await go(q, 'quiz/repeter'); const c1 = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); return OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }).correct; });
+    await q.click(`.choice:not([data-o="${c1}"]) >> nth=0`); ok((await q.textContent('#why')).length > 80, 'bølge 24: feil svar gir forklaring'); await q.click('#nx');
+    ok(await q.evaluate((id) => !!JSON.parse(localStorage.getItem('okad221:v1')).qmiss[id], one), 'bølge 24: feil igjen holder spørsmålet i repetisjonen');
+    ok(await sameIds(q), 'bølge 24: quiz-id-ene er de samme som i de rå dataene');
+    await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });
