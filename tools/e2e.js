@@ -588,6 +588,31 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
       const left = await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length); ok(left === part.length, `bølge 16 ${nm}: feil igjen holder spørsmålene i repetisjonen`); }
     ok(await sameIds(q), 'bølge 16: quiz-id-ene er de samme som i de rå dataene');
     await q.context().close(); }
+  // 27) Bølge 17: hvert feil tallalternativ er forklart i alle 13 kapitler, og fire nye spørsmål i kapittel 10 og 13
+  { const q = await mk({ w: 320, h: 640 }); await go(q, 'quiz');
+    const all = await q.evaluate(() => { const d = document.createElement('div'), txt = (h) => { d.innerHTML = h; return d.textContent; }, r = {};
+      for (let ch = 1; ch <= 13; ch++) { const c = OKAD.quiz.filter((x) => x.ch === ch);
+        r[ch] = { n: c.length, pos: new Set(c.map((x) => x.correct)).size, unexplained: c.flatMap((x) => x.options.filter((o, i) => i !== x.correct && /^−?\d/.test(o) && !txt(x.why).includes(o.match(/^−?[\d \u00a0,]+\d|^\d/)[0])).map((o) => txt(x.q).slice(0, 30) + ' → ' + o)) }; }
+      const nw = (re) => OKAD.quiz.filter((x) => re.test(x.q)).map((x) => ({ id: x.id, c: x.correct, ch: x.ch }));
+      r.nye = nw(/0,25 for begge opp|−0,00525 \(korrelasjon|fra 100 til 1.425,05|fra 165 til 168|m = 0,7778 aksjer|38.000 å spekulere|salgsopsjoner med innløsningskurs 400 og premie 44|salgsopsjon med innløsningskurs 400 og betaler 44/);
+      return r; });
+    const bad = []; for (let ch = 1; ch <= 13; ch++) bad.push(...all[ch].unexplained);
+    ok(bad.length === 0, 'bølge 17: hvert feil tallalternativ er forklart i alle 13 kapitler' + (bad.length ? ': ' + bad.slice(0, 8).join(' | ') : ''));
+    ok([...Array(13).keys()].every((k) => all[k + 1].pos === 4), 'bølge 17: riktig svar står på alle fire plassene i hvert kapittel');
+    ok(all[10].n >= 17 && all[13].n >= 18, `bølge 17: kapittel 10 har minst 17 og kapittel 13 minst 18 spørsmål (${all[10].n} og ${all[13].n})`);
+    const nye = all.nye; ok(nye.length === 8, 'bølge 17: alle åtte nye spørsmål finnes (' + nye.length + ')');
+    for (const ch of [10, 13]) ok(nye.filter((x) => x.ch === ch).map((x) => x.c).sort().join('') === '0123', `bølge 17: riktig svar på alle fire plassene i de nye spørsmålene i kapittel ${ch}`);
+    for (const ch of [10, 13]) { await go(q, 'quiz/' + ch); ok(/av 10/.test(await q.textContent('.eyebrow')), `bølge 17: kapittel ${ch} gir full runde`); }
+    const ids = nye.map((x) => x.id);
+    await q.evaluate((ids) => { const st = JSON.parse(localStorage.getItem('okad221:v1') || '{"gen":{},"exam":{},"quiz":{}}'); st.qmiss = {}; ids.forEach((id, k) => { st.qmiss[id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); }, ids);
+    await q.reload(); await go(q, 'quiz/repeter'); const tot = +(await q.textContent('.eyebrow')).match(/av (\d+)/)[1]; ok(tot === ids.length, `bølge 17: repetisjonsrunden har alle nye spørsmål (${tot})`);
+    let wide = 0, why = 0;
+    for (let k = 0; k < tot; k++) { const c = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); return OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }).correct; });
+      if (await overflow(q)) wide++; await q.click(`.choice:not([data-o="${c}"]) >> nth=0`); if ((await q.textContent('#why')).length > 80) why++; if (await overflow(q)) wide++; await q.click('#nx'); }
+    ok(wide === 0, 'bølge 17: spørsmål og forklaring uten sidelengs rulling i 320 px'); ok(why === tot, `bølge 17: feil svar gir forklaring på alle (${why} av ${tot})`);
+    ok(await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length) === ids.length, 'bølge 17: feil igjen holder spørsmålene i repetisjonen');
+    ok(await sameIds(q), 'bølge 17: quiz-id-ene er de samme som i de rå dataene');
+    await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });
