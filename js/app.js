@@ -44,10 +44,49 @@
       for (const t of ts) { const f = document.createDocumentFragment(); t.data.split(';').forEach((piece, i, arr) => { f.appendChild(document.createTextNode(piece + (i < arr.length - 1 ? ';' : ''))); if (i < arr.length - 1) f.appendChild(document.createElement('wbr')); }); t.parentNode.replaceChild(f, t); }
     }
   };
+  // ---------- Brede tabeller på mobil ----------
+  // 1) Årstabeller med få poster (høyst tre) og minst fire år snus på mobil, med årene som rader. Begge ligger på siden, og CSS velger
+  //    hvilken som vises, så PC og utskrift viser tabellen som før. 2) En tabell som fortsatt er bredere enn skjermen, får fast første kolonne,
+  //    en strek i høyre kant så lenge det er mer å se, og en linje under som sier at den kan rulles. Gjelder bare visningen.
+  const turnTable = (t) => {
+    const head = t.tHead && t.tHead.rows[0], body = t.tBodies[0];
+    if (!head || !body || t.dataset.turn) return; t.dataset.turn = '1';
+    const H = [...head.cells], R = [...body.rows];
+    if (!/^(År|Måned)/.test(H[0].textContent.trim()) || !H.slice(1).every((h) => /^(\d+|…)$/.test(h.textContent.trim())) || R.length > 3 || H.length < 5 || R.some((r) => r.cells.length !== H.length)) return;
+    const n = document.createElement('table'); n.className = t.className + ' turned'; n.setAttribute('aria-hidden', 'true');
+    n.innerHTML = '<thead><tr><th>' + H[0].innerHTML + '</th>' + R.map((r) => '<th>' + r.cells[0].innerHTML + '</th>').join('') + '</tr></thead><tbody>' +
+      H.slice(1).map((h, j) => '<tr><th scope="row">' + h.innerHTML + '</th>' + R.map((r) => '<td>' + r.cells[j + 1].innerHTML + '</td>').join('') + '</tr>').join('') + '</tbody>';
+    t.classList.add('orig'); t.after(n);
+  };
+  const turnMq = matchMedia('(max-width: 760px)');
+  const scrollMark = (w) => {
+    const more = w.scrollWidth > w.clientWidth + 1 && w.clientWidth > 0;
+    w.classList.toggle('scrolls', more); w.classList.toggle('more', more && w.scrollLeft + w.clientWidth < w.scrollWidth - 1);
+    // Begge tabellene ligger i wrapperen: skjermleseren skal bare lese den som vises.
+    const turned = w.querySelector('table.turned'), orig = w.querySelector('table.orig');
+    if (turned && orig) { const m = turnMq.matches; turned.toggleAttribute('aria-hidden', !m); orig.toggleAttribute('aria-hidden', m); }
+    let hint = w.nextElementSibling && w.nextElementSibling.classList.contains('scrollhint') ? w.nextElementSibling : null;
+    if (more && !hint) { hint = document.createElement('p'); hint.className = 'scrollhint small muted noprint'; hint.textContent = 'Tabellen er bredere enn skjermen. Rull sidelengs for å se resten →'; w.after(hint); }
+    if (hint) hint.hidden = !more;
+    if (more && !w.hasAttribute('tabindex')) { w.tabIndex = 0; w.setAttribute('role', 'region'); w.setAttribute('aria-label', 'Tabell, kan rulles sidelengs'); w.dataset.tabset = '1'; }
+    if (!more && w.dataset.tabset) { w.removeAttribute('tabindex'); w.removeAttribute('role'); w.removeAttribute('aria-label'); delete w.dataset.tabset; }
+  };
+  const wrapRO = window.ResizeObserver ? new ResizeObserver((es) => es.forEach((e) => scrollMark(e.target))) : null;
+  const wideTables = (el) => {
+    const ws = el.classList && el.classList.contains('tablewrap') ? [el] : el.querySelectorAll ? el.querySelectorAll('.tablewrap') : [];
+    for (const w of ws) {
+      if (w.dataset.wide) continue; w.dataset.wide = '1';
+      w.querySelectorAll('table.data').forEach(turnTable);
+      w.addEventListener('scroll', () => scrollMark(w), { passive: true });
+      if (wrapRO) wrapRO.observe(w); else scrollMark(w);
+      const t = w.querySelector('table'); if (wrapRO && t) wrapRO.observe(t);
+    }
+  };
+  turnMq.addEventListener ? turnMq.addEventListener('change', () => document.querySelectorAll('.tablewrap').forEach(scrollMark)) : 0;
   const nbText = (node) => {
     if (node.nodeType === 3) return nbNode(node);
     if (node.nodeType !== 1 || NBSKIP[node.nodeName]) return;
-    wbrCode(node);
+    wbrCode(node); wideTables(node);
     const w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
     for (let t = w.nextNode(); t; t = w.nextNode()) nbNode(t);
   };
