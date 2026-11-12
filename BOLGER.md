@@ -37,6 +37,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 15 | Åpne punkter: factoring med kortere kredittid og durasjon lukket. Hardt mellomrom også før «prosent», «mill.», «millioner», «mnd.», «måneder» og «timer» | Ferdig |
 | 16 | 16 nye quizspørsmål (fire i hvert av kapittel 2, 3, 5 og 6), alle feil tallalternativer i de fire kapitlene forklart | Ferdig |
 | 17 | Alle feil tallalternativer forklart i alle 13 kapitler, fire nye quizspørsmål i kapittel 10 og 13 | Ferdig |
+| 18 | Fire nye quizspørsmål i kapittel 8 og 11 | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -387,6 +388,22 @@ Kontroller i `e2e.js` (13 nye): hvert feil tallalternativ er forklart i alle 13 
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 214 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 619 bestått.
 
+Avgjort av eier etter bølgen: de 13 byttede alternativene beholdes (1a), og bølge 18 gir nye spørsmål til kapittel 8 og 11 (2a).
+
+## Bølge 18: quiz for kapittel 8 og 11 (ferdig)
+
+Nye quizspørsmål (222 i alt, 214 før). Kapittel 8 og 11 har nå 18 hver. Alle tall er regnet med et eget skript og stemmer med eksemplene i forelesningen. Hvert feil alternativ er en navngitt feil, og riktig svar står på hver av de fire plassene i de nye spørsmålene i hvert kapittel.
+
+- Kapittel 8, investeringer og skatt (eksempel 8-1, 8-3, 8-4 og 8-7): kontantstrøm etter skatt med lineær avskrivning (feil: hele kontantstrømmen skattlagt, avskrivningen ikke lagt tilbake, skatten), nåverdien i år 0 av spart skatt på saldoen etter levetiden (feil: ikke diskontert, hele saldoen skattlagt med en gang, med og uten diskontering), NNV etter skatt med samlet skatteledd (feil: skattefordelen glemt, skatten på hele investeringen, delt på kravet alene) og internrente etter skatt ved lineær interpolering (feil: midtpunktet, regnet fra feil ende, andelen lest som prosentpoeng). Tallene i interpoleringen er egne, fordi tallene i eksempel 8-7 manglet.
+- Kapittel 11, risiko og avkastning (eksempel 11-3 og 11-4): WACC trinn for trinn med KVM for både egenkapital og gjeld (feil: skattejusteringen glemt, vektene byttet, bare egenkapitalkostnaden), gjeldskostnad før skatt etter KVM (feil: etter skatt, beta ganget med hele markedsavkastningen, bare risikopremien), hva beta 1,23 betyr når markedet stiger 2 % (feil: beta lest som prosent, lagt til, delt), og beta fra kovarians og markedets standardavvik (feil: delt på standardavviket, brøken snudd, ganget med variansen).
+- Brukertesten på mobil: meldingen hadde fortsatt plassholderen «<funn>», så ingen funn er rettet.
+
+Endret kontroll: testen for at en runde fylles med flere som venter når kapitlet har for få andre spørsmål, gikk ut fra at kapittel 8 hadde 14 spørsmål. Den lar nå alle unntatt fire vente, uansett antall. Versjonsnummeret er økt til `?v=20`.
+
+Kontroller i `e2e.js` (11 nye): antall spørsmål i kapittel 8 og 11, at alle åtte nye spørsmål finnes og har riktig svar på alle fire plassene, full runde i begge kapitlene, alle nye spørsmål i repetisjonsrunden, feil svar gir forklaring, ingen sidelengs rulling i 320 px, feil igjen holder dem i repetisjonen, og uendrede quiz-id-er. Kontrollen fra bølge 17 bekrefter at alle feil tallalternativer fortsatt er forklart i alle kapitler.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 222 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 630 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -400,15 +417,15 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Alle feilalternativer i quizen er nå forklart. Kapittel 1 har færrest spørsmål (12), deretter kapittel 8, 9 og 11 (14 hver). Forslag til bølge 18: fire nye quizspørsmål i hvert av kapittel 8 og 11, de to kapitlene med mest eksamensvekt blant dem som har få spørsmål (nåverdi etter skatt og WACC/KVM), etter reglene fra bølge 16.
+Kapittel 1 har nå færrest spørsmål (12), deretter kapittel 9 (14). Alle andre har 16 eller flere. Kapittel 1 har ingen regneeksempler i kildene, og eksamen spør lite om det. Forslag til bølge 19 er derfor ikke flere quizspørsmål, men en gjennomgang av prøveeksamenen på mobil: start, tidtaking, levering og retting i 320 og 390 px, med fokus på det som er tungt å bruke på liten skjerm (lange oppgavetekster, tabeller og svarfelt). Kontrollspørsmålet gjelder: hva skal brukeren gjøre her, og hvor godt fungerer det når noe går galt?
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 18 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 19 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 18:
-1. Fire nye quizspørsmål i hvert av kapittel 8 og 11 (fra 14 til 18), etter reglene fra bølge 16: hvert feil alternativ er en navngitt feil som forklaringen sier hva er, riktig svar på alle fire plassene, alle tall regnet med eget skript, og bygget på kilder/.
+Innhold i bølge 19:
+1. Gå gjennom prøveeksamenen på mobil (320 og 390 px): start, tidtaking, svarfelt, lange oppgavetekster og tabeller, levering og retting. Rett det som er tungt å bruke på liten skjerm, og legg kontroller i tools/e2e.js.
 2. Funn fra brukertesten på mobil (stryk punktet hvis ingen): <funn>.
 3. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 

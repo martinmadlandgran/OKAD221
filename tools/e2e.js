@@ -229,8 +229,8 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await q2.evaluate(() => localStorage.setItem('okad221:v1', JSON.stringify({ gen: {}, exam: {}, quiz: {}, qmiss: { qutgatt: { t: 1, n: 1 } } }))); await q2.reload(); await q2.waitForTimeout(200); await go(q2, 'quiz/repeter');
     ok(/Ingenting å repetere/.test(await q2.textContent('.empty')), 'quiz-rep: utgått spørsmål ved oppstart fjernes');
     await go(q2, 'quiz/repeter/x'); ok((await q2.locator('#view').count()) === 1, 'quiz-rep: ekstra ledd i adressen krasjer ikke');
-    // Kapittel 8 etter ti feil har bare fire andre spørsmål: runden fylles med flere som venter, fortsatt ti spørsmål
-    await q.evaluate(() => { const st = JSON.parse(localStorage.getItem('okad221:v1')); st.qmiss = {}; OKAD.quiz.filter((x) => x.ch === 8).slice(0, 10).forEach((x, k) => { st.qmiss[x.id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); });
+    // Kapittel 8 der alle unntatt fire venter, har bare fire andre spørsmål: runden fylles med flere som venter, fortsatt ti spørsmål
+    await q.evaluate(() => { const st = JSON.parse(localStorage.getItem('okad221:v1')); st.qmiss = {}; OKAD.quiz.filter((x) => x.ch === 8).slice(0, -4).forEach((x, k) => { st.qmiss[x.id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); });
     await q.reload(); await q.waitForTimeout(200); await go(q, 'quiz/8'); const r4 = await round(q, () => true); ok(r4.tot === 10 && r4.reps === 6, 'quiz-rep: kapittel med for få andre spørsmål fylles med flere som venter (' + r4.reps + ' av ' + r4.tot + ')');
     // Lite kapittel (alle har nå minst ti, så kapittel 1 kortes ned til fem i siden) og mobil 320 px
     await q2.evaluate(() => { const c1 = OKAD.quiz.filter((x) => x.ch === 1).slice(5); c1.forEach((x) => OKAD.quiz.splice(OKAD.quiz.indexOf(x), 1)); });
@@ -612,6 +612,24 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     ok(wide === 0, 'bølge 17: spørsmål og forklaring uten sidelengs rulling i 320 px'); ok(why === tot, `bølge 17: feil svar gir forklaring på alle (${why} av ${tot})`);
     ok(await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length) === ids.length, 'bølge 17: feil igjen holder spørsmålene i repetisjonen');
     ok(await sameIds(q), 'bølge 17: quiz-id-ene er de samme som i de rå dataene');
+    await q.context().close(); }
+  // 28) Bølge 18: fire nye quizspørsmål i kapittel 8 og 11
+  { const q = await mk({ w: 320, h: 640 }); await go(q, 'quiz');
+    const r = await q.evaluate(() => { const re = /sparer den 149.000 i transportutgifter|uavskrevet saldo 131.693|samlet skatteledd\?|20.000 ved 10.% krav og −30.000|Egenkapitalbeta er 1,55|Gjelden er omsatt og har beta 0,24|Olav Thon ASA har beta 1,23|Kovariansen mellom en aksje og markedet er 0,03/;
+      return { n8: OKAD.quiz.filter((x) => x.ch === 8).length, n11: OKAD.quiz.filter((x) => x.ch === 11).length, nye: OKAD.quiz.filter((x) => re.test(x.q)).map((x) => ({ id: x.id, c: x.correct, ch: x.ch })) }; });
+    ok(r.n8 >= 18 && r.n11 >= 18, `bølge 18: kapittel 8 og 11 har minst 18 spørsmål hver (${r.n8} og ${r.n11})`);
+    ok(r.nye.length === 8, 'bølge 18: alle åtte nye spørsmål finnes (' + r.nye.length + ')');
+    for (const ch of [8, 11]) ok(r.nye.filter((x) => x.ch === ch).map((x) => x.c).sort().join('') === '0123', `bølge 18: riktig svar på alle fire plassene i de nye spørsmålene i kapittel ${ch}`);
+    for (const ch of [8, 11]) { await go(q, 'quiz/' + ch); ok(/av 10/.test(await q.textContent('.eyebrow')), `bølge 18: kapittel ${ch} gir full runde`); }
+    const ids = r.nye.map((x) => x.id);
+    await q.evaluate((ids) => { const st = JSON.parse(localStorage.getItem('okad221:v1') || '{"gen":{},"exam":{},"quiz":{}}'); st.qmiss = {}; ids.forEach((id, k) => { st.qmiss[id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); }, ids);
+    await q.reload(); await go(q, 'quiz/repeter'); const tot = +(await q.textContent('.eyebrow')).match(/av (\d+)/)[1]; ok(tot === ids.length, `bølge 18: repetisjonsrunden har alle nye spørsmål (${tot})`);
+    let wide = 0, why = 0;
+    for (let k = 0; k < tot; k++) { const c = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); return OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }).correct; });
+      if (await overflow(q)) wide++; await q.click(`.choice:not([data-o="${c}"]) >> nth=0`); if ((await q.textContent('#why')).length > 80) why++; if (await overflow(q)) wide++; await q.click('#nx'); }
+    ok(wide === 0, 'bølge 18: spørsmål og forklaring uten sidelengs rulling i 320 px'); ok(why === tot, `bølge 18: feil svar gir forklaring på alle (${why} av ${tot})`);
+    ok(await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length) === ids.length, 'bølge 18: feil igjen holder spørsmålene i repetisjonen');
+    ok(await sameIds(q), 'bølge 18: quiz-id-ene er de samme som i de rå dataene');
     await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
