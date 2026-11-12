@@ -823,7 +823,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     await q.context().close(); }
   // 34) Bølge 24: fire nye quizspørsmål i kapittel 3 og 7
   { const q = await mk({ w: 320, h: 640 }); await go(q, 'quiz');
-    const r = await q.evaluate(() => { const re = /25.500 utbetales om ett år og vokser|50.000 i år 2 og 150.000 i år 5|fire like årlige beløp\. Det første betales i dag|300.000 på kontoen om fem år|98 om 15 dager eller 100 om 45 dager|to årlige terminer på 27.272|faller markedsrenten til 4|16 terminer på 13.869/;
+    const r = await q.evaluate(() => { const re = /25.500 utbetales om ett år og vokser|50.000 i år 2 og 150.000 i år 5|fire like årlige beløp\. Det første betales i dag|300.000 på kontoen om fem år|98 om 15.dager eller 100 om 45.dager|to årlige terminer på 27.272|faller markedsrenten til 4|16 terminer på 13.869/;
       const d = document.createElement('div'), txt = (h) => { d.innerHTML = h; return d.textContent; }, c = (ch) => OKAD.quiz.filter((x) => x.ch === ch);
       const nye = OKAD.quiz.filter((x) => re.test(x.q));
       return { n: [c(3).length, c(7).length], nye: nye.map((x) => ({ id: x.id, c: x.correct, ch: x.ch })),
