@@ -8,7 +8,7 @@ import json, os, re, subprocess, sys
 from bs4 import BeautifulSoup, NavigableString, Tag
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.utils import get_column_letter
+from openpyxl.utils import column_index_from_string, get_column_letter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'excel')
@@ -176,8 +176,44 @@ def lines(text, width):
     return int(n)
 
 
+class Shifted:
+    """Arket sett én kolonne til høyre. Kolonne A er satt av til kapittelmerket foran delspørsmålene,
+    så resten av oppsettet skrives som før (A = merkelapp, B = tekst, C.. = tall) og havner i B, C, D ..."""
+    def __init__(self, ws):
+        object.__setattr__(self, '_ws', ws)
+
+    def cell(self, row, column, value=None):
+        return self._ws.cell(row=row, column=column + 1, value=value)
+
+    def merge_cells(self, start_row, start_column, end_row, end_column):
+        self._ws.merge_cells(start_row=start_row, start_column=start_column + 1, end_row=end_row, end_column=end_column + 1)
+
+    @property
+    def column_dimensions(self):
+        ws = self._ws
+
+        class Cols:
+            def __getitem__(_, letter):
+                return ws.column_dimensions[get_column_letter(column_index_from_string(letter) + 1)]
+        return Cols()
+
+    def __getattr__(self, n):
+        return getattr(self._ws, n)
+
+    def __setattr__(self, n, v):
+        setattr(self._ws, n, v)
+
+
+MARKW = 9
+F_MARK = Font(name=FONT, size=8, bold=True, color='833C0B')
+FILL_MARK = PatternFill('solid', fgColor='FCE4D6')
+
+
 class Sheet:
     def __init__(self, ws):
+        ws.column_dimensions['A'].width = MARKW
+        self.raw = ws
+        ws = Shifted(ws)
         self.ws, self.r = ws, 1
         ws.column_dimensions['A'].width = W['A']
         ws.column_dimensions['B'].width = W['B']
@@ -205,6 +241,13 @@ class Sheet:
         ws.row_dimensions[r].height = height or max(15, lines(s, width * 10 / size) * (size * 1.32))
         self.r += 1
         return r
+
+    def mark(self, r, chapters):
+        """Merke til venstre for delspørsmålet: pensum fra andre kapitler enn fanens."""
+        if chapters:
+            c = self.raw.cell(r, 1, '+ kap ' + ', '.join(str(x) for x in chapters))
+            c.font, c.fill = F_MARK, FILL_MARK
+            c.alignment = Alignment(wrap_text=True, vertical='top', horizontal='center')
 
     def blank(self, n=1):
         self.r += n
@@ -295,6 +338,7 @@ def build(fasit):
         'Hver eksamensoppgave står samlet under det kapitlet tyngden ligger i, med ordrett tekst og tall fra eksamenssettet. Nyeste eksamen står først. '
         'Delspørsmål som hører til andre kapitler, er listet nederst i disse kapitlenes faner, med henvisning.',
         'Oppgavene om WACC og nåverdi etter skatt står under kapittel 8, med henvisning fra kapittel 11 for WACC-delen.',
+        'Et oransje merke til venstre for et delspørsmål, for eksempel «+ kap 3», betyr at delspørsmålet også bygger på pensum fra det kapitlet.',
         'Tabeller er lagt inn som tall i celler, så de kan brukes direkte i utregningen.',
     ]
     if fasit:
@@ -350,6 +394,7 @@ def build(fasit):
                 s.html(t['text'])
                 for p in t['parts']:
                     s.blank()
+                    s.mark(s.r, sorted(part_chapters(p, t) - {ch}))
                     s.html(p['q'], label=p['label'] + ')')
                     r = s.r
                     s.ws.cell(r, 2, 'Ditt svar:').font = F_MUTED
@@ -360,6 +405,7 @@ def build(fasit):
             else:
                 for p in t['parts']:
                     s.blank()
+                    s.mark(s.r, sorted(part_chapters(p, t) - {ch}))
                     s.text(norm(BeautifulSoup(p['q'], 'html.parser').get_text()), F_MUTED, label=p['label'] + ')')
                     s.text('Svar', F_BOLD)
                     s.html(p['answer'])
