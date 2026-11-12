@@ -728,6 +728,23 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   { const q = await mk(); await go(q, 'oving/k5-payback-kapitalrasjonering/11'); await q.waitForTimeout(150);
     ok(await q.evaluate(() => { const w = document.querySelector('.task-text .tablewrap'); return getComputedStyle(w.querySelector('table.orig')).display === 'table' && w.querySelector('table.turned').getAttribute('aria-hidden') !== null && w.querySelector('table.orig').getAttribute('aria-hidden') === null; }), 'bølge 20: på PC vises originalen, og skjermleseren hopper over den snudde');
     await q.context().close(); }
+  // 31) Bølge 21: fire nye quizspørsmål i kapittel 1 og 9
+  { const q = await mk({ w: 320, h: 640 }); await go(q, 'quiz');
+    const r = await q.evaluate(() => { const re = /Hva gjelder finansieringsproblemet|egenkapitalen 2.100.000\. Hvor stor er den langsiktige|øker varelageret med 500.000 og betaler med kassekreditten|narre noen mennesker|realavkastningskravet er 6.%, som gir et nominelt krav på 10,24|Kostnadene er 600.000 i dag og stiger 6.%|lån på 1.000.000 som skal betales tilbake om tre år|setter inn 100.000 til 5.% rente\. Inflasjonen er 2/;
+      return { n1: OKAD.quiz.filter((x) => x.ch === 1).length, n9: OKAD.quiz.filter((x) => x.ch === 9).length, nye: OKAD.quiz.filter((x) => re.test(x.q)).map((x) => ({ id: x.id, c: x.correct, ch: x.ch })) }; });
+    ok(r.n1 >= 16 && r.n9 >= 18, `bølge 21: kapittel 1 har minst 16 og kapittel 9 minst 18 spørsmål (${r.n1} og ${r.n9})`);
+    ok(r.nye.length === 8, 'bølge 21: alle åtte nye spørsmål finnes (' + r.nye.length + ')');
+    for (const ch of [1, 9]) ok(r.nye.filter((x) => x.ch === ch).map((x) => x.c).sort().join('') === '0123', `bølge 21: riktig svar på alle fire plassene i de nye spørsmålene i kapittel ${ch}`);
+    const ids = r.nye.map((x) => x.id);
+    await q.evaluate((ids) => { const st = JSON.parse(localStorage.getItem('okad221:v1') || '{"gen":{},"exam":{},"quiz":{}}'); st.qmiss = {}; ids.forEach((id, k) => { st.qmiss[id] = { t: k + 1, n: 1 }; }); localStorage.setItem('okad221:v1', JSON.stringify(st)); }, ids);
+    await q.reload(); await go(q, 'quiz/repeter'); const tot = +(await q.textContent('.eyebrow')).match(/av (\d+)/)[1]; ok(tot === ids.length, `bølge 21: repetisjonsrunden har alle nye spørsmål (${tot})`);
+    let wide = 0, why = 0;
+    for (let k = 0; k < tot; k++) { const c = await q.evaluate(() => { const t = document.querySelector('#qq').textContent, d = document.createElement('div'); return OKAD.quiz.find((y) => { d.innerHTML = y.q; return d.textContent === t; }).correct; });
+      if (await overflow(q)) wide++; await q.click(`.choice:not([data-o="${c}"]) >> nth=0`); if ((await q.textContent('#why')).length > 80) why++; if (await overflow(q)) wide++; await q.click('#nx'); }
+    ok(wide === 0, 'bølge 21: spørsmål og forklaring uten sidelengs rulling i 320 px'); ok(why === tot, `bølge 21: feil svar gir forklaring på alle (${why} av ${tot})`);
+    ok(await q.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('okad221:v1')).qmiss).length) === ids.length, 'bølge 21: feil igjen holder spørsmålene i repetisjonen');
+    ok(await sameIds(q), 'bølge 21: quiz-id-ene er de samme som i de rå dataene');
+    await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });
