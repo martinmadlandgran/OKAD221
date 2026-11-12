@@ -45,6 +45,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 23 | Fire nye quizspørsmål i kapittel 10 og 11 | Ferdig |
 | 24 | Fire nye quizspørsmål i kapittel 3 og 7 | Ferdig |
 | 25 | Excel-arbeidsbøker: eksamensoppgaver per kapittel, og fasit | Ferdig |
+| 26 | Nyeste eksamen først i Excel, og nedlasting av Excel-filene fra siden | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -629,6 +630,35 @@ Kontroll:
 - Begge filene er gjort om til PDF med LibreOffice og sett gjennom.
 - Tallene i fasiten er de samme som i eksamensdataene, som ble kontrollert i bølge 4 og senere. De er satt inn som verdier fra løsningsforslagene, ikke som formler.
 
+## Bølge 26: nyeste eksamen først, og Excel-filene på siden (ferdig)
+
+Ønske fra eier: nyeste eksamen skal stå først i arbeidsbøkene, og Excel-filene skal kunne lastes ned fra siden der det passer.
+
+- Arbeidsbøkene viser nå eksamenssettene fra 2025 og bakover. Det gjelder oppgavene i hver kapittelfane, listen over delspørsmål og fanen «Merknader».
+- `tools/excel.py` lager også `js/data/excel.js`, med filstørrelsene, hva hver kapittelfane inneholder og hvilken fane hver oppgave står i. Siden henter alt fra den, så lenkene og antallene alltid stemmer med filene.
+- Lenkene på siden:
+  - **Tidligere eksamener:** en boks øverst som forklarer hva filene inneholder, med knappene «Last ned oppgavene» og «Last ned fasit», begge med filstørrelse. Den sier også at filene passer best på PC.
+  - **Hvert eksamenssett:** under hver oppgave står hvilken fane den ligger i, for eksempel «I Excel: fanen «Kap 8» i oppgavefilen og fasiten», med vanlige lenker.
+  - **Teori, «Øv på kapitlet»:** hva fanen for kapitlet inneholder (eksamensoppgaver, henvisninger og kapitteloppgaver), med de samme to knappene. Kapittel 1 har ingen lenke, fordi fanen er tom.
+- Når noe går galt: lenkene har `download`, så filen lastes ned i stedet for å åpnes i nettleseren. Er `excel.js` blokkert eller tom, vises ingen Excel-lenker, og resten av siden virker. «kB» står med hardt mellomrom, så det ikke brytes fra tallet.
+- Versjonsnummeret er økt til `?v=27`.
+
+Kontroller i `e2e.js` (21 nye):
+
+- I 320 og 1200 px:
+  - Begge knappene finnes på Tidligere eksamener, med filstørrelse.
+  - Hver oppgave i 2025 viser fanen sin.
+  - Teorien for kapittel 4 og 13 viser innholdet i fanen.
+  - Kapittel 1 har ingen lenke.
+  - Ingen sidelengs rulling.
+- Knappene er store nok å trykke på i 320 px.
+- Filene svarer på serveren, er xlsx (zip) og er like store som oppgitt, og et klikk gir nedlasting med riktig filnavn.
+- Alle 40 oppgaver står i en fane.
+- Siden virker uten datafilen.
+- Kapittel 4 i arbeidsboka har nyeste eksamen først.
+
+Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 258 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar, 0 avvik), `tools/e2e.js` 786 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -647,9 +677,9 @@ Alle kapitler har nå minst 16 quizspørsmål, og kapitlene med mest eksamensvek
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 25 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 27 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 25:
+Innhold i bølge 27:
 1. Rett det jeg har funnet i bruk (side, skjerm, hva jeg gjorde og hva som skjedde): <funn>.
 2. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
