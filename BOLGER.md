@@ -40,6 +40,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 18 | Fire nye quizspørsmål i kapittel 8 og 11 | Ferdig |
 | 19 | Prøveeksamenen på mobil: klokkeraden, hopp og fokus, levering med tomme felt, resultattabellen, Excel-formler i 320 px | Ferdig |
 | 20 | Brede tabeller på mobil: snudde årstabeller, fast første kolonne, strek og hint når tabellen kan rulles | Ferdig |
+| 21 | Fire nye quizspørsmål i kapittel 1 og 9. Alle kapitler har nå minst 16 | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -461,6 +462,31 @@ Kontroller i `e2e.js` (15 nye):
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 222 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 679 bestått.
 
+Avgjort av eier etter bølgen: bølge 21 er brukertesten av bølge 19 og 20, og deretter quiz for kapittel 1 og 9 (a).
+
+## Bølge 21: quiz for kapittel 1 og 9 (ferdig)
+
+Brukertesten på mobil av bølge 19 og 20: eier svarte «a» uten å melde funn, så ingenting er rettet.
+
+Nye quizspørsmål (230 i alt, 222 før). Kapittel 1 har nå 16 og kapittel 9 18, så alle kapitler har minst 16. Alle tall er regnet med et eget skript. Hvert feil alternativ er en navngitt feil, og riktig svar står på hver av de fire plassene i de nye spørsmålene i hvert kapittel.
+
+- Kapittel 1 (forelesningen har ingen regneeksempler, så tallene er egne):
+  - Hva finansieringsproblemet gjelder (feil: investeringsproblemet, arbeidskapital, utbyttepolitikk).
+  - Langsiktig gjeld fra balanseligningen (feil: bare anleggsmidlene som eiendeler, netto arbeidskapital, egenkapitalen glemt).
+  - Hvordan netto arbeidskapital endres når varelageret finansieres med kassekreditt (feil: bare varelageret, bare gjelden, begge lagt sammen).
+  - Hva det tredje læringsmålet handler om (feil: de to andre læringsmålene og en påstand som ikke er et læringsmål).
+- Kapittel 9, prisstigning (eksempel 9-1, 9-3 og 9-4 i forelesningen):
+  - At nominell kontantstrøm med nominelt krav gir samme nåverdi som faste priser med realkrav, 889 996 begge veier (feil: nominelt beløp med realkrav, faste priser med nominelt krav, ikke diskontert).
+  - Netto kontantstrøm når inntekter og kostnader stiger med ulik sats (feil: nettobeløpet justert med den ene eller den andre satsen, satsene byttet).
+  - Realverdien av gjeld som betales om tre år (feil: uten rentesrente, ganget i stedet for delt, bare ett år).
+  - Kjøpekraften av et bankinnskudd etter ett år (feil: enkel tilnærming, ganget med prisstigningen, nominelt beløp).
+
+Versjonsnummeret er økt til `?v=23`.
+
+Kontroller i `e2e.js` (9 nye): antall spørsmål i kapittel 1 og 9, at alle åtte nye spørsmål finnes og har riktig svar på alle fire plassene, alle i repetisjonsrunden, feil svar gir forklaring, ingen sidelengs rulling i 320 px, feil igjen holder dem i repetisjonen, og uendrede quiz-id-er. Kontrollen fra bølge 17 bekrefter at alle feil tallalternativer fortsatt er forklart i alle kapitler.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 230 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 688 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -474,17 +500,16 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Mobilgjennomgangen er ferdig for Øv, prøveeksamen og tabeller. Det som gjenstår av åpne punkter, krever læreboka (Altmans grenser) eller eier (ekte utskrift og flytting mellom enheter). Forslag til bølge 21: eiers brukertest på mobil av bølge 19 og 20 (prøveeksamen og brede tabeller), og deretter kapittel 1 og 9 i quizen (12 og 14 spørsmål) hvis det ikke er funn.
+Siden er etter Claudes vurdering ferdig til eksamen. Alle kapitler har minst 16 quizspørsmål, hvert feil svar er forklart, og mobilgjennomgangen dekker Øv, prøveeksamen og tabeller. De to åpne punktene krever læreboka (Altmans grenser) eller eier (ekte utskrift og flytting mellom enheter). Neste bølge bør bare komme hvis eier finner noe i bruk. Meldingen under er laget for det.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 21 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 22 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 21:
-1. Rett det jeg fant i brukertesten på mobil av bølge 19 og 20 (prøveeksamen og brede tabeller): <funn, eller «ingen funn»>.
-2. Fire nye quizspørsmål i hvert av kapittel 1 og 9, etter reglene fra bølge 16.
-3. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
+Innhold i bølge 22:
+1. Rett det jeg har funnet i bruk (side, skjerm, hva jeg gjorde og hva som skjedde): <funn>.
+2. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit, push og merge når alt er grønt.
 ```
