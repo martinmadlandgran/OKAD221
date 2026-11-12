@@ -880,7 +880,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
     ok((await q.locator('#xl').count()) === 0 && (await q.locator('.rowlink').count()) === 10, 'bølge 26: blokkert datafil gir siden uten Excel-lenker');
     await go(q, 'tema/4'); ok((await q.locator('h1').count()) === 1 && (await q.locator('#xl').count()) === 0, 'bølge 26: teorien virker uten datafilen');
     // Nyeste eksamen først i arbeidsboka
-    const xl = require('child_process').execFileSync('python3', ['-c', "import openpyxl;ws=openpyxl.load_workbook('excel/OKAD221_oppgaver.xlsx')['Kap 4'];print('|'.join(str(r[1]) for r in ws.iter_rows(values_only=True) if r[1] and ' · Oppgave ' in str(r[1])))"], { cwd: root, encoding: 'utf8' }).trim().split('|');
+    const xl = require('child_process').execFileSync('python3', ['-c', "import openpyxl;ws=openpyxl.load_workbook('excel/OKAD221_oppgaver.xlsx')['Kap 4'];print('|'.join(str(r[2]) for r in ws.iter_rows(values_only=True) if r[2] and ' · Oppgave ' in str(r[2])))"], { cwd: root, encoding: 'utf8' }).trim().split('|');
     const yrs = xl.map((x) => +x.match(/\d{4}/)[0]); ok(yrs.length === 16 && yrs.every((y, i) => !i || y <= yrs[i - 1]) && yrs[0] === 2025, 'bølge 26: kapittel 4 i Excel har nyeste eksamen først (' + yrs.join(', ') + ')');
     await q.context().close(); }
   // 36) Bølge 27: kalkulatorene synlige, Øv-lenkene i prognosen som nedtrekksmeny, pensum per deloppgave, kapittelmerke i Excel
