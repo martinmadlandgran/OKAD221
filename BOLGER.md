@@ -596,7 +596,9 @@ Versjonsnummeret er økt til `?v=26`.
 
 Kontroller i `e2e.js` (14 nye, de samme som i bølge 23): antall og at alle åtte finnes, riktig svar på alle fire plassene, hvert tall i feil alternativer forklart, kapittelrunde og repetisjon, forklaring ved riktig og feil svar, 320 px og uendrede quiz-id-er.
 
-TESTLINJE
+Første kjøring feilet på ett søkemønster i testen (hardt mellomrom foran «dager»), som i bølge 23. Mønsteret er rettet, ikke dataene.
+
+Test etter bølgen: `node tools/check.js 3000` OK (45 generatorer, 258 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (217 kontrolltall, 129 000 tallsvar, 0 avvik), `tools/e2e.js` 765 bestått.
 
 ## Åpne punkter
 
