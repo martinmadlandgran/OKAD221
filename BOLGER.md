@@ -39,6 +39,7 @@ Arbeidet gjøres i bølger. Etter hver bølge rapporterer Claude i dette formate
 | 17 | Alle feil tallalternativer forklart i alle 13 kapitler, fire nye quizspørsmål i kapittel 10 og 13 | Ferdig |
 | 18 | Fire nye quizspørsmål i kapittel 8 og 11 | Ferdig |
 | 19 | Prøveeksamenen på mobil: klokkeraden, hopp og fokus, levering med tomme felt, resultattabellen, Excel-formler i 320 px | Ferdig |
+| 20 | Brede tabeller på mobil: snudde årstabeller, fast første kolonne, strek og hint når tabellen kan rulles | Ferdig |
 
 ## Bølge 4: faglig kvalitetssikring (ferdig)
 
@@ -428,6 +429,38 @@ Kontroller i `e2e.js` (34 nye), i både 320 og 390 px: tidsvalget og knappene ha
 
 Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 222 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 664 bestått.
 
+Avgjort av eier etter bølgen: brede tabeller skal vise at de kan rulles, holde første kolonne fast og snus der det hjelper (a).
+
+## Bølge 20: brede tabeller på mobil (ferdig)
+
+Kartlagt i alle 43 oppgavetyper med løsningene åpne: 70 tabeller. I 320 px fikk bare 13 plass, og ingenting viste at resten fortsatte til høyre. Løsningstabellene har enda mindre plass enn oppgaveteksten (234 px mot 292 px), fordi de er rykket inn. Det meste er årstabeller med fem–tolv poster over fem–sju år. De får ikke plass på en telefon uansett, så målet er at de er lette å lese mens man ruller.
+
+- Årstabeller med høyst tre poster og minst fire år (som «År 0–5» med én rad «Kontantstrøm») vises snudd på mobil, med årene som rader. Tabeller som allerede har årene eller månedene som rader, snus ikke. De lange overskriftene i den snudde tabellen brytes. 10 tabeller snus, og 8 av dem får nå plass i 320 px. Med flere poster ville den snudde tabellen blitt like bred, så de blir som før.
+- Begge tabellene ligger på siden, og CSS velger hvilken som vises. Utskrift og PC viser originalen. Skjermleseren leser bare den som vises.
+- En tabell som fortsatt er bredere enn skjermen, får:
+  - fast første kolonne, så radnavnet står mens tallene ruller forbi
+  - en strek i høyre kant så lenge det er mer å se, som forsvinner ved enden (ingen skygge, etter utformingsreglene)
+  - linjen «Tabellen er bredere enn skjermen. Rull sidelengs for å se resten →» under
+  - fokus med tastatur (Tab), med rollen «region» og navn for skjermleser, så den kan rulles med piltastene
+- Dette oppdateres når skjermen endrer bredde, og når en løsning eller et panel åpnes (`ResizeObserver`). Tabeller som får plass, får ingen av delene.
+- Gjelder alle sider: oppgaver, løsninger, prøveeksamen og papirutgave, eksamenssett, teori og analyse.
+- Prøvd i bølge 19 og ikke gjentatt: å bryte radnavn i alle tabeller gjorde andre tabeller bredere. Den faste kolonnen endrer ikke bredden.
+
+Endret i `js/app.js` (`turnTable`, `scrollMark` og `wideTables`, på samme sted som de harde mellomrommene) og `css/style.css`. Versjonsnummeret er økt til `?v=22`.
+
+Kontroller i `e2e.js` (15 nye):
+
+- I 320 og 390 px, i alle 43 oppgavetyper med løsninger: hver tabell som er bredere enn skjermen, har fast første kolonne, strek, hint, tastaturfokus og rolle. Ingen tabell som får plass, har hint. Minst åtte årstabeller vises snudd, og skjermleseren leser bare den som vises.
+- Den snudde tabellen har de samme tallene med årene som rader og får plass i 320 px.
+- Utskrift viser originalen.
+- En tabell med månedene som rader snus ikke.
+- Streken forsvinner ved enden, og første kolonne står fast mens man ruller.
+- Fra mobil til PC og tilbake følger tabellene med, og siden ruller ikke sidelengs.
+- Eksamenssett, teori, analyse og papirutgaven, også i paneler som åpnes.
+- På PC vises originalen.
+
+Test etter bølgen: `node tools/check.js 3000` OK (43 generatorer, 222 gyldige quizspørsmål med unike id-er), `node tools/verify.js 1000` OK (193 kontrolltall, 118 000 tallsvar), `tools/e2e.js` 679 bestått.
+
 ## Åpne punkter
 
 - Altmans grenseverdier (1,81 og 2,99) er ikke kontrollert mot læreboka. Beholdt i oppgaveteksten, avgjort av eier.
@@ -441,16 +474,16 @@ Avgjort av eier etter bølge 6: de fire nye typene holdes utenfor prøveeksamene
 
 ## Neste bølge (forslag)
 
-Tabellene i oppgaveteksten er det som nå er tyngst på mobil: 24 av 37 må rulles sidelengs i 320 px, og det er ingenting som viser at tabellen fortsetter. Forslag til bølge 20: gjør det synlig når en tabell kan rulles (en skygge er ikke lov etter utformingsreglene, så for eksempel en linje i kanten og teksten «Rull sidelengs» under), hold første kolonne fast mens man ruller, og vurder om de bredeste årstabellene kan snus med årene som rader på mobil, slik nøkkeltallstabellen ble i bølge 9.
+Mobilgjennomgangen er ferdig for Øv, prøveeksamen og tabeller. Det som gjenstår av åpne punkter, krever læreboka (Altmans grenser) eller eier (ekte utskrift og flytting mellom enheter). Forslag til bølge 21: eiers brukertest på mobil av bølge 19 og 20 (prøveeksamen og brede tabeller), og deretter kapittel 1 og 9 i quizen (12 og 14 spørsmål) hvis det ikke er funn.
 
 ## Melding for neste bølge (kopier inn i ny chat)
 
 ```text
-Kjør bølge 20 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
+Kjør bølge 21 i ØKAD 221-øvingssiden. Les BOLGER.md og README.md først, og følg føringene der (norsk bokmål, utformingsreglene, kontrollspørsmålet for alt nytt, rapportformatet med seks punkter).
 
-Innhold i bølge 20:
-1. Tabellene i oppgaveteksten på mobil (320 og 390 px): gjør det synlig når en tabell kan rulles sidelengs, hold første kolonne fast mens man ruller, og snu de bredeste årstabellene med årene som rader der det gjør dem lettere å lese. Legg kontroller i tools/e2e.js.
-2. Funn fra brukertesten på mobil (stryk punktet hvis ingen): <funn>.
+Innhold i bølge 21:
+1. Rett det jeg fant i brukertesten på mobil av bølge 19 og 20 (prøveeksamen og brede tabeller): <funn, eller «ingen funn»>.
+2. Fire nye quizspørsmål i hvert av kapittel 1 og 9, etter reglene fra bølge 16.
 3. Øk versjonsnummeret (?v=) i index.html hvis JS eller CSS endres, oppdater tools/e2e.js og kjør check.js 3000, verify.js 1000 og e2e.js før du rapporterer.
 
 Commit, push og merge når alt er grønt.

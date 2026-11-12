@@ -173,6 +173,10 @@ dl.defs dt { font-weight: 700; margin-top: 12px; } dl.defs dd { margin: 2px 0 0;
 /* ---------- Tabeller: hovedbok ---------- */
 .tablewrap { overflow-x: auto; margin: 12px 0; position: relative; }
 .tablewrap:focus-visible { outline-offset: 0; }
+table.data.turned { display: none; }
+table.data.turned thead th { white-space: normal; vertical-align: bottom; letter-spacing: 0; }
+.tablewrap.more { border-right: 2px solid var(--ink-3); }
+.scrollhint { margin: -6px 0 12px; }
 table.data { border-collapse: collapse; width: 100%; font-size: .88rem; }
 table.data th, table.data td { padding: 5px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 table.data.wrapth th[scope=row] { white-space: normal; min-width: 7em; }
@@ -280,6 +284,8 @@ table.data.result th[scope=row] { min-width: 9em; }
   .sticky-bar { top: 49px; padding: 6px 0; margin-bottom: 14px; } .sticky-bar .hide-m { display: none; } .sticky-bar .show-m { display: inline; }
   .sticky-bar > .row { flex-wrap: nowrap; gap: 6px; } .sticky-bar .timer { font-size: 1.05rem; } .sticky-bar #abort { padding-inline: 4px; } .sticky-bar #submit { padding-inline: 14px; }
   select { min-height: 44px; }
+  .tablewrap > table.data.turned { display: table; } .tablewrap > table.data.orig { display: none; }
+  .tablewrap.scrolls table.data tr > :first-child { position: sticky; left: 0; z-index: 1; background: var(--bg); border-right: 1px solid var(--line); }
   table.data.result th, table.data.result td { padding: 5px 4px; } table.data.result th[scope=row] { min-width: 0; hyphens: auto; } table.data.result thead th { white-space: normal; letter-spacing: 0; vertical-align: bottom; }
   table.data th, table.data td { padding: 5px 8px; }
   footer { padding-bottom: 90px; }
@@ -295,6 +301,7 @@ table.data.result th[scope=row] { min-width: 9em; }
 .pk h3 { margin-top: 1.8em; }
 
 @media print {
+  .tablewrap > table.data.orig { display: table !important; } .tablewrap > table.data.turned { display: none !important; } .tablewrap.more { border-right: 0; }
   :root, :root:not([data-theme="light"]), :root[data-theme="dark"] {
     --bg: #fff; --tint: #f2f2f2; --ink: #000; --ink-2: #222; --ink-3: #444; --line: #999; --rule: #000;
     --accent: #000; --mark: #fff; --mark-ink: #000; --good: #000; --bad: #000; --warn: #000; --bad-bg: #fff; --warn-bg: #fff; --good-bg: #fff;

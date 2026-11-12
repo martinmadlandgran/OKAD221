@@ -677,6 +677,57 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
   { const q = await mk(); await go(q, 'prove'); await q.click('#start'); await q.waitForTimeout(200);
     ok(/^0 av \d+ tallsvar fylt ut$/.test((await q.evaluate(() => document.querySelector('#filled').innerText)).trim()), 'bølge 19: på PC står telleren med hele teksten');
     await q.click('#abort'); await q.context().close(); }
+  // 30) Bølge 20: brede tabeller på mobil (snudde årstabeller, fast første kolonne, strek og hint når tabellen kan rulles)
+  const tabState = (q) => q.evaluate(() => [...document.querySelectorAll('#view .tablewrap')].filter((w) => w.clientWidth && w.checkVisibility()).map((w) => {
+    const vis = [...w.querySelectorAll('table')].find((t) => getComputedStyle(t).display !== 'none'), h = w.nextElementSibling, first = vis.querySelector('tbody tr > :first-child');
+    return { over: w.scrollWidth > w.clientWidth + 1, turned: vis.classList.contains('turned'), hasTurn: !!w.querySelector('table.turned'), scrolls: w.classList.contains('scrolls'), more: w.classList.contains('more'),
+      hint: !!(h && h.classList.contains('scrollhint') && !h.hidden), sticky: first ? getComputedStyle(first).position : '', tab: w.tabIndex, role: w.getAttribute('role'),
+      turnedW: w.querySelector('table.turned') ? w.querySelector('table.turned').scrollWidth : 0, origAria: w.querySelector('table.orig') ? w.querySelector('table.orig').getAttribute('aria-hidden') : null }; }));
+  for (const w of [320, 390]) { const q = await mk({ w, h: 640 }); await go(q, 'oving'); const ids = await q.evaluate(() => OKAD.gens.map((g) => g.id));
+    const bad = [], badTurn = []; let n = 0, turned = 0, scrolls = 0, fits = 0;
+    for (const id of ids) { await go(q, 'oving/' + id + '/11'); await q.click('#all'); await q.waitForTimeout(120);
+      for (const t of await tabState(q)) { n++; if (t.turned) turned++;
+        if (t.over) { scrolls++; if (!(t.scrolls && t.more && t.hint && t.sticky === 'sticky' && t.tab === 0 && t.role === 'region')) bad.push(id); }
+        else { fits++; if (t.scrolls || t.hint) bad.push(id + ' (hint uten at tabellen ruller)'); }
+        if (t.hasTurn && t.turned && t.origAria === null) badTurn.push(id + ' (originalen ikke skjult for skjermleser)'); } }
+    ok(bad.length === 0, `bølge 20 ${w}px: hver tabell som er bredere enn skjermen, har fast første kolonne, strek i kanten, hint og kan nås med tastatur, og ingen andre har hint (${n} tabeller, ${scrolls} ruller, ${fits} får plass)` + (bad.length ? ' – ' + [...new Set(bad)].slice(0, 6).join(', ') : ''));
+    ok(turned >= 8, `bølge 20 ${w}px: årstabeller med få poster vises snudd (${turned})`);
+    ok(badTurn.length === 0, `bølge 20 ${w}px: skjermleseren leser bare tabellen som vises` + (badTurn.length ? ' – ' + badTurn.join(', ') : ''));
+    await q.context().close(); }
+  { const q = await mk({ w: 320, h: 640 }); await go(q, 'oving/k5-payback-kapitalrasjonering/11'); await q.waitForTimeout(150);
+    // Den snudde tabellen har samme tall som originalen, med årene som rader, og får plass
+    const tr = await q.evaluate(() => { const w = document.querySelector('.task-text .tablewrap'), o = w.querySelector('table.orig'), t = w.querySelector('table.turned');
+      const oy = [...o.tHead.rows[0].cells].slice(1).map((c) => c.textContent), ov = [...o.tBodies[0].rows[0].cells].slice(1).map((c) => c.textContent);
+      const ty = [...t.tBodies[0].rows].map((r) => r.cells[0].textContent), tv = [...t.tBodies[0].rows].map((r) => r.cells[1].textContent);
+      return { same: JSON.stringify(oy) === JSON.stringify(ty) && JSON.stringify(ov) === JSON.stringify(tv), fits: w.scrollWidth <= w.clientWidth + 1, vis: getComputedStyle(t).display, n: ty.length }; });
+    ok(tr.same && tr.fits && tr.vis === 'table' && tr.n >= 5, `bølge 20: den snudde tabellen har de samme tallene med årene som rader, og får plass i 320 px (${tr.n} år)`);
+    await q.screenshot({ path: out + '/m-bolge20-snudd.png' });
+    // Utskrift viser originalen
+    await q.emulateMedia({ media: 'print' }); ok(await q.evaluate(() => { const w = document.querySelector('.task-text .tablewrap'); return getComputedStyle(w.querySelector('table.orig')).display === 'table' && getComputedStyle(w.querySelector('table.turned')).display === 'none'; }), 'bølge 20: utskrift viser tabellen med årene som kolonner'); await q.emulateMedia({ media: 'screen' });
+    // En tabell som allerede har månedene som rader, snus ikke
+    await go(q, 'oving/k7-annuitetslan-maanedlig/11'); await q.click('#all'); ok(await q.evaluate(() => ![...document.querySelectorAll('#view table.turned')].some((t) => /Rente|Avdrag/.test(t.tHead.textContent) === false && /^Måned/.test(t.tHead.rows[0].cells[0].textContent) && /^\d/.test(t.tHead.rows[0].cells[1].textContent))), 'bølge 20: en tabell som allerede har månedene som rader, snus ikke');
+    // Strek i kanten forsvinner når man har rullet til enden, og første kolonne står fast
+    await go(q, 'oving/k2-prosjekt-for-skatt/11'); await q.waitForTimeout(150);
+    const sc = await q.evaluate(async () => { const w = document.querySelector('.task-text .tablewrap'), c = w.querySelector('tbody tr > :first-child'), x0 = c.getBoundingClientRect().left;
+      w.scrollLeft = w.scrollWidth; await new Promise((r) => setTimeout(r, 120)); return { more: w.classList.contains('more'), fixed: Math.abs(c.getBoundingClientRect().left - x0) < 1, hint: !w.nextElementSibling.hidden }; });
+    ok(!sc.more && sc.fixed && sc.hint, 'bølge 20: streken i kanten forsvinner ved enden av tabellen, og første kolonne står fast mens man ruller');
+    await q.screenshot({ path: out + '/m-bolge20-rull.png' });
+    // Til PC-bredde og tilbake: tabellene følger med
+    await q.setViewportSize({ width: 1200, height: 900 }); await q.waitForTimeout(250);
+    const pc = await tabState(q); ok(pc.every((t) => !t.turned && !t.hint && !t.over), 'bølge 20: på PC vises tabellene som før, uten hint');
+    await q.setViewportSize({ width: 320, height: 640 }); await q.waitForTimeout(250);
+    const mob = await tabState(q); ok(mob.filter((t) => t.over).every((t) => t.hint && t.scrolls), 'bølge 20: tilbake til mobilbredde får de brede tabellene hint igjen');
+    ok(!(await overflow(q)), 'bølge 20: ingen sidelengs rulling av siden i 320 px');
+    await q.context().close(); }
+  // Prøveeksamen, eksamenssett og teori i 320 px: brede tabeller har hint, siden ruller ikke
+  { const q = await mk({ w: 320, h: 640 }); const bad = [];
+    for (const h of ['prove/utskrift/4242', 'eksamen/2025', 'eksamen/2023', 'tema/8', 'tema/12', 'analyse']) { await go(q, h); await q.evaluate(() => document.querySelectorAll('#view details').forEach((d) => { d.open = true; })); await q.waitForTimeout(250);
+      for (const t of await tabState(q)) if (t.over && !(t.hint && t.sticky === 'sticky' && t.tab === 0)) bad.push(h); if (await overflow(q)) bad.push(h + ' (siden ruller)'); }
+    ok(bad.length === 0, 'bølge 20: brede tabeller i eksamenssett, teori, analyse og papirutgaven har hint og fast første kolonne, også i paneler som åpnes' + (bad.length ? ' – ' + [...new Set(bad)].join(', ') : ''));
+    await q.context().close(); }
+  { const q = await mk(); await go(q, 'oving/k5-payback-kapitalrasjonering/11'); await q.waitForTimeout(150);
+    ok(await q.evaluate(() => { const w = document.querySelector('.task-text .tablewrap'); return getComputedStyle(w.querySelector('table.orig')).display === 'table' && w.querySelector('table.turned').getAttribute('aria-hidden') !== null && w.querySelector('table.orig').getAttribute('aria-hidden') === null; }), 'bølge 20: på PC vises originalen, og skjermleseren hopper over den snudde');
+    await q.context().close(); }
   // Skjermbilder
   const s = await mk(); for (const [nm, h, full] of [['hjem', '', true], ['oving', 'oving', false], ['analyse', 'analyse', true], ['tema', 'tema/8', false], ['task', 'oving/k8-nv-etter-skatt-komplett/42', false]]) { await go(s, h); await s.screenshot({ path: `${out}/${nm}.png`, fullPage: full }); }
   await s.emulateMedia({ colorScheme: 'dark' }); await go(s, 'oving/k4-obligasjon-kurs-ytm-durasjon/3'); await s.click('#all'); await s.screenshot({ path: out + '/task-dark.png' });
