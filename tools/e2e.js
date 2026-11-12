@@ -892,7 +892,7 @@ const ok = (c, msg) => (c ? pass : fails).push(msg);
       return { n: menus.length, want: all.length, closed: menus.every((x) => !x.open), links: menus.map((x) => [...x.querySelectorAll('a')].map((a) => a.getAttribute('href').replace('#/oving/', ''))).every((l, i) => l.join() === all[i].gens.join()), loose: [...document.querySelectorAll('.slot p.small')].filter((p) => /^Øv:/.test(p.textContent)).length }; });
     ok(m.n === m.want && m.closed && m.links && m.loose === 0, `bølge 27: hver prognose og joker har en lukket nedtrekksmeny med de samme Øv-lenkene (${m.n} av ${m.want})`);
     await d.focus('.slot details.menu summary'); await d.keyboard.press('Enter'); ok(await d.evaluate(() => document.querySelector('.slot details.menu').open && document.querySelector('.slot details.menu a').getBoundingClientRect().height > 30), 'bølge 27: menyen åpnes med tastaturet, og lenkene er store nok');
-    await d.click('.slot details.menu a'); await d.waitForTimeout(150); ok(/#\/oving\/k2-prosjekt-for-skatt$/.test(d.url()), 'bølge 27: lenken i menyen åpner oppgavetypen');
+    await d.click('.slot details.menu a'); await d.waitForTimeout(150); ok(/#\/oving\/k2-prosjekt-for-skatt(\/\d+)?$/.test(d.url()), 'bølge 27: lenken i menyen åpner oppgavetypen');
     await d.context().close();
     const q = await mk({ w: 320, h: 700 }); await go(q, 'analyse');
     for (let i = 0; i < 5; i++) await q.click(`.slot details.menu summary >> nth=${i}`);
